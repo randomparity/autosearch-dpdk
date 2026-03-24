@@ -21,6 +21,17 @@ poll_interval = 30
 # Total wall-clock budget for a single DTS run
 timeout_minutes = 60
 
+[goal]
+# Freeform description injected into the Claude prompt. Use this to specify
+# hardware, optimization strategy, constraints, or any other context.
+description = """
+Target: Intel E810 NIC (ice driver), Xeon Platinum, 2-socket NUMA.
+Focus on testpmd forwarding throughput with 64-byte packets.
+Strategies to explore: rx/tx burst sizing, prefetch tuning, cache-line
+alignment, vectorized PMD paths, DPDK EAL memory and lcore configuration.
+Constraints: do not change public API signatures.
+"""
+
 [dpdk]
 # Path to the DPDK git submodule relative to repo root
 submodule_path = "dpdk"

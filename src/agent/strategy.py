@@ -26,6 +26,8 @@ def format_context(history: list[dict], campaign: dict) -> str:
     dpdk_cfg = campaign.get("dpdk", {})
     campaign_cfg = campaign.get("campaign", {})
 
+    goal = campaign.get("goal", {}).get("description", "").strip()
+
     lines = [
         f"Campaign: {campaign_cfg.get('name', 'unnamed')}",
         f"Objective: {metric_cfg.get('direction', 'maximize')} {metric_cfg.get('name', '?')}",
@@ -33,6 +35,10 @@ def format_context(history: list[dict], campaign: dict) -> str:
         f"Iterations: {len(history)} / {campaign_cfg.get('max_iterations', '?')}",
         "",
     ]
+
+    if goal:
+        lines.append(f"Goal: {goal}")
+        lines.append("")
 
     scored = _scored_rows(history)
     if scored:

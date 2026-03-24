@@ -233,8 +233,12 @@ def run_autonomous(
         history = load_history()
         context = format_context(history, campaign)
 
+        goal = campaign.get("goal", {}).get("description", "").strip()
+        goal_block = f"\nGoal:\n{goal}\n" if goal else ""
+
         prompt = (
-            f"You are optimizing DPDK for maximum throughput.\n\n"
+            f"You are optimizing DPDK for maximum throughput.\n"
+            f"{goal_block}\n"
             f"Current state:\n{context}\n\n"
             f"Propose a specific code change to the DPDK source in {dpdk_path}. "
             f"Focus on the scoped areas. Describe the change and the file(s) to modify."
