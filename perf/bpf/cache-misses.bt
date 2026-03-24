@@ -3,9 +3,9 @@
 // Cache miss stack annotation.
 // Usage: bpftrace -p <PID> cache-misses.bt
 //
-// Produces folded cache-miss stacks that can be overlaid with CPU
-// flame graphs to see which hot functions are hot because of cache
-// misses versus pure computation.
+// Captures cache-miss stacks. Output is bpftrace's native stack
+// format — pipe through `stackcollapse-bpftrace.pl` (or equivalent)
+// before feeding to flamegraph.pl.
 //
 // Requires hardware PMU tracepoint support. Falls back to software
 // event if hardware is unavailable.
@@ -14,4 +14,9 @@ hardware:cache-misses:1000
 /pid == $target/
 {
     @cache_miss_stacks[ustack] = count();
+}
+
+END
+{
+    clear(@cache_miss_stacks);
 }

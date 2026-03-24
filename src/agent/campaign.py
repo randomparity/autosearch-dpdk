@@ -55,7 +55,6 @@ class ProfilingConfig(TypedDict, total=False):
     """Profiling configuration from campaign TOML."""
 
     enabled: bool
-    every_n: int
 
 
 class CampaignConfig(TypedDict, total=False):

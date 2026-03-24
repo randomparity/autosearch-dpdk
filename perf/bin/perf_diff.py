@@ -20,8 +20,12 @@ def main() -> None:
     parser.add_argument("--threshold", type=float, default=1.0, help="Min delta pct to report")
     args = parser.parse_args()
 
-    baseline = load_folded(args.baseline)
-    current = load_folded(args.current)
+    try:
+        baseline = load_folded(args.baseline)
+        current = load_folded(args.current)
+    except FileNotFoundError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(1)
     result = diff_stacks(baseline, current, threshold=args.threshold)
 
     if args.output:

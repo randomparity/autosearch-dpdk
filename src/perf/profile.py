@@ -76,31 +76,54 @@ def profile_pid(
     # Launch perf record and perf stat in parallel
     record_cmd = _build_cmd(
         [
-            "perf", "record", "-g", "--call-graph", "dwarf,16384",
-            "-F", str(frequency), "-p", str(pid),
-            "-o", str(perf_data), "--", "sleep", str(duration),
+            "perf",
+            "record",
+            "--call-graph",
+            "dwarf,16384",
+            "-F",
+            str(frequency),
+            "-p",
+            str(pid),
+            "-o",
+            str(perf_data),
+            "--",
+            "sleep",
+            str(duration),
         ],
         sudo=sudo,
     )
     stat_cmd = _build_cmd(
         [
-            "perf", "stat", "-e", ",".join(events),
-            "-p", str(pid), "--", "sleep", str(duration),
+            "perf",
+            "stat",
+            "-e",
+            ",".join(events),
+            "-p",
+            str(pid),
+            "--",
+            "sleep",
+            str(duration),
         ],
         sudo=sudo,
     )
 
     logger.info("Starting perf record (pid=%d, %ds, %dHz)", pid, duration, frequency)
     record_proc = subprocess.Popen(
-        record_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        record_cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
     )
     stat_proc = subprocess.Popen(
-        stat_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        stat_cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
     )
 
     try:
+        deadline = time.monotonic() + timeout
         _, record_stderr = record_proc.communicate(timeout=timeout)
-        _, stat_stderr = stat_proc.communicate(timeout=timeout)
+        remaining = max(5.0, deadline - time.monotonic())
+        _, stat_stderr = stat_proc.communicate(timeout=remaining)
     except subprocess.TimeoutExpired:
         record_proc.kill()
         stat_proc.kill()
@@ -119,13 +142,23 @@ def profile_pid(
             duration_seconds=time.monotonic() - start,
         )
 
+    if stat_proc.returncode != 0:
+        logger.warning(
+            "perf stat failed (rc=%d): %s",
+            stat_proc.returncode,
+            stat_stderr.decode(errors="replace")[:300],
+        )
+
     # Post-process: perf script → folded stacks
     script_cmd = _build_cmd(
         ["perf", "script", "-i", str(perf_data)],
         sudo=sudo,
     )
     script_result = subprocess.run(
-        script_cmd, capture_output=True, text=True, timeout=timeout,
+        script_cmd,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
     )
     if script_result.returncode != 0:
         return ProfileResult(
@@ -142,7 +175,8 @@ def profile_pid(
 
     logger.info(
         "Profiling complete: %d unique stacks, %d counters",
-        len(stacks), len(counters),
+        len(stacks),
+        len(counters),
     )
     return ProfileResult(
         success=True,
@@ -204,9 +238,7 @@ def _is_hex(s: str) -> bool:
     return True
 
 
-_STAT_LINE_RE = re.compile(
-    r"^\s*([\d,]+)\s+(\S+)"
-)
+_STAT_LINE_RE = re.compile(r"^\s*([\d,]+)\s+(\S+)")
 
 
 def parse_perf_stat(raw_output: str) -> dict[str, float]:

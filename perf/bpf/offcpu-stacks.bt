@@ -5,7 +5,8 @@
 //
 // For DPDK poll-mode this should show almost nothing. If it does,
 // it reveals unexpected blocking (locks, syscalls, page faults).
-// Output can be folded and fed to flamegraph.pl --color=io --countname=us.
+// Output is bpftrace's native stack format — pipe through
+// `stackcollapse-bpftrace.pl` before feeding to flamegraph.pl.
 
 tracepoint:sched:sched_switch
 /pid == $target/
@@ -21,4 +22,10 @@ tracepoint:sched:sched_wakeup
     @offcpu[@block_stack[args->pid]] = sum($duration);
     delete(@block_start[args->pid]);
     delete(@block_stack[args->pid]);
+}
+
+END
+{
+    clear(@block_start);
+    clear(@block_stack);
 }

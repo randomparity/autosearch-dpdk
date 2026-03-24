@@ -99,6 +99,11 @@ def compute_derived_metrics(
     for metric_name, formula in arch_profile.get("derived_metrics", {}).items():
         parts = formula.split("/")
         if len(parts) != 2:
+            logger.warning(
+                "Skipping malformed derived metric formula: %s = %s",
+                metric_name,
+                formula,
+            )
             continue
         numerator_key = parts[0].strip()
         denominator_key = parts[1].strip()
@@ -136,12 +141,14 @@ def diagnose(
             evidence_parts = [condition]
             if top:
                 evidence_parts.append(f"top function: {top[0]['name']} ({top[0]['pct']}%)")
-            triggered.append({
-                "priority": i + 1,
-                "category": _category_from_condition(condition),
-                "evidence": ", ".join(evidence_parts),
-                "suggestions": heuristic.get("suggestions", []),
-            })
+            triggered.append(
+                {
+                    "priority": i + 1,
+                    "category": _category_from_condition(condition),
+                    "evidence": ", ".join(evidence_parts),
+                    "suggestions": heuristic.get("suggestions", []),
+                }
+            )
 
     return triggered
 

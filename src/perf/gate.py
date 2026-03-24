@@ -34,44 +34,52 @@ def check_regression(
     # Check per-symbol regressions
     for change in stack_diff.get("significant_changes", []):
         if change["delta_pct"] > max_regression_pct:
-            report["checks"].append({
-                "check": "symbol_regression",
-                "symbol": change["symbol"],
-                "delta_pct": change["delta_pct"],
-                "threshold": max_regression_pct,
-                "result": "fail",
-            })
+            report["checks"].append(
+                {
+                    "check": "symbol_regression",
+                    "symbol": change["symbol"],
+                    "delta_pct": change["delta_pct"],
+                    "threshold": max_regression_pct,
+                    "result": "fail",
+                }
+            )
             worst_exit = max(worst_exit, EXIT_FAIL)
         elif change["delta_pct"] > max_regression_pct * 0.5:
-            report["checks"].append({
-                "check": "symbol_regression",
-                "symbol": change["symbol"],
-                "delta_pct": change["delta_pct"],
-                "threshold": max_regression_pct,
-                "result": "warn",
-            })
+            report["checks"].append(
+                {
+                    "check": "symbol_regression",
+                    "symbol": change["symbol"],
+                    "delta_pct": change["delta_pct"],
+                    "threshold": max_regression_pct,
+                    "result": "warn",
+                }
+            )
             worst_exit = max(worst_exit, EXIT_WARN)
 
     # Check IPC drop
     if counter_diff:
         ipc_delta = _extract_ipc_delta(counter_diff)
         if ipc_delta is not None and ipc_delta < -max_ipc_drop:
-            report["checks"].append({
-                "check": "ipc_drop",
-                "ipc_delta": ipc_delta,
-                "threshold": -max_ipc_drop,
-                "result": "fail",
-            })
+            report["checks"].append(
+                {
+                    "check": "ipc_drop",
+                    "ipc_delta": ipc_delta,
+                    "threshold": -max_ipc_drop,
+                    "result": "fail",
+                }
+            )
             worst_exit = max(worst_exit, EXIT_FAIL)
 
     # Throughput improvement can override minor regressions
     if throughput_delta is not None and throughput_delta > 0 and worst_exit == EXIT_WARN:
-        report["checks"].append({
-            "check": "throughput_override",
-            "throughput_delta": throughput_delta,
-            "result": "pass",
-            "note": "Throughput improvement overrides minor profiling regressions",
-        })
+        report["checks"].append(
+            {
+                "check": "throughput_override",
+                "throughput_delta": throughput_delta,
+                "result": "pass",
+                "note": "Throughput improvement overrides minor profiling regressions",
+            }
+        )
         worst_exit = EXIT_PASS
 
     report["exit_code"] = worst_exit

@@ -5,6 +5,11 @@
 //
 // Bimodal distributions often indicate NUMA effects, contention, or
 // interrupt interference on polling threads.
+//
+// WARNING: Do not attach to dataplane fast-path functions (rte_eth_rx_burst,
+// mlx5_rx_burst_vec, etc.) at line rate — uprobe overhead (~100-200 ns/call)
+// will dominate at 20+ Mpps and invalidate throughput measurements.
+// Use perf probe with sampling or restrict to control-plane functions.
 
 uprobe:$BINARY:$FUNC
 {

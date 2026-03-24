@@ -6,8 +6,7 @@
     "cycles": "cycles",
     "instructions": "instructions",
     "l1d_miss": "L1D_RO_EXCL_WRITES",
-    "branch_miss": "branch-misses",
-    "stalled_backend": "CPU_CYCLES:u"
+    "branch_miss": "branch-misses"
   },
   "derived_metrics": {
     "ipc": "instructions / cycles",
@@ -29,6 +28,7 @@
     "s390x uses cpum_cf (counter facility) and cpum_sf (sampling facility) for profiling.",
     "Sampling facility (cpum_sf) required for call stack capture — may need kernel config.",
     "Limited perf event support in older kernels; verify available events with `perf list`.",
-    "For DPDK: s390x support is more limited; check which PMDs are available."
+    "For DPDK: s390x support is more limited; check which PMDs are available.",
+    "No backend stall event is available on s390x via standard perf."
   ]
 }

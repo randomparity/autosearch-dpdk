@@ -17,20 +17,31 @@ def main() -> None:
     parser.add_argument("--diff", type=Path, required=True, help="Stack diff JSON file")
     parser.add_argument("--counters-diff", type=Path, help="Counter diff JSON file")
     parser.add_argument(
-        "--max-regression", type=float, default=5.0, help="Max regression ppt",
+        "--max-regression",
+        type=float,
+        default=5.0,
+        help="Max regression ppt",
     )
     parser.add_argument("--max-ipc-drop", type=float, default=0.05)
     parser.add_argument("--throughput-delta", type=float)
     parser.add_argument("--output", type=Path, help="Output report JSON (default: stdout)")
     args = parser.parse_args()
 
-    with open(args.diff) as f:
-        stack_diff = json.load(f)
+    try:
+        with open(args.diff) as f:
+            stack_diff = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError) as exc:
+        print(f"Error loading {args.diff}: {exc}", file=sys.stderr)
+        sys.exit(1)
 
     counter_diff = None
     if args.counters_diff:
-        with open(args.counters_diff) as f:
-            counter_diff = json.load(f)
+        try:
+            with open(args.counters_diff) as f:
+                counter_diff = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError) as exc:
+            print(f"Error loading {args.counters_diff}: {exc}", file=sys.stderr)
+            sys.exit(1)
 
     exit_code, report = check_regression(
         stack_diff,

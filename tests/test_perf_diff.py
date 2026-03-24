@@ -36,9 +36,7 @@ class TestDiffStacks:
     def test_regressed(self):
         result = diff_stacks(BASELINE_STACKS, REGRESSED_STACKS, threshold=1.0)
         assert result["net_assessment"] == "regressed"
-        hot_change = next(
-            c for c in result["significant_changes"] if c["symbol"] == "hot_func"
-        )
+        hot_change = next(c for c in result["significant_changes"] if c["symbol"] == "hot_func")
         assert hot_change["verdict"] == "regressed"
         assert hot_change["delta_pct"] > 0
 

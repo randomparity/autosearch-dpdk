@@ -19,7 +19,8 @@ class TestCheckRegression:
             {"symbol": "hot_func", "delta_pct": 8.0, "verdict": "regressed"},
         ]
         exit_code, report = check_regression(
-            _make_diff(changes), max_regression_pct=5.0,
+            _make_diff(changes),
+            max_regression_pct=5.0,
         )
         assert exit_code == EXIT_FAIL
         assert any(c["result"] == "fail" for c in report["checks"])
@@ -29,7 +30,8 @@ class TestCheckRegression:
             {"symbol": "hot_func", "delta_pct": 3.5, "verdict": "regressed"},
         ]
         exit_code, report = check_regression(
-            _make_diff(changes), max_regression_pct=5.0,
+            _make_diff(changes),
+            max_regression_pct=5.0,
         )
         assert exit_code == EXIT_WARN
 
@@ -38,7 +40,8 @@ class TestCheckRegression:
             {"symbol": "hot_func", "delta_pct": 1.0, "verdict": "regressed"},
         ]
         exit_code, _ = check_regression(
-            _make_diff(changes), max_regression_pct=5.0,
+            _make_diff(changes),
+            max_regression_pct=5.0,
         )
         assert exit_code == EXIT_PASS
 
@@ -58,7 +61,8 @@ class TestCheckRegression:
             {"symbol": "hot_func", "delta_pct": 3.5, "verdict": "regressed"},
         ]
         exit_code, report = check_regression(
-            _make_diff(changes), throughput_delta=1000.0,
+            _make_diff(changes),
+            throughput_delta=1000.0,
         )
         assert exit_code == EXIT_PASS
         overrides = [c for c in report["checks"] if c["check"] == "throughput_override"]
@@ -69,7 +73,9 @@ class TestCheckRegression:
             {"symbol": "hot_func", "delta_pct": 8.0, "verdict": "regressed"},
         ]
         exit_code, _ = check_regression(
-            _make_diff(changes), throughput_delta=1000.0, max_regression_pct=5.0,
+            _make_diff(changes),
+            throughput_delta=1000.0,
+            max_regression_pct=5.0,
         )
         assert exit_code == EXIT_FAIL
 

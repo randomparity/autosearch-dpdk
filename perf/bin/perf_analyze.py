@@ -55,8 +55,13 @@ def cmd_summarize(args: argparse.Namespace) -> None:
 
 
 def _load_json(path: Path) -> dict:
-    with open(path) as f:
-        return json.load(f)
+    """Load a JSON file, exiting with an error message on failure."""
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError) as exc:
+        print(f"Error loading {path}: {exc}", file=sys.stderr)
+        sys.exit(1)
 
 
 def main() -> None:

@@ -101,8 +101,12 @@ class TestFilename:
 class TestStatusValidation:
     def test_valid_statuses(self) -> None:
         for status in [
-            STATUS_PENDING, STATUS_CLAIMED, STATUS_BUILDING,
-            STATUS_RUNNING, STATUS_COMPLETED, STATUS_FAILED,
+            STATUS_PENDING,
+            STATUS_CLAIMED,
+            STATUS_BUILDING,
+            STATUS_RUNNING,
+            STATUS_COMPLETED,
+            STATUS_FAILED,
         ]:
             validate_status(status)
 

@@ -68,7 +68,7 @@ def format_context(
 
     if profile_summary:
         lines.append("")
-        lines.extend(_format_profile_lines(profile_summary))
+        lines.extend(format_profile_lines(profile_summary))
 
     return "\n".join(lines)
 
@@ -86,7 +86,7 @@ def _scored_rows(history: list[dict]) -> list[tuple[float, dict]]:
     return scored
 
 
-def _format_profile_lines(summary: dict) -> list[str]:
+def format_profile_lines(summary: dict) -> list[str]:
     """Format profiling data for prompt context.
 
     Args:

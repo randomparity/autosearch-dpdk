@@ -70,14 +70,21 @@ def diff_stacks(
         curr_pct = curr_pcts.get(symbol, 0.0)
         delta = curr_pct - base_pct
         if abs(delta) >= threshold:
-            verdict = "regressed" if delta > 0 else "improved"
-            changes.append({
-                "symbol": symbol,
-                "baseline_pct": round(base_pct, 2),
-                "current_pct": round(curr_pct, 2),
-                "delta_pct": round(delta, 2),
-                "verdict": verdict,
-            })
+            if delta > 0:
+                verdict = "regressed"
+            elif delta < 0:
+                verdict = "improved"
+            else:
+                verdict = "neutral"
+            changes.append(
+                {
+                    "symbol": symbol,
+                    "baseline_pct": round(base_pct, 2),
+                    "current_pct": round(curr_pct, 2),
+                    "delta_pct": round(delta, 2),
+                    "verdict": verdict,
+                }
+            )
 
     changes.sort(key=lambda c: abs(c["delta_pct"]), reverse=True)
 
@@ -116,7 +123,12 @@ def diff_counters(
     for event in sorted(all_events):
         base_val = baseline.get(event, 0.0)
         curr_val = current.get(event, 0.0)
-        change_pct = ((curr_val - base_val) / base_val * 100) if base_val else 0.0
+        if base_val:
+            change_pct = (curr_val - base_val) / base_val * 100
+        elif curr_val:
+            change_pct = float("inf")
+        else:
+            change_pct = 0.0
         deltas[event] = {
             "baseline": base_val,
             "current": curr_val,

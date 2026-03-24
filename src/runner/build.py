@@ -72,8 +72,11 @@ def build_dpdk(
         meson_configured = (build_dir / "meson-private" / "build.dat").exists()
         if meson_configured:
             meson_cmd = [
-                "meson", "setup", "--reconfigure",
-                str(build_dir), str(source_path),
+                "meson",
+                "setup",
+                "--reconfigure",
+                str(build_dir),
+                str(source_path),
             ]
         else:
             if build_dir.exists():

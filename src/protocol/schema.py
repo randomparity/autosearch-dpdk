@@ -9,9 +9,7 @@ from typing import Any, Literal
 
 DEFAULT_REQUESTS_DIR = Path("requests")
 
-StatusLiteral = Literal[
-    "pending", "claimed", "building", "running", "completed", "failed"
-]
+StatusLiteral = Literal["pending", "claimed", "building", "running", "completed", "failed"]
 
 STATUS_PENDING: StatusLiteral = "pending"
 STATUS_CLAIMED: StatusLiteral = "claimed"
@@ -20,14 +18,16 @@ STATUS_RUNNING: StatusLiteral = "running"
 STATUS_COMPLETED: StatusLiteral = "completed"
 STATUS_FAILED: StatusLiteral = "failed"
 
-VALID_STATUSES = frozenset({
-    STATUS_PENDING,
-    STATUS_CLAIMED,
-    STATUS_BUILDING,
-    STATUS_RUNNING,
-    STATUS_COMPLETED,
-    STATUS_FAILED,
-})
+VALID_STATUSES = frozenset(
+    {
+        STATUS_PENDING,
+        STATUS_CLAIMED,
+        STATUS_BUILDING,
+        STATUS_RUNNING,
+        STATUS_COMPLETED,
+        STATUS_FAILED,
+    }
+)
 
 VALID_TRANSITIONS: dict[str, frozenset[str]] = {
     STATUS_PENDING: frozenset({STATUS_CLAIMED, STATUS_FAILED}),

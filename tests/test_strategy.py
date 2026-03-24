@@ -69,10 +69,7 @@ class TestFormatContext:
         assert "No successful iterations yet." in result
 
     def test_recent_limited_to_five(self) -> None:
-        history = [
-            _row(str(i), str(i), "completed", f"iter {i}")
-            for i in range(10)
-        ]
+        history = [_row(str(i), str(i), "completed", f"iter {i}") for i in range(10)]
         result = format_context(history, SAMPLE_CAMPAIGN)
         assert "#5" not in result or "iter 5" in result
         assert "iter 9" in result

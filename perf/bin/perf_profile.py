@@ -17,7 +17,9 @@ def main() -> None:
     parser.add_argument("--pid", type=int, required=True, help="Target process ID")
     parser.add_argument("--duration", type=int, default=10, help="Capture duration in seconds")
     parser.add_argument(
-        "--output-dir", type=Path, default=Path("perf/results"),
+        "--output-dir",
+        type=Path,
+        default=Path("perf/results"),
         help="Directory for profiling artifacts",
     )
     parser.add_argument("--frequency", type=int, default=99, help="Sampling frequency (Hz)")

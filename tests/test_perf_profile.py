@@ -64,9 +64,7 @@ class TestFoldStacks:
 
     def test_single_frame(self):
         output = (
-            "testpmd 12345 1234.0: 10 cycles:\n"
-            "\t00007f0000000001 some_func+0x10 (/lib/foo.so)\n"
-            "\n"
+            "testpmd 12345 1234.0: 10 cycles:\n\t00007f0000000001 some_func+0x10 (/lib/foo.so)\n\n"
         )
         stacks = fold_stacks(output)
         assert "some_func" in stacks

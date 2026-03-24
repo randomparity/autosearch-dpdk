@@ -45,10 +45,7 @@ def create_api_client(provider: str) -> tuple[object, str]:
     try:
         import anthropic
     except ImportError:
-        msg = (
-            "'anthropic' package required for autonomous mode. "
-            "Install with: uv add anthropic"
-        )
+        msg = "'anthropic' package required for autonomous mode. Install with: uv add anthropic"
         raise ImportError(msg) from None
 
     if provider == "openrouter":
@@ -105,23 +102,19 @@ def _record_result_or_revert(
             else f"Baseline: {metric}"
         )
         files = ["results.tsv", str(dpdk_path)]
-        git_add_commit_push(
-            files, f"results: iteration {seq:04d}", dry_run=dry_run
-        )
+        git_add_commit_push(files, f"results: iteration {seq:04d}", dry_run=dry_run)
     else:
         print(f"No improvement ({metric} vs best {best_val}). Reverting.")
         diff_summary = get_diff_summary(dpdk_path)
         revert_last_change(dpdk_path)
         append_failure(commit, metric, description, diff_summary)
         files = ["results.tsv", "failures.tsv", str(dpdk_path)]
-        git_add_commit_push(
-            files, f"revert: iteration {seq:04d}", dry_run=dry_run
-        )
+        git_add_commit_push(files, f"revert: iteration {seq:04d}", dry_run=dry_run)
 
     return improved
 
 
-def _extract_profile_summary(result: object) -> dict | None:
+def extract_profile_summary(result: object) -> dict | None:
     """Extract profiling summary from a completed test result.
 
     Args:
@@ -167,7 +160,9 @@ def run_autonomous(
         history = load_history()
         failures = load_failures()
         context = format_context(
-            history, campaign, profile_summary=last_profile_summary,
+            history,
+            campaign,
+            profile_summary=last_profile_summary,
         )
 
         goal = campaign.get("goal", {}).get("description", "").strip()
@@ -223,36 +218,32 @@ def run_autonomous(
             continue
 
         try:
-            result = poll_for_completion(
-                seq, timeout=timeout, interval=poll_interval
-            )
+            result = poll_for_completion(seq, timeout=timeout, interval=poll_interval)
         except TimeoutError:
             append_result(seq, commit, None, "timed_out", description)
             continue
 
-        metric = (
-            result.metric_value if result.status == "completed" else None
-        )
+        metric = result.metric_value if result.status == "completed" else None
 
         # Extract profiling data for next iteration's context
-        last_profile_summary = _extract_profile_summary(result)
+        last_profile_summary = extract_profile_summary(result)
         direction = campaign.get("metric", {}).get("direction", "maximize")
         prev_best = best_result(direction=direction)
-        prev_val = (
-            float(prev_best["metric_value"])
-            if prev_best is not None
-            else None
-        )
+        prev_val = float(prev_best["metric_value"]) if prev_best is not None else None
 
         append_result(seq, commit, metric, result.status, description)
 
         _record_result_or_revert(
-            metric, prev_val, direction, seq, commit, description,
-            dpdk_path, dry_run,
+            metric,
+            prev_val,
+            direction,
+            seq,
+            commit,
+            description,
+            dpdk_path,
+            dry_run,
         )
 
         if _below_threshold(metric, prev_val, campaign):
-            print(
-                "Improvement below threshold. Stopping early."
-            )
+            print("Improvement below threshold. Stopping early.")
             break

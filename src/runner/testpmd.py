@@ -121,7 +121,12 @@ def run_testpmd(
 
     try:
         return _measure_throughput(
-            proc, master_fd, warmup_seconds, measure_seconds, timeout, start,
+            proc,
+            master_fd,
+            warmup_seconds,
+            measure_seconds,
+            timeout,
+            start,
             profile_config=profile_config,
         )
     finally:
@@ -177,13 +182,19 @@ def _measure_throughput(
     boot_output = _read_until(fd, "Press enter to exit", min(timeout, 60))
     if proc.poll() is not None:
         return TestpmdResult(
-            False, None, boot_output, "testpmd exited during startup",
+            False,
+            None,
+            boot_output,
+            "testpmd exited during startup",
             time.monotonic() - start,
         )
 
     if "Press enter to exit" not in boot_output:
         return TestpmdResult(
-            False, None, boot_output, "testpmd did not reach forwarding state",
+            False,
+            None,
+            boot_output,
+            "testpmd did not reach forwarding state",
             time.monotonic() - start,
         )
 
@@ -209,13 +220,20 @@ def _measure_throughput(
     throughput = _parse_throughput(all_output, total_time)
     if throughput is None:
         return TestpmdResult(
-            False, None, all_output, "Failed to parse throughput from stats",
+            False,
+            None,
+            all_output,
+            "Failed to parse throughput from stats",
             time.monotonic() - start,
         )
 
     return TestpmdResult(
-        True, throughput, all_output, None,
-        time.monotonic() - start, profile_summary=profile_summary,
+        True,
+        throughput,
+        all_output,
+        None,
+        time.monotonic() - start,
+        profile_summary=profile_summary,
     )
 
 
@@ -234,7 +252,8 @@ def _run_profiling(pid: int, duration: int, config: dict) -> dict | None:
     from src.perf.arch import load_arch_profile
     from src.perf.profile import profile_pid
 
-    output_dir = Path("perf/results") / str(int(time.time()))
+    repo_root = Path(__file__).resolve().parent.parent.parent
+    output_dir = repo_root / "perf" / "results" / str(int(time.time()))
     result = profile_pid(
         pid=pid,
         duration=duration,
@@ -253,9 +272,7 @@ def _run_profiling(pid: int, duration: int, config: dict) -> dict | None:
 
 def _parse_throughput(output: str, duration: float) -> float | None:
     """Parse accumulated forward stats and compute bi-directional Mpps."""
-    acc_section = output.split(
-        "Accumulated forward statistics for all ports"
-    )
+    acc_section = output.split("Accumulated forward statistics for all ports")
     if len(acc_section) >= 2:
         rx_match = RX_PACKETS_RE.search(acc_section[1])
         if rx_match and duration > 0:
@@ -263,7 +280,9 @@ def _parse_throughput(output: str, duration: float) -> float | None:
             mpps = total_rx / duration / 1_000_000
             logger.info(
                 "Throughput: %.2f Mpps (RX-packets=%d over %.0fs)",
-                mpps, total_rx, duration,
+                mpps,
+                total_rx,
+                duration,
             )
             return round(mpps, 4)
 
@@ -274,7 +293,8 @@ def _parse_throughput(output: str, duration: float) -> float | None:
         mpps = total_pps / 1_000_000
         logger.info(
             "Throughput: %.2f Mpps (from Rx-pps, per-port: %s)",
-            mpps, ", ".join(matches),
+            mpps,
+            ", ".join(matches),
         )
         return round(mpps, 4)
 

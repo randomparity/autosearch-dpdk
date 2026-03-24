@@ -39,8 +39,6 @@ Constraints: do not change public API signatures or break other PMDs.
 [profiling]
 # Include profiling summary in results pushed to agent
 enabled = true
-# Run profiling on every Nth iteration (1 = every time)
-every_n = 1
 
 [dpdk]
 # Path to the DPDK git submodule relative to repo root
