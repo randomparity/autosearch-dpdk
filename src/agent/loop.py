@@ -17,6 +17,18 @@ from src.agent.strategy import format_context, validate_change
 logger = logging.getLogger(__name__)
 
 
+def _below_threshold(
+    metric: float | None,
+    best_val: float | None,
+    campaign: dict,
+) -> bool:
+    """Check if improvement between metric and best_val is below threshold."""
+    threshold = campaign.get("metric", {}).get("threshold")
+    if threshold is None or metric is None or best_val is None:
+        return False
+    return abs(metric - best_val) < threshold
+
+
 def load_campaign(path: Path) -> dict:
     """Load and return the campaign TOML configuration."""
     with open(path, "rb") as f:
@@ -120,8 +132,8 @@ def run_interactive_iteration(
     print(f"Request {seq:04d} completed. Metric: {metric}")
 
     current_best = best_result(direction=direction)
-    if current_best is not None and metric is not None:
-        best_val = float(current_best["metric_value"])
+    best_val = float(current_best["metric_value"]) if current_best is not None else None
+    if best_val is not None and metric is not None:
         if compare_metric(metric, best_val, direction):
             print(f"Improvement! {best_val} -> {metric}")
         else:
@@ -129,6 +141,11 @@ def run_interactive_iteration(
 
     append_result(seq, commit, metric, "completed", description)
     git_add_commit_push(["results.tsv"], f"results: iteration {seq:04d}", dry_run=dry_run)
+
+    if _below_threshold(metric, best_val, campaign):
+        threshold = campaign["metric"]["threshold"]
+        print(f"Improvement below threshold ({threshold}). Stopping early.")
+        return False
 
     return True
 
@@ -286,8 +303,17 @@ def run_autonomous(
             continue
 
         metric = result.metric_value if result.status == "completed" else None
+        direction = campaign.get("metric", {}).get("direction", "maximize")
+        prev_best = best_result(direction=direction)
+        prev_val = float(prev_best["metric_value"]) if prev_best is not None else None
+
         append_result(seq, commit, metric, result.status, description)
         git_add_commit_push(["results.tsv"], f"results: iteration {seq:04d}", dry_run=dry_run)
+
+        if _below_threshold(metric, prev_val, campaign):
+            threshold = campaign["metric"]["threshold"]
+            print(f"Improvement below threshold ({threshold}). Stopping early.")
+            break
 
 
 if __name__ == "__main__":
