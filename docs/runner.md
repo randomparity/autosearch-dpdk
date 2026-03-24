@@ -44,6 +44,9 @@ cp config/runner.toml.example config/runner.toml
 | `[build]` | `jobs` | Parallel build jobs (0 = all cores) |
 | `[build]` | `cross_file` | Meson cross-file for cross-compiling (empty for native) |
 | `[build]` | `extra_meson_args` | Additional meson setup arguments |
+| `[profiling]` | `enabled` | Capture `perf` profiles during testpmd measurement window (default: `false`) |
+| `[profiling]` | `frequency` | Sampling frequency in Hz (default: `99`) |
+| `[profiling]` | `sudo` | Run `perf` with sudo — must match `testpmd.sudo` (default: `true`) |
 
 Override the config path with the `AUTOSEARCH_CONFIG` environment variable.
 The log level can also be set via the `LOG_LEVEL` environment variable.
@@ -89,11 +92,48 @@ Set `sudo = false` in `[testpmd]` if the runner service already runs as root.
 ### DTS
 
 Runs the DPDK Test Suite via `poetry run ./main.py` in the DTS directory.
-Requires `[paths].dts_dir` in `runner.toml` and DTS topology files
-(`nodes.yaml`, `test_run.yaml`) configured separately.
+Requires `[paths].dts_dir` in `runner.toml` and DTS topology files.
+Copy `config/nodes.yaml.example` → `config/nodes.yaml` and
+`config/test_run.yaml.example` → `config/test_run.yaml` and fill in your
+topology.
 
 Set `backend = "dts"` in `config/campaign.toml` and configure the metric path
 to match the DTS JSON result structure.
+
+### Profiling
+
+When enabled, the runner captures `perf` profiles during the testpmd
+measurement window. The profiling data (folded stacks and hardware counters)
+is summarized and attached to the request results, giving the agent insight
+into where CPU cycles are spent.
+
+**Prerequisites:**
+- Linux `perf` tool installed (`perf` or `linux-tools-$(uname -r)`)
+- Kernel support for hardware performance counters
+- If `profiling.sudo = true`: passwordless sudo for `perf` (same pattern as testpmd above)
+
+**Enable in `config/runner.toml`:**
+
+```toml
+[profiling]
+enabled = true
+frequency = 99    # sampling Hz (99 avoids timer aliasing)
+sudo = true       # must match [testpmd].sudo when profiling testpmd
+```
+
+Also set `[profiling].enabled = true` in `config/campaign.toml` so the agent
+receives the profiling summary in its prompt context.
+
+**What happens at runtime:**
+1. `perf record` attaches to the testpmd process for the measurement window
+2. Stacks are folded and parsed into a top-functions / hot-paths summary
+3. Hardware counters (`perf stat`) capture IPC, cache misses, branch misses
+4. The summary is included in the request result pushed back to the agent
+
+The profiling library lives in `src/perf/`: `profile.py` (capture),
+`analyze.py` (stack analysis and diagnostics), `arch.py` (architecture
+detection and PMU event profiles), `diff.py` (differential comparison between
+runs), and `gate.py` (CI regression gate with pass/warn/fail thresholds).
 
 ## Running
 
@@ -124,8 +164,14 @@ sudo systemctl enable --now autosearch-runner
 ```
 
 The service unit expects:
-- `ExecStart=/usr/local/bin/autosearch-runner` — create a wrapper script or
-  symlink to `uv run python -m src.runner.service` in your checkout
+- `ExecStart=/usr/local/bin/autosearch-runner` — two options:
+  1. Create a wrapper script at `/usr/local/bin/autosearch-runner`:
+     ```bash
+     #!/bin/sh
+     cd /path/to/checkout && exec .venv/bin/python -m src.runner.service "$@"
+     ```
+  2. Install the runner package into a venv (`uv pip install /path/to/checkout`)
+     and point `ExecStart` at the installed `autosearch-runner` binary
 - `User=dpdk` — runs as a dedicated `dpdk` user
 - `AUTOSEARCH_CONFIG=/etc/autosearch/runner.toml` — config path override
 - `ReadWritePaths=/var/lib/autosearch /tmp` — writable paths for build artifacts

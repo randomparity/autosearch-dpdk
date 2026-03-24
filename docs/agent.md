@@ -40,6 +40,7 @@ on startup (override with `--campaign <path>`).
 | `[dpdk]` | `submodule_path` | Path to the DPDK submodule (default: `"dpdk"`) |
 | `[dpdk]` | `optimization_branch` | Branch in submodule for good changes (default: `"autosearch/optimize"`) |
 | `[dpdk]` | `scope` | Source paths the agent may modify (relative to submodule) |
+| `[profiling]` | `enabled` | Include profiling summary in results sent to the agent (default: `false`) |
 
 ## Interactive mode
 
@@ -81,8 +82,16 @@ uv run autosearch --autonomous
 ```
 
 The agent shows Claude's proposal and prompts `Apply this change? [y/N/quit]`.
-After you apply the change and commit in the submodule, the agent submits the
-request and polls for results as usual. Use `--dry-run` to test locally.
+
+To apply a proposal:
+1. Read Claude's description of which files to modify and what to change.
+2. Make the edits manually in the `dpdk/` submodule.
+3. Commit the changes inside `dpdk/` (`git -C dpdk commit -am "..."`).
+4. Press `y` at the prompt.
+
+The agent then submits the request and polls for results. Press `N` to skip
+the proposal without applying it; Claude will propose something different next
+iteration. Use `--dry-run` to test locally.
 
 ## CLI reference
 
@@ -105,6 +114,14 @@ Each iteration appends a row to `results.tsv` with columns:
 - `metric_value` — extracted metric (empty if failed/timed out)
 - `status` — `completed`, `failed`, `timed_out`, or `dry_run`
 - `description` — user-provided or Claude-generated change description
+
+Failed attempts are recorded in `failures.tsv` with columns:
+
+- `timestamp` — ISO 8601 UTC
+- `dpdk_commit` — DPDK submodule HEAD of the reverted change
+- `metric_value` — measured value that didn't improve
+- `description` — change description
+- `diff_summary` — summary of the reverted diff
 
 Request JSON files in `requests/` follow the naming pattern
 `{seq:04d}_{isodate}.json` and track the full lifecycle:

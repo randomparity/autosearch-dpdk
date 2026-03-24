@@ -68,6 +68,7 @@ src/
   agent/       Agent loop, protocol, history, metric, strategy
   runner/      Runner service, build, testpmd, execute (DTS), protocol
   protocol/    Shared schema (TestRequest dataclass)
+  perf/        Profiling: perf record, stack analysis, arch profiles
   logging_config.py  Shared logging setup
 config/
   campaign.toml           Campaign settings (metric, goal, test backend, scope)

@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 uv sync --group dev          # install deps + dev tools
-uv run pytest -q             # run all tests (95 tests)
+uv run pytest -q             # run all tests (152 tests)
 uv run pytest tests/test_schema.py -q                 # run one test file
 uv run pytest tests/test_schema.py::TestSerialization  # run one test class
 uv run ruff check src/ tests/                          # lint
@@ -33,9 +33,10 @@ pending → claimed → building → running → completed
 src/protocol/    Shared: TestRequest, status constants, StatusLiteral, extract_metric
 src/agent/       Workstation: optimization loop, Claude API, git ops, history tracking
 src/runner/      Lab machine: build DPDK, run testpmd/DTS, push results
+src/perf/        Profiling: perf record orchestration, stack analysis, arch profiles, diff comparison
 ```
 
-**Import rule:** `agent/` and `runner/` both import from `protocol/`, never from each other. Always import from `src.protocol` (the facade), not `src.protocol.schema` directly.
+**Import rules:** `agent/` and `runner/` both import from `protocol/`, never from each other. `runner/` imports from `perf/` for profiling captures; `agent/` displays profiling output but does not import `perf/` directly. Always import from `src.protocol` (the facade), not `src.protocol.schema` directly.
 
 ### Agent modules
 
@@ -46,6 +47,7 @@ src/runner/      Lab machine: build DPDK, run testpmd/DTS, push results
 - `strategy.py` — `format_context()` for prompt building, `validate_change()` for submodule diff
 - `history.py` — TSV-based results/failures tracking
 - `metric.py` — `compare_metric()` with `Direction` Literal type
+- `protocol.py` — request creation (`create_request()`), sequence numbering, `poll_for_completion()`
 
 ### Runner modules
 
