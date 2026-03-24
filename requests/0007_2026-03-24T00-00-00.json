@@ -9,7 +9,7 @@
   "metric_path": "throughput_mpps",
   "description": "baseline measurement - unmodified DPDK v25.11",
   "backend": "testpmd",
-  "status": "building",
+  "status": "running",
   "claimed_at": "2026-03-24T13:32:06.642397+00:00",
   "completed_at": null,
   "build_log_snippet": null,
