@@ -3,30 +3,21 @@
 # runner.toml is gitignored; never commit host-specific paths or credentials.
 
 [paths]
-# Absolute path to the DPDK source tree (or the autosearch-dpdk repo root
-# if DPDK is a submodule that has been initialised)
-dpdk_src = "/opt/dpdk"
+# Absolute path to the DPDK source tree
+dpdk_src = "/home/user/src/dpdk"
 
-# Absolute path to the DTS (DPDK Test Suite) installation directory
-dts_dir = "/opt/dts"
-
-# Directory where DPDK build artefacts are written.  Created automatically
-# if it does not exist.
+# Directory where DPDK build artefacts are written. Created automatically.
 build_dir = "/tmp/dpdk-build"
-
-# Path to the Python interpreter inside the DTS virtualenv (or system Python
-# if DTS dependencies are installed globally)
-python = "/opt/dts/.venv/bin/python"
 
 [timeouts]
 # Minutes to wait for a full DPDK build before aborting
 build_minutes = 30
 
-# Minutes to wait for a complete DTS test run before aborting
-test_minutes = 60
+# Minutes to wait for testpmd measurement to complete
+test_minutes = 10
 
 [git]
-# Remote name used when fetching/pushing DPDK patches
+# Remote name used when fetching/pushing
 remote = "origin"
 
 # Branch that patches are applied on top of
@@ -37,11 +28,33 @@ base_branch = "main"
 patch_branch = "autosearch/iter-{iteration}"
 
 [build]
-# Number of parallel make jobs.  0 means use all available CPU cores.
+# Number of parallel build jobs. 0 means use all available CPU cores.
 jobs = 0
 
-# Meson cross-file to use when cross-compiling.  Leave empty for native builds.
+# Meson cross-file to use when cross-compiling. Leave empty for native builds.
 cross_file = ""
 
 # Additional meson setup arguments passed verbatim (space-separated)
 extra_meson_args = ""
+
+[testpmd]
+# EAL lcore mask — main lcore + forwarding cores
+lcores = "4-7"
+
+# PCI addresses of the NIC ports (back-to-back connected)
+pci = ["01:00.0", "01:00.1"]
+
+# Number of forwarding cores (excluding main lcore)
+nb_cores = 2
+
+# Queues and descriptors per port
+rxq = 1
+txq = 1
+rxd = 1024
+txd = 1024
+
+# Seconds to wait after tx_first before resetting stats
+warmup_seconds = 5
+
+# Seconds to collect throughput measurement
+measure_seconds = 10
