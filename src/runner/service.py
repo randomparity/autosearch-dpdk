@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import logging
 import subprocess
-import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
 
 import tomllib
 
+from src.logging_config import setup_logging
 from src.protocol.schema import (
     STATUS_BUILDING,
     STATUS_CLAIMED,
@@ -179,14 +179,15 @@ def process_request(request: TestRequest, request_path: Path, config: dict) -> N
 
 def main() -> None:
     """Runner service entry point."""
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-        stream=sys.stdout,
+    config = load_config()
+    runner_cfg = config.get("runner", {})
+
+    setup_logging(
+        level_name=runner_cfg.get("log_level"),
+        log_file=runner_cfg.get("log_file"),
     )
 
-    config = load_config()
-    poll_interval = int(config.get("runner", {}).get("poll_interval", 30))
+    poll_interval = int(runner_cfg.get("poll_interval", 30))
     requests_dir = DEFAULT_REQUESTS_DIR
 
     logger.info("Runner starting, poll_interval=%ds", poll_interval)
