@@ -237,11 +237,45 @@ def _measure_throughput(
     )
 
 
+def _find_child_pid(parent_pid: int) -> int | None:
+    """Find the first child process of a given PID.
+
+    When testpmd runs under sudo, proc.pid is the sudo process.
+    The actual testpmd process is the child of sudo.
+    """
+    try:
+        result = subprocess.run(
+            ["pgrep", "-P", str(parent_pid)],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            return int(result.stdout.strip().splitlines()[0])
+    except (subprocess.TimeoutExpired, ValueError, OSError) as exc:
+        logger.debug("Failed to find child of PID %d: %s", parent_pid, exc)
+    return None
+
+
+def _resolve_testpmd_pid(proc_pid: int, use_sudo: bool) -> int:
+    """Resolve the actual testpmd PID, traversing sudo if needed."""
+    if not use_sudo:
+        return proc_pid
+
+    child = _find_child_pid(proc_pid)
+    if child is not None:
+        logger.info("Resolved testpmd PID: %d (child of sudo %d)", child, proc_pid)
+        return child
+
+    logger.warning("Could not find child of sudo (pid=%d), profiling sudo PID", proc_pid)
+    return proc_pid
+
+
 def _run_profiling(pid: int, duration: int, config: dict) -> dict | None:
     """Run perf profiling during the measurement window.
 
     Args:
-        pid: testpmd process ID.
+        pid: testpmd process ID (may be sudo wrapper).
         duration: Measurement duration in seconds.
         config: Profiling config with 'frequency', 'sudo' keys.
 
@@ -252,10 +286,12 @@ def _run_profiling(pid: int, duration: int, config: dict) -> dict | None:
     from src.perf.arch import load_arch_profile
     from src.perf.profile import profile_pid
 
+    target_pid = _resolve_testpmd_pid(pid, config.get("sudo", True))
+
     repo_root = Path(__file__).resolve().parent.parent.parent
     output_dir = repo_root / "perf" / "results" / str(int(time.time()))
     result = profile_pid(
-        pid=pid,
+        pid=target_pid,
         duration=duration,
         output_dir=output_dir,
         frequency=config.get("frequency", 99),
