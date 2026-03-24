@@ -2,6 +2,16 @@
 # Copy this file to runner.toml and fill in values for your environment.
 # runner.toml is gitignored; never commit host-specific paths or credentials.
 
+[runner]
+# Log level: debug, info, warning, error (also settable via LOG_LEVEL env var)
+log_level = "info"
+
+# Optional log file path (logs to both stdout and file when set)
+# log_file = "/var/log/autosearch-runner.log"
+
+# Seconds between polling for new requests
+poll_interval = 30
+
 [paths]
 # Absolute path to the DPDK source tree
 dpdk_src = "/home/user/src/dpdk"

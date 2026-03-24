@@ -13,6 +13,7 @@ from src.agent.history import append_result, best_result, load_history
 from src.agent.metric import compare_metric
 from src.agent.protocol import create_request, next_sequence, poll_for_completion
 from src.agent.strategy import format_context, validate_change
+from src.logging_config import setup_logging
 
 logger = logging.getLogger(__name__)
 
@@ -174,13 +175,20 @@ def main() -> None:
         default="anthropic",
         help="API provider for autonomous mode (default: anthropic)",
     )
+    parser.add_argument(
+        "--log-level",
+        choices=["debug", "info", "warning", "error"],
+        default=None,
+        help="Log level (default: info, or LOG_LEVEL env var)",
+    )
+    parser.add_argument(
+        "--log-file",
+        default=None,
+        help="Path to log file (logs to stdout and file)",
+    )
     args = parser.parse_args()
 
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-        stream=sys.stdout,
-    )
+    setup_logging(args.log_level, args.log_file)
 
     campaign = load_campaign(Path(args.campaign))
     dpdk_path = Path(campaign.get("dpdk", {}).get("submodule_path", "dpdk"))
