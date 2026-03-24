@@ -1,16 +1,17 @@
 # Runner Guide
 
-The runner runs on a lab machine with DTS infrastructure (SUT + traffic
-generator). It polls for test requests, builds DPDK, runs DTS tests, and
-pushes results back.
+The runner runs on a lab machine with DPDK hardware. It polls for test
+requests, builds DPDK, runs performance tests (testpmd or DTS), and pushes
+results back.
 
 ## Prerequisites
 
 - Python 3.13+
 - [uv](https://docs.astral.sh/uv/)
 - DPDK build dependencies: meson, ninja, gcc (or clang), pkg-config
-- DTS installed and configured with a two-node topology (SUT + TG)
 - Git access to the autosearch-dpdk repository (push permissions)
+- For testpmd backend: NIC ports connected back-to-back
+- For DTS backend: DTS installed with a two-node topology (SUT + TG)
 
 ## Installation
 
@@ -33,42 +34,45 @@ cp config/runner.toml.example config/runner.toml
 | Section | Key | Description |
 |---------|-----|-------------|
 | `[paths]` | `dpdk_src` | Absolute path to the DPDK source tree |
-| `[paths]` | `dts_dir` | Absolute path to the DTS installation |
 | `[paths]` | `build_dir` | Build artifact directory (created automatically) |
-| `[paths]` | `python` | Python interpreter for DTS (e.g. DTS venv path) |
+| `[paths]` | `dts_dir` | DTS installation path (DTS backend only) |
 | `[timeouts]` | `build_minutes` | Max build time before abort (default: 30) |
-| `[timeouts]` | `test_minutes` | Max DTS test time before abort (default: 60) |
-| `[git]` | `remote` | Git remote name (default: `"origin"`) |
-| `[git]` | `base_branch` | Branch patches are applied on (default: `"main"`) |
-| `[git]` | `patch_branch` | Iteration branch template (`{iteration}` replaced) |
+| `[timeouts]` | `test_minutes` | Max test time before abort (default: 10) |
 | `[build]` | `jobs` | Parallel build jobs (0 = all cores) |
 | `[build]` | `cross_file` | Meson cross-file for cross-compiling (empty for native) |
 | `[build]` | `extra_meson_args` | Additional meson setup arguments |
 
 Override the config path with the `AUTOSEARCH_CONFIG` environment variable.
 
-## DTS configuration
+## Test backends
 
-Copy the example files and fill in lab-specific values:
+The test backend is selected in `config/campaign.toml` via `[test].backend`.
 
-```bash
-cp config/nodes.yaml.example config/nodes.yaml
-cp config/test_run.yaml.example config/test_run.yaml
-```
+### testpmd (default)
 
-Both files are gitignored.
+Runs testpmd in io-fwd mode with `--tx-first` on back-to-back ports. Measures
+bi-directional throughput in Mpps by parsing `show port stats all` output.
 
-**`config/nodes.yaml`** — defines the two-node topology:
-- `sut` (system under test): hostname, PCI addresses, hugepage config, lcores
-- `tg` (traffic generator): same fields for the traffic generator node
+Configure in `config/runner.toml`:
 
-**`config/test_run.yaml`** — defines the test run:
-- Build target (architecture, compiler)
-- Test suites and cases to run
-- Performance settings: trial duration, trial count, packet sizes, forwarding
-  mode, queue and descriptor counts
+| Key | Description |
+|-----|-------------|
+| `[testpmd].lcores` | EAL lcore mask (e.g. `"4-7"`) |
+| `[testpmd].pci` | PCI addresses of NIC ports |
+| `[testpmd].nb_cores` | Forwarding cores (excluding main lcore) |
+| `[testpmd].rxq` / `txq` | Queues per port |
+| `[testpmd].rxd` / `txd` | Descriptors per queue |
+| `[testpmd].warmup_seconds` | Seconds before measurement starts |
+| `[testpmd].measure_seconds` | Measurement window duration |
 
-See the example files for all available fields and their descriptions.
+### DTS
+
+Runs the DPDK Test Suite via `poetry run ./main.py` in the DTS directory.
+Requires `[paths].dts_dir` in `runner.toml` and DTS topology files
+(`nodes.yaml`, `test_run.yaml`) configured separately.
+
+Set `backend = "dts"` in `config/campaign.toml` and configure the metric path
+to match the DTS JSON result structure.
 
 ## Running
 
@@ -82,7 +86,7 @@ The runner daemon loop:
 2. Scan `requests/` for pending requests
 3. Claim the first pending request (status: `pending` -> `claimed`)
 4. Build DPDK at the specified commit (`claimed` -> `building`)
-5. Run DTS tests (`building` -> `running`)
+5. Run test backend (`building` -> `running`)
 6. Push results (`running` -> `completed` or `failed`)
 7. Sleep and repeat
 
@@ -129,9 +133,10 @@ Check the `build_log_snippet` field in the request JSON file. It contains the
 last lines of build output. Common causes: missing dependencies, incompatible
 compiler version, or meson configuration errors.
 
-**DTS test failures**
-Check the DTS output directory for full test logs. The request JSON `error`
-field contains the failure reason.
+**Test failures**
+For testpmd: check that PCI addresses and lcores are correct in `runner.toml`.
+For DTS: check the DTS output directory for full test logs. The request JSON
+`error` field contains the failure reason.
 
 **Push conflicts**
 The runner automatically retries push operations up to 3 times with

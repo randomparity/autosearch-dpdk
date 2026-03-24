@@ -9,23 +9,15 @@ dpdk_src = "/home/user/src/dpdk"
 # Directory where DPDK build artefacts are written. Created automatically.
 build_dir = "/tmp/dpdk-build"
 
+# DTS backend only: path to the DTS installation directory
+# dts_dir = "/opt/dts"
+
 [timeouts]
 # Minutes to wait for a full DPDK build before aborting
 build_minutes = 30
 
 # Minutes to wait for testpmd measurement to complete
 test_minutes = 10
-
-[git]
-# Remote name used when fetching/pushing
-remote = "origin"
-
-# Branch that patches are applied on top of
-base_branch = "main"
-
-# Temporary branch created for each campaign iteration.
-# The string "{iteration}" is replaced with the zero-padded iteration number.
-patch_branch = "autosearch/iter-{iteration}"
 
 [build]
 # Number of parallel build jobs. 0 means use all available CPU cores.
