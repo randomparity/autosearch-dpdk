@@ -201,7 +201,7 @@ def build_client(provider: str) -> tuple:
             print("Error: OPENROUTER_API_KEY environment variable required.")
             sys.exit(1)
         client = anthropic.Anthropic(
-            base_url="https://openrouter.ai/api/v1",
+            base_url="https://openrouter.ai/api",
             api_key=api_key,
         )
         model = "anthropic/claude-opus-4-6"
