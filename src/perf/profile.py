@@ -43,6 +43,7 @@ def profile_pid(
     arch: str | None = None,
     frequency: int = 99,
     sudo: bool = False,
+    cpus: str | None = None,
 ) -> ProfileResult:
     """Capture perf record + perf stat against a running process.
 
@@ -53,6 +54,8 @@ def profile_pid(
         arch: Architecture key for event selection. Auto-detected if None.
         frequency: Sampling frequency in Hz.
         sudo: Whether to run perf commands with sudo.
+        cpus: CPU list for system-wide profiling (e.g. "4-12"). When set,
+            uses -a -C instead of -p to capture all threads on those cores.
 
     Returns:
         ProfileResult with folded stacks and counter data.
@@ -73,6 +76,14 @@ def profile_pid(
     profile = load_arch_profile(arch)
     events = list(profile.get("events", {}).values()) or COMMON_EVENTS
 
+    # Use CPU-based targeting when lcores are specified (captures all threads),
+    # otherwise fall back to PID-based targeting.
+    if cpus:
+        target_args = ["-a", "-C", cpus]
+        logger.info("Profiling CPUs %s (system-wide on those cores)", cpus)
+    else:
+        target_args = ["-p", str(pid)]
+
     # Launch perf record and perf stat in parallel
     record_cmd = _build_cmd(
         [
@@ -82,8 +93,7 @@ def profile_pid(
             "dwarf,16384",
             "-F",
             str(frequency),
-            "-p",
-            str(pid),
+            *target_args,
             "-o",
             str(perf_data),
             "--",
@@ -98,8 +108,7 @@ def profile_pid(
             "stat",
             "-e",
             ",".join(events),
-            "-p",
-            str(pid),
+            *target_args,
             "--",
             "sleep",
             str(duration),

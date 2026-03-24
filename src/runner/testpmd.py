@@ -128,6 +128,7 @@ def run_testpmd(
             timeout,
             start,
             profile_config=profile_config,
+            lcores=lcores,
         )
     finally:
         _ensure_stopped(proc, master_fd)
@@ -177,6 +178,7 @@ def _measure_throughput(
     start: float,
     *,
     profile_config: dict | None = None,
+    lcores: str = "0",
 ) -> TestpmdResult:
     """Wait for testpmd to start, measure, then stop and parse stats."""
     boot_output = _read_until(fd, "Press enter to exit", min(timeout, 60))
@@ -205,7 +207,9 @@ def _measure_throughput(
     time.sleep(warmup)
     profile_summary = None
     if profile_config and profile_config.get("enabled"):
-        profile_summary = _run_profiling(proc.pid, measure, profile_config)
+        profile_summary = _run_profiling(
+            proc.pid, measure, profile_config, lcores=lcores,
+        )
     else:
         time.sleep(measure)
 
@@ -271,13 +275,16 @@ def _resolve_testpmd_pid(proc_pid: int, use_sudo: bool) -> int:
     return proc_pid
 
 
-def _run_profiling(pid: int, duration: int, config: dict) -> dict | None:
+def _run_profiling(
+    pid: int, duration: int, config: dict, *, lcores: str = "0",
+) -> dict | None:
     """Run perf profiling during the measurement window.
 
     Args:
         pid: testpmd process ID (may be sudo wrapper).
         duration: Measurement duration in seconds.
         config: Profiling config with 'frequency', 'sudo' keys.
+        lcores: CPU list string (e.g. "4-12") for system-wide profiling.
 
     Returns:
         Compact profile summary dict, or None on failure.
@@ -286,16 +293,15 @@ def _run_profiling(pid: int, duration: int, config: dict) -> dict | None:
     from src.perf.arch import load_arch_profile
     from src.perf.profile import profile_pid
 
-    target_pid = _resolve_testpmd_pid(pid, config.get("sudo", True))
-
     repo_root = Path(__file__).resolve().parent.parent.parent
     output_dir = repo_root / "perf" / "results" / str(int(time.time()))
     result = profile_pid(
-        pid=target_pid,
+        pid=pid,
         duration=duration,
         output_dir=output_dir,
         frequency=config.get("frequency", 99),
         sudo=config.get("sudo", True),
+        cpus=lcores,
     )
 
     if not result.success:
