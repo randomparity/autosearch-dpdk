@@ -1,4 +1,4 @@
-"""Runner service main loop — polls for requests, builds DPDK, runs DTS."""
+"""Runner service main loop — polls for requests, builds DPDK, runs tests."""
 
 from __future__ import annotations
 
@@ -27,6 +27,7 @@ from src.runner.protocol import (
     find_pending,
     update_status,
 )
+from src.runner.testpmd import run_testpmd
 
 logger = logging.getLogger(__name__)
 
@@ -100,10 +101,9 @@ def process_request(request: TestRequest, request_path: Path, config: dict) -> N
     paths = config.get("paths", {})
     timeouts = config.get("timeouts", {})
     source_path = Path(paths.get("dpdk_src", "/opt/dpdk"))
-    dts_path = Path(paths.get("dts_dir", "/opt/dts"))
     build_dir = Path(paths.get("build_dir", "/tmp/dpdk-build"))
     build_timeout = int(timeouts.get("build_minutes", 30)) * 60
-    test_timeout = int(timeouts.get("test_minutes", 60)) * 60
+    test_timeout = int(timeouts.get("test_minutes", 10)) * 60
 
     update_status(request, STATUS_BUILDING, request_path)
 
@@ -112,6 +112,7 @@ def process_request(request: TestRequest, request_path: Path, config: dict) -> N
         commit=request.dpdk_commit,
         build_dir=build_dir,
         timeout=build_timeout,
+        build_config=config.get("build", {}),
     )
 
     if not build_result.success:
@@ -125,28 +126,55 @@ def process_request(request: TestRequest, request_path: Path, config: dict) -> N
 
     update_status(request, STATUS_RUNNING, request_path)
 
-    dts_result = run_dts(
-        dts_path=dts_path,
-        config=config,
-        suites=request.test_suites,
-        perf=request.perf,
-        metric_path=request.metric_path,
-        timeout=test_timeout,
-    )
+    backend = getattr(request, "backend", "testpmd")
 
-    if not dts_result.success:
-        fail(request, request_path, error=dts_result.error or "DTS failed")
-        return
+    if backend == "dts":
+        dts_path = Path(paths.get("dts_dir", "/opt/dts"))
+        dts_result = run_dts(
+            dts_path=dts_path,
+            config=config,
+            suites=request.test_suites,
+            perf=request.perf,
+            metric_path=request.metric_path,
+            timeout=test_timeout,
+        )
+        if not dts_result.success:
+            fail(request, request_path, error=dts_result.error or "DTS failed")
+            return
+        results_json = dts_result.results_json
+        results_summary = dts_result.results_summary
+        metric_value = dts_result.metric_value
+    else:
+        testpmd_result = run_testpmd(
+            build_dir=build_dir,
+            config=config,
+            timeout=test_timeout,
+        )
+        if not testpmd_result.success:
+            fail(
+                request,
+                request_path,
+                error=testpmd_result.error or "testpmd failed",
+            )
+            return
+        results_json = {"throughput_mpps": testpmd_result.throughput_mpps}
+        results_summary = testpmd_result.port_stats
+        metric_value = testpmd_result.throughput_mpps
 
-    update_status(
+    pushed = update_status(
         request,
         STATUS_COMPLETED,
         request_path,
-        results_json=dts_result.results_json,
-        results_summary=dts_result.results_summary,
-        metric_value=dts_result.metric_value,
+        results_json=results_json,
+        results_summary=results_summary,
+        metric_value=metric_value,
         completed_at=datetime.now(timezone.utc).isoformat(),
     )
+    if not pushed:
+        logger.error(
+            "Results for request %04d written locally but not pushed",
+            request.sequence,
+        )
 
 
 def main() -> None:

@@ -125,7 +125,7 @@ def update_status(
     status: str,
     request_path: Path,
     **fields: Any,
-) -> None:
+) -> bool:
     """Update a request's status and any extra fields, then commit and push.
 
     Args:
@@ -133,6 +133,9 @@ def update_status(
         status: The new status string.
         request_path: Path to the request JSON file.
         **fields: Additional fields to set on the request (e.g. results_json).
+
+    Returns:
+        True if the push succeeded, False otherwise.
     """
     request.transition_to(status)
     for key, value in fields.items():
@@ -150,6 +153,7 @@ def update_status(
         logger.error(
             "Failed to push status update to %s for request %04d", status, request.sequence
         )
+    return pushed
 
 
 def fail(
@@ -171,4 +175,10 @@ def fail(
         extra["build_log_snippet"] = log_snippet
     extra["completed_at"] = datetime.now(timezone.utc).isoformat()
 
-    update_status(request, STATUS_FAILED, request_path, **extra)
+    pushed = update_status(request, STATUS_FAILED, request_path, **extra)
+    if not pushed:
+        logger.critical(
+            "Could not push failure status for request %04d; local file written at %s",
+            request.sequence,
+            request_path,
+        )

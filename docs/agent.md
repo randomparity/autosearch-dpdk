@@ -28,13 +28,14 @@ on startup (override with `--campaign <path>`).
 | `[campaign]` | `name` | Campaign identifier |
 | `[campaign]` | `max_iterations` | Stop after this many iterations (default: 50) |
 | `[metric]` | `name` | Human-readable metric name |
-| `[metric]` | `path` | Dot-separated path into the DTS JSON result structure |
+| `[metric]` | `path` | Key path into results JSON (dot-separated for nested dicts) |
 | `[metric]` | `direction` | `"maximize"` or `"minimize"` |
-| `[metric]` | `threshold` | Minimum improvement between iterations to continue |
-| `[dts]` | `test_suites` | List of DTS test suite names to run |
-| `[dts]` | `perf` | Enable performance mode (`true`/`false`) |
+| `[metric]` | `threshold` | Stop early if improvement falls below this value |
+| `[test]` | `backend` | Test backend: `"testpmd"` (default) or `"dts"` |
+| `[test]` | `test_suites` | List of test suite names to run |
+| `[test]` | `perf` | Enable performance mode (`true`/`false`) |
 | `[agent]` | `poll_interval` | Seconds between polling for results (default: 30) |
-| `[agent]` | `timeout_minutes` | Max wait for a single DTS run (default: 60) |
+| `[agent]` | `timeout_minutes` | Max wait for a single test run (default: 60) |
 | `[dpdk]` | `submodule_path` | Path to the DPDK submodule (default: `"dpdk"`) |
 | `[dpdk]` | `scope` | Source paths the agent may modify (relative to submodule) |
 

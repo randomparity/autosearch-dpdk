@@ -48,6 +48,7 @@ class TestRequest:
     metric_name: str
     metric_path: str
     description: str
+    backend: str = "testpmd"
     status: str = STATUS_PENDING
 
     claimed_at: str | None = None

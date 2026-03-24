@@ -17,6 +17,18 @@ from src.agent.strategy import format_context, validate_change
 logger = logging.getLogger(__name__)
 
 
+def _below_threshold(
+    metric: float | None,
+    best_val: float | None,
+    campaign: dict,
+) -> bool:
+    """Check if improvement between metric and best_val is below threshold."""
+    threshold = campaign.get("metric", {}).get("threshold")
+    if threshold is None or metric is None or best_val is None:
+        return False
+    return abs(metric - best_val) < threshold
+
+
 def load_campaign(path: Path) -> dict:
     """Load and return the campaign TOML configuration."""
     with open(path, "rb") as f:
@@ -120,8 +132,8 @@ def run_interactive_iteration(
     print(f"Request {seq:04d} completed. Metric: {metric}")
 
     current_best = best_result(direction=direction)
-    if current_best is not None and metric is not None:
-        best_val = float(current_best["metric_value"])
+    best_val = float(current_best["metric_value"]) if current_best is not None else None
+    if best_val is not None and metric is not None:
         if compare_metric(metric, best_val, direction):
             print(f"Improvement! {best_val} -> {metric}")
         else:
@@ -129,6 +141,11 @@ def run_interactive_iteration(
 
     append_result(seq, commit, metric, "completed", description)
     git_add_commit_push(["results.tsv"], f"results: iteration {seq:04d}", dry_run=dry_run)
+
+    if _below_threshold(metric, best_val, campaign):
+        threshold = campaign["metric"]["threshold"]
+        print(f"Improvement below threshold ({threshold}). Stopping early.")
+        return False
 
     return True
 
@@ -151,6 +168,12 @@ def main() -> None:
         action="store_true",
         help="Use Claude API for automated change proposals",
     )
+    parser.add_argument(
+        "--provider",
+        choices=["anthropic", "openrouter"],
+        default="anthropic",
+        help="API provider for autonomous mode (default: anthropic)",
+    )
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -163,7 +186,7 @@ def main() -> None:
     dpdk_path = Path(campaign.get("dpdk", {}).get("submodule_path", "dpdk"))
 
     if args.autonomous:
-        run_autonomous(campaign, dpdk_path, args.dry_run)
+        run_autonomous(campaign, dpdk_path, args.dry_run, args.provider)
     else:
         while run_interactive_iteration(campaign, dpdk_path, args.dry_run):
             pass
@@ -171,13 +194,14 @@ def main() -> None:
     print("Optimization loop finished.")
 
 
-def run_autonomous(campaign: dict, dpdk_path: Path, dry_run: bool) -> None:
-    """Run the autonomous optimization loop using the Claude API.
+def build_client(provider: str) -> tuple:
+    """Build an Anthropic-compatible API client and model ID.
 
     Args:
-        campaign: Parsed campaign configuration.
-        dpdk_path: Path to the DPDK submodule.
-        dry_run: If True, skip git push operations.
+        provider: "anthropic" or "openrouter".
+
+    Returns:
+        (client, model_id) tuple.
     """
     try:
         import anthropic
@@ -186,22 +210,59 @@ def run_autonomous(campaign: dict, dpdk_path: Path, dry_run: bool) -> None:
         print("Install with: uv add anthropic")
         sys.exit(1)
 
-    client = anthropic.Anthropic()
+    if provider == "openrouter":
+        import os
+
+        api_key = os.environ.get("OPENROUTER_API_KEY")
+        if not api_key:
+            print("Error: OPENROUTER_API_KEY environment variable required.")
+            sys.exit(1)
+        client = anthropic.Anthropic(
+            base_url="https://openrouter.ai/api",
+            api_key=api_key,
+        )
+        model = "anthropic/claude-opus-4-6"
+    else:
+        client = anthropic.Anthropic()
+        model = "claude-opus-4-6"
+
+    return client, model
+
+
+def run_autonomous(
+    campaign: dict,
+    dpdk_path: Path,
+    dry_run: bool,
+    provider: str = "anthropic",
+) -> None:
+    """Run the autonomous optimization loop using the Claude API.
+
+    Args:
+        campaign: Parsed campaign configuration.
+        dpdk_path: Path to the DPDK submodule.
+        dry_run: If True, skip git push operations.
+        provider: API provider ("anthropic" or "openrouter").
+    """
+    client, model = build_client(provider)
     max_iter = campaign.get("campaign", {}).get("max_iterations", 50)
 
     for _ in range(max_iter):
         history = load_history()
         context = format_context(history, campaign)
 
+        goal = campaign.get("goal", {}).get("description", "").strip()
+        goal_block = f"\nGoal:\n{goal}\n" if goal else ""
+
         prompt = (
-            f"You are optimizing DPDK for maximum throughput.\n\n"
+            f"You are optimizing DPDK for maximum throughput.\n"
+            f"{goal_block}\n"
             f"Current state:\n{context}\n\n"
             f"Propose a specific code change to the DPDK source in {dpdk_path}. "
             f"Focus on the scoped areas. Describe the change and the file(s) to modify."
         )
 
         response = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model=model,
             max_tokens=4096,
             messages=[{"role": "user", "content": prompt}],
         )
@@ -242,8 +303,17 @@ def run_autonomous(campaign: dict, dpdk_path: Path, dry_run: bool) -> None:
             continue
 
         metric = result.metric_value if result.status == "completed" else None
+        direction = campaign.get("metric", {}).get("direction", "maximize")
+        prev_best = best_result(direction=direction)
+        prev_val = float(prev_best["metric_value"]) if prev_best is not None else None
+
         append_result(seq, commit, metric, result.status, description)
         git_add_commit_push(["results.tsv"], f"results: iteration {seq:04d}", dry_run=dry_run)
+
+        if _below_threshold(metric, prev_val, campaign):
+            threshold = campaign["metric"]["threshold"]
+            print(f"Improvement below threshold ({threshold}). Stopping early.")
+            break
 
 
 if __name__ == "__main__":

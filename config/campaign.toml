@@ -4,14 +4,16 @@ max_iterations = 50
 
 [metric]
 name = "throughput_mpps"
-# Dot-separated path into the DTS JSON result structure
-path = "test_runs.0.test_suites.0.test_cases.0.throughput_mpps"
+# Key path into the results JSON (dot-separated for nested dicts)
+path = "throughput_mpps"
 # "maximize" or "minimize"
 direction = "maximize"
 # Stop early if improvement between iterations falls below this value
 threshold = 0.01
 
-[dts]
+[test]
+# Test backend: "testpmd" for direct measurement, "dts" for DPDK Test Suite
+backend = "testpmd"
 test_suites = ["TestPmd"]
 perf = true
 
@@ -21,8 +23,21 @@ poll_interval = 30
 # Total wall-clock budget for a single DTS run
 timeout_minutes = 60
 
+[goal]
+# Freeform description injected into the Claude prompt. Use this to specify
+# hardware, optimization strategy, constraints, or any other context.
+description = """
+Target: Mellanox ConnectX-6 Dx / ConnectX-7 NIC (mlx5 PMD).
+Workload: testpmd in io-fwd mode, bi-directional 64-byte frames.
+Strategies to explore: rx/tx burst sizing, MPRQ (multi-packet RQ) tuning,
+vectorized datapath selection, prefetch and cache-line alignment in the
+mlx5 rx/tx burst functions, descriptor compression, inline packet
+thresholds, and LRO/TSO knob removal for small-packet workloads.
+Constraints: do not change public API signatures or break other PMDs.
+"""
+
 [dpdk]
 # Path to the DPDK git submodule relative to repo root
 submodule_path = "dpdk"
 # Source paths the agent is allowed to modify (relative to submodule_path)
-scope = ["lib/", "drivers/net/", "app/test-pmd/"]
+scope = ["drivers/net/mlx5/", "drivers/common/mlx5/", "app/test-pmd/"]

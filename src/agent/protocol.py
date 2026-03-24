@@ -58,18 +58,19 @@ def create_request(
     directory.mkdir(parents=True, exist_ok=True)
 
     metric = campaign["metric"]
-    dts = campaign["dts"]
+    test_cfg = campaign.get("test", campaign.get("dts", {}))
 
     request = TestRequest(
         sequence=seq,
         created_at=datetime.now(timezone.utc).isoformat(),  # noqa: UP017
         dpdk_commit=commit,
-        test_suites=dts["test_suites"],
-        test_cases=dts.get("test_cases"),
-        perf=dts.get("perf", True),
+        test_suites=test_cfg.get("test_suites", []),
+        test_cases=test_cfg.get("test_cases"),
+        perf=test_cfg.get("perf", True),
         metric_name=metric["name"],
         metric_path=metric["path"],
         description=description,
+        backend=test_cfg.get("backend", "testpmd"),
     )
 
     path = directory / request.filename

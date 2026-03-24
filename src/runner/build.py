@@ -33,6 +33,7 @@ def build_dpdk(
     commit: str,
     build_dir: Path,
     timeout: int = 1800,
+    build_config: dict | None = None,
 ) -> BuildResult:
     """Build DPDK from source at a given commit.
 
@@ -41,10 +42,13 @@ def build_dpdk(
         commit: Git commit hash to check out.
         build_dir: Directory for meson build artefacts.
         timeout: Maximum seconds before the build is killed.
+        build_config: Optional [build] config dict with keys:
+            jobs, cross_file, extra_meson_args.
 
     Returns:
         A BuildResult with success status, build log, and duration.
     """
+    cfg = build_config or {}
     start = time.monotonic()
     combined_log: list[str] = []
 
@@ -67,6 +71,14 @@ def build_dpdk(
         else:
             meson_cmd = ["meson", "setup", str(build_dir), str(source_path)]
 
+        cross_file = cfg.get("cross_file", "")
+        if cross_file:
+            meson_cmd.extend(["--cross-file", cross_file])
+
+        extra_args = cfg.get("extra_meson_args", "")
+        if extra_args:
+            meson_cmd.extend(extra_args.split())
+
         meson = subprocess.run(
             meson_cmd,
             capture_output=True,
@@ -81,8 +93,13 @@ def build_dpdk(
             return BuildResult(success=False, log=log, duration_seconds=duration)
 
         remaining = max(10, timeout - int(time.monotonic() - start))
+        ninja_cmd = ["ninja", "-C", str(build_dir)]
+        jobs = int(cfg.get("jobs", 0))
+        if jobs > 0:
+            ninja_cmd.extend(["-j", str(jobs)])
+
         ninja = subprocess.run(
-            ["ninja", "-C", str(build_dir)],
+            ninja_cmd,
             capture_output=True,
             text=True,
             timeout=remaining,
