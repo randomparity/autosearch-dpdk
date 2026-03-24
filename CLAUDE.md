@@ -68,6 +68,10 @@ src/runner/      Lab machine: build DPDK, run testpmd/DTS, push results
 - `Direction` — `Literal["maximize", "minimize"]`
 - Result dataclasses: `BuildResult`, `TestpmdResult`, `DtsResult` — all have `success`, `error`, `duration_seconds`
 
+## Working with request/result files
+
+`requests/*.json`, `results.tsv`, and `failures.tsv` are live performance tracking data used by the optimization loop. Never commit test or scratch request files — they will pollute the real results history. If you create request files during development or testing, delete them before committing. Tests should use `tmp_path` fixtures, not the repo's `requests/` directory.
+
 ## Style
 
 - Python 3.13, `from __future__ import annotations` in every file
