@@ -74,6 +74,10 @@ src/perf/        Profiling: perf record orchestration, stack analysis, arch prof
 
 `requests/*.json`, `results.tsv`, and `failures.tsv` are live performance tracking data used by the optimization loop. Never commit test or scratch request files — they will pollute the real results history. If you create request files during development or testing, delete them before committing. Tests should use `tmp_path` fixtures, not the repo's `requests/` directory.
 
+## Pull requests
+
+Before creating a PR, run the `markdown-doc-reviewer` agent on the branch to verify that documentation (README, CLAUDE.md, docstrings, inline comments) is consistent with code changes. Fix any findings before opening the PR.
+
 ## Style
 
 - Python 3.13, `from __future__ import annotations` in every file

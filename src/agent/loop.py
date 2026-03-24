@@ -136,6 +136,53 @@ def run_interactive_iteration(
     return True
 
 
+def run_baseline(
+    campaign: CampaignConfig,
+    dpdk_path: Path,
+    dry_run: bool,
+) -> None:
+    """Submit a baseline request for the current DPDK commit and wait for results.
+
+    Creates a test request with no code changes to exercise the full
+    agent → runner pipeline. Does not record to history or trigger revert logic.
+    """
+    commit = git_submodule_head(dpdk_path)
+    seq = next_sequence()
+    description = "Baseline: unmodified DPDK"
+    poll_interval = campaign.get("agent", {}).get("poll_interval", 30)
+    timeout = campaign.get("agent", {}).get("timeout_minutes", 60) * 60
+
+    request_path = create_request(seq, commit, campaign, description)
+
+    git_add_commit_push(
+        [str(request_path)],
+        f"baseline {seq:04d}: {description}",
+        dry_run=dry_run,
+    )
+    print(f"Baseline request {seq:04d} submitted ({commit[:12]}).")
+
+    if dry_run:
+        print(f"[dry-run] Request written to {request_path}")
+        return
+
+    try:
+        result = poll_for_completion(seq, timeout=timeout, interval=poll_interval)
+    except TimeoutError:
+        print(f"Baseline request {seq:04d} timed out.")
+        return
+
+    if result.status == "failed":
+        print(f"Baseline request {seq:04d} FAILED: {result.error}")
+        return
+
+    print(f"Baseline request {seq:04d} completed. Metric: {result.metric_value}")
+
+    profile_summary = extract_profile_summary(result)
+    if profile_summary:
+        for line in format_profile_lines(profile_summary):
+            print(line)
+
+
 def main() -> None:
     """Entry point for the autosearch agent."""
     parser = argparse.ArgumentParser(description="Autosearch DPDK optimization agent")
@@ -149,11 +196,19 @@ def main() -> None:
         action="store_true",
         help="Skip git push (local testing)",
     )
-    parser.add_argument(
+
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument(
         "--autonomous",
         action="store_true",
         help="Use Claude API for automated change proposals",
     )
+    mode.add_argument(
+        "--baseline",
+        action="store_true",
+        help="Submit a baseline request (no code changes) to test the pipeline",
+    )
+
     parser.add_argument(
         "--provider",
         choices=["anthropic", "openrouter"],
@@ -180,7 +235,9 @@ def main() -> None:
     opt_branch = campaign.get("dpdk", {}).get("optimization_branch", "autosearch/optimize")
     ensure_optimization_branch(dpdk_path, opt_branch)
 
-    if args.autonomous:
+    if args.baseline:
+        run_baseline(campaign, dpdk_path, args.dry_run)
+    elif args.autonomous:
         try:
             run_autonomous(campaign, dpdk_path, args.dry_run, args.provider)
         except (ImportError, ValueError) as exc:
