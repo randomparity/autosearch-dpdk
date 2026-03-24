@@ -70,7 +70,8 @@ def run_testpmd(
     for pci in pci_addrs:
         eal_args.extend(["-a", pci])
 
-    cmd = [
+    use_sudo = testpmd_cfg.get("sudo", True)
+    cmd = [*(["sudo"] if use_sudo else []),
         str(testpmd_bin),
         *eal_args,
         "--",

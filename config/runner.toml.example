@@ -50,3 +50,6 @@ warmup_seconds = 5
 
 # Seconds to collect throughput measurement
 measure_seconds = 10
+
+# Run testpmd with sudo (requires passwordless sudo for the testpmd binary)
+sudo = true

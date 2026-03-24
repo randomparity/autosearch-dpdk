@@ -64,6 +64,22 @@ Configure in `config/runner.toml`:
 | `[testpmd].rxd` / `txd` | Descriptors per queue |
 | `[testpmd].warmup_seconds` | Seconds before measurement starts |
 | `[testpmd].measure_seconds` | Measurement window duration |
+| `[testpmd].sudo` | Run testpmd with sudo (default: `true`) |
+
+testpmd requires root for hugepages and device access. The runner uses `sudo`
+by default. Configure passwordless sudo for the testpmd binary:
+
+```bash
+sudo visudo -f /etc/sudoers.d/dpdk-testpmd
+```
+
+Add a rule for your user (replace `dave` and the path as needed):
+
+```
+dave ALL=(root) NOPASSWD: /tmp/dpdk-build/app/dpdk-testpmd
+```
+
+Set `sudo = false` in `[testpmd]` if the runner service already runs as root.
 
 ### DTS
 
