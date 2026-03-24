@@ -7,8 +7,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 DEFAULT_RESULTS_PATH = Path("results.tsv")
+DEFAULT_FAILURES_PATH = Path("failures.tsv")
 
 COLUMNS = ["sequence", "timestamp", "dpdk_commit", "metric_value", "status", "description"]
+FAILURE_COLUMNS = ["timestamp", "dpdk_commit", "metric_value", "description", "diff_summary"]
 
 
 def append_result(
@@ -90,3 +92,77 @@ def best_result(
     if direction == "minimize":
         return min(scored, key=lambda x: x[0])[1]
     return max(scored, key=lambda x: x[0])[1]
+
+
+def append_failure(
+    commit: str,
+    metric: float | None,
+    description: str,
+    diff_summary: str,
+    path: Path | None = None,
+) -> None:
+    """Record a failed optimization attempt.
+
+    Args:
+        commit: DPDK commit SHA that was reverted.
+        metric: Metric value that was worse than best.
+        description: What the change attempted.
+        diff_summary: Short git diff --stat of the reverted change.
+        path: Path to the failures.tsv file.
+    """
+    failures_path = path or DEFAULT_FAILURES_PATH
+    timestamp = datetime.now(UTC).isoformat()
+    metric_str = str(metric) if metric is not None else ""
+
+    write_header = not failures_path.exists()
+    with open(failures_path, "a", newline="") as f:
+        writer = csv.writer(f, delimiter="\t")
+        if write_header:
+            writer.writerow(FAILURE_COLUMNS)
+        writer.writerow([timestamp, commit, metric_str, description, diff_summary])
+
+
+def load_failures(path: Path | None = None) -> list[dict]:
+    """Read the failures TSV file.
+
+    Args:
+        path: Path to the failures.tsv file.
+
+    Returns:
+        List of row dicts keyed by column name.
+    """
+    failures_path = path or DEFAULT_FAILURES_PATH
+    if not failures_path.exists():
+        return []
+
+    with open(failures_path, newline="") as f:
+        reader = csv.DictReader(f, delimiter="\t")
+        return list(reader)
+
+
+def format_failures(failures: list[dict], limit: int = 10) -> str:
+    """Format recent failures for inclusion in prompts.
+
+    Args:
+        failures: List of failure row dicts.
+        limit: Maximum number of recent failures to include.
+
+    Returns:
+        Multi-line string summarizing recent failures.
+    """
+    if not failures:
+        return ""
+
+    recent = failures[-limit:]
+    lines = ["Previously failed attempts (do NOT repeat these):"]
+    for row in recent:
+        desc = row.get("description", "?")
+        metric = row.get("metric_value", "N/A") or "N/A"
+        diff = row.get("diff_summary", "")
+        lines.append(f"  - {desc} (metric={metric})")
+        if diff:
+            for diff_line in diff.split("\\n"):
+                if diff_line.strip():
+                    lines.append(f"    {diff_line.strip()}")
+
+    return "\n".join(lines)
