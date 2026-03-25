@@ -1,5 +1,8 @@
+[sprint]
+name = "2026-03-23-memif-ppc64le"
+
 [campaign]
-name = "testpmd-throughput"
+name = "memif-throughput"
 max_iterations = 50
 
 [metric]
@@ -27,13 +30,24 @@ timeout_minutes = 60
 # Freeform description injected into the Claude prompt. Use this to specify
 # hardware, optimization strategy, constraints, or any other context.
 description = """
-Target: Mellanox ConnectX-6 Dx / ConnectX-7 NIC (mlx5 PMD).
-Workload: testpmd in io-fwd mode, bi-directional 64-byte frames.
-Strategies to explore: rx/tx burst sizing, MPRQ (multi-packet RQ) tuning,
-vectorized datapath selection, prefetch and cache-line alignment in the
-mlx5 rx/tx burst functions, descriptor compression, inline packet
-thresholds, and LRO/TSO knob removal for small-packet workloads.
-Constraints: do not change public API signatures or break other PMDs.
+Target: memif PMD (shared-memory interface, no physical NIC required).
+Platform: POWER9 ppc64le, 128B cache lines, VSX/AltiVec SIMD.
+Workload: testpmd in io-fwd mode, bi-directional 64-byte frames between
+a memif server and client pair.
+
+Driver-level strategies: optimizing rte_memcpy in eth_memif_rx/tx hot paths,
+batch descriptor processing, loop unrolling in rx/tx burst functions,
+reducing atomic operation overhead on ring head/tail, improving mbuf
+bulk alloc/free patterns, and vectorized copy paths for small packets.
+
+Library-level strategies: POWER-optimized rte_memcpy (VSX vector loads/stores
+for small sizes), rte_prefetch tuning, mempool cache behavior, ring
+enqueue/dequeue optimization for POWER9 memory model, mbuf alloc/free
+fast paths, and atomic operation strength reduction.
+
+Constraints: do not change public API signatures, the memif wire protocol
+(memif.h), or break other PMDs or platforms. Library changes must be
+guarded by architecture ifdefs (RTE_ARCH_PPC_64) where appropriate.
 """
 
 [profiling]
@@ -46,4 +60,12 @@ submodule_path = "dpdk"
 # Branch in the submodule where good changes accumulate
 optimization_branch = "autosearch/optimize"
 # Source paths the agent is allowed to modify (relative to submodule_path)
-scope = ["drivers/net/mlx5/", "drivers/common/mlx5/", "app/test-pmd/"]
+scope = [
+    "drivers/net/memif/",
+    "app/test-pmd/",
+    "lib/eal/ppc/",
+    "lib/eal/include/",
+    "lib/ring/",
+    "lib/mbuf/",
+    "lib/mempool/",
+]

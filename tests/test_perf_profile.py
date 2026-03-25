@@ -141,7 +141,7 @@ class TestLoadArchProfile:
     def test_loads_ppc64le(self):
         profile = load_arch_profile("ppc64le")
         assert profile["arch"] == "ppc64le"
-        assert profile["events"]["cycles"] == "PM_RUN_CYC"
+        assert profile["events"]["cycles"] == "pm_run_cyc"
 
     def test_loads_aarch64(self):
         profile = load_arch_profile("aarch64")

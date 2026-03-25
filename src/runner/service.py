@@ -13,7 +13,6 @@ import tomllib
 
 from src.logging_config import setup_logging
 from src.protocol import (
-    DEFAULT_REQUESTS_DIR,
     STATUS_BUILDING,
     STATUS_CLAIMED,
     STATUS_COMPLETED,
@@ -207,6 +206,22 @@ def execute_request(request: TestRequest, request_path: Path, config: dict) -> N
         logger.info("Request %04d completed successfully", request.sequence)
 
 
+def _load_requests_dir() -> Path:
+    """Derive the requests directory from campaign.toml sprint config."""
+    repo_root = Path(__file__).resolve().parent.parent.parent
+    campaign_path = repo_root / "config" / "campaign.toml"
+    if not campaign_path.exists():
+        msg = f"Campaign config not found: {campaign_path}"
+        raise FileNotFoundError(msg)
+    with open(campaign_path, "rb") as f:
+        campaign = tomllib.load(f)
+    sprint_name = campaign.get("sprint", {}).get("name")
+    if not sprint_name:
+        msg = "No [sprint] name in campaign.toml. Run 'autosearch sprint init' first."
+        raise ValueError(msg)
+    return repo_root / "sprints" / sprint_name / "requests"
+
+
 def main() -> None:
     """Runner service entry point."""
     config = load_config()
@@ -218,11 +233,11 @@ def main() -> None:
     )
 
     poll_interval = int(runner_cfg.get("poll_interval", 30))
-    requests_dir = DEFAULT_REQUESTS_DIR
+    req_dir = _load_requests_dir()
 
-    logger.info("Runner starting, poll_interval=%ds", poll_interval)
+    logger.info("Runner starting, poll_interval=%ds, requests_dir=%s", poll_interval, req_dir)
 
-    recover_stale_requests(requests_dir)
+    recover_stale_requests(req_dir)
 
     try:
         while True:
@@ -231,7 +246,7 @@ def main() -> None:
                 time.sleep(poll_interval)
                 continue
 
-            result = find_pending(requests_dir)
+            result = find_pending(req_dir)
             if result is None:
                 logger.debug("No pending requests, sleeping %ds", poll_interval)
                 time.sleep(poll_interval)

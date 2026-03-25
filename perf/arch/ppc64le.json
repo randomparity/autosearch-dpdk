@@ -1,22 +1,20 @@
 {
   "arch": "ppc64le",
-  "kernel_min": "5.4",
+  "kernel_min": "4.18",
   "pmu_driver": "power9_pmu / power10_pmu",
   "events": {
-    "cycles": "PM_RUN_CYC",
-    "instructions": "PM_RUN_INST_CMPL",
-    "l1d_miss": "PM_LD_MISS_L1",
-    "l3_miss": "PM_DATA_FROM_L3MISS",
-    "branch_miss": "PM_BR_MPRED_CMPL",
-    "stalled_frontend": "PM_NO_INST_AVAIL",
-    "stalled_backend": "PM_CMPLU_STALL"
+    "cycles": "pm_run_cyc",
+    "instructions": "pm_run_inst_cmpl",
+    "l1d_miss": "pm_ld_miss_l1",
+    "l3_miss": "pm_data_from_l3miss",
+    "branch_miss": "pm_br_mpred_cmpl",
+    "stalled_backend": "pm_cmplu_stall"
   },
   "derived_metrics": {
     "ipc": "instructions / cycles",
     "l1d_miss_rate": "l1d_miss / instructions",
     "l3_miss_rate": "l3_miss / instructions",
     "branch_miss_rate": "branch_miss / instructions",
-    "frontend_bound": "stalled_frontend / cycles",
     "backend_bound": "stalled_backend / cycles"
   },
   "heuristics": [
@@ -52,6 +50,8 @@
     "PM_RUN_* events count only non-idle, non-stolen cycles/instructions — preferred over raw counters for accuracy in shared/virtualized environments.",
     "POWER9/10 supports simultaneous counting of up to 6 PMU events per group. Plan event groups to avoid multiplexing.",
     "Cache lines are 128 bytes on POWER (vs 64B on x86). Alignment matters more.",
-    "For DPDK: verify rte_memcpy uses the POWER-optimized (AltiVec) variant at compile time. Check RTE_ARCH_PPC_64 ifdefs."
+    "For DPDK: verify rte_memcpy uses the POWER-optimized (AltiVec) variant at compile time. Check RTE_ARCH_PPC_64 ifdefs.",
+    "Event names are lowercase on RHEL 8 / kernel 4.18 (e.g. pm_run_cyc not PM_RUN_CYC).",
+    "frontend_bound metric is omitted: PM_NO_INST_AVAIL is not accessible under RHEL 8 / kernel 4.18 without CAP_SYS_ADMIN. Use backend_bound as the primary stall metric on POWER9."
   ]
 }

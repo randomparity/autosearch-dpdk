@@ -1,6 +1,12 @@
 # runner.toml — machine-local runner configuration
 # Copy this file to runner.toml and fill in values for your environment.
 # runner.toml is gitignored; never commit host-specific paths or credentials.
+#
+# Sudo setup (required when testpmd.sudo or profiling.sudo is true):
+#   sudo ./scripts/setup-sudo.sh [username] [build_dir]
+#
+# This grants passwordless sudo for the testpmd binary and perf only.
+# See scripts/setup-sudo.sh for details.
 
 [runner]
 # Log level: debug, info, warning, error (also settable via LOG_LEVEL env var)
@@ -43,17 +49,41 @@ extra_meson_args = ""
 # EAL lcore mask — main lcore + forwarding cores
 lcores = "4-7"
 
+# --- Port configuration (choose PCI or vdev, not both) ---
+
 # PCI addresses of the NIC ports (back-to-back connected)
-pci = ["01:00.0", "01:00.1"]
+# pci = ["01:00.0", "01:00.1"]
+
+# Virtual devices (e.g. memif pair). Each string is passed as --vdev to EAL.
+# The client uses zero-copy (ZC). The server zero-copy flag is accepted but
+# silently ignored by the memif PMD — the server always uses the copy path.
+vdev = [
+    "net_memif0,role=server,id=0,zero-copy=yes,bsize=2048,rsize=12",
+    "net_memif1,role=client,id=0,zero-copy=yes,bsize=2048,rsize=12",
+]
+
+# When using vdevs, disable PCI bus scanning
+no_pci = true
+
+# Additional EAL arguments passed verbatim (list of strings)
+# extra_eal_args = ["--single-file-segments"]
+
+# --- Testpmd application arguments ---
 
 # Number of forwarding cores (excluding main lcore)
 nb_cores = 2
 
 # Queues and descriptors per port
-rxq = 1
-txq = 1
-rxd = 1024
-txd = 1024
+rxq = 4
+txq = 4
+rxd = 4096
+txd = 4096
+
+# Burst size for rx/tx
+burst = 128
+
+# Forward mode: "io", "macswap", "mac", etc.
+forward_mode = "io"
 
 # Seconds to wait after tx_first before resetting stats
 warmup_seconds = 5

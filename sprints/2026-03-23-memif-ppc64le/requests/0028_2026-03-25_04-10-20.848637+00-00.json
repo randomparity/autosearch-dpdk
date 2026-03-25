@@ -1,0 +1,108 @@
+{
+  "sequence": 28,
+  "created_at": "2026-03-25T04:10:20.848637+00:00",
+  "dpdk_commit": "a08e840df54cafbb723f6b3bdc2a4d2fecd711f5",
+  "test_suites": [
+    "TestPmd"
+  ],
+  "test_cases": null,
+  "perf": true,
+  "metric_name": "throughput_mpps",
+  "metric_path": "throughput_mpps",
+  "description": "use rte_mov64 for <=64B packets in 4x unrolled rx, skip rte_memcpy branches",
+  "backend": "testpmd",
+  "status": "completed",
+  "claimed_at": "2026-03-25T04:11:45.955273+00:00",
+  "completed_at": "2026-03-25T04:12:46.275928+00:00",
+  "build_log_snippet": null,
+  "results_json": {
+    "throughput_mpps": 87.4834,
+    "profiling": {
+      "top_functions": [
+        {
+          "name": "eth_memif_rx",
+          "samples": 1471,
+          "pct": 22.37
+        },
+        {
+          "name": "rte_pktmbuf_free_bulk",
+          "samples": 1201,
+          "pct": 18.27
+        },
+        {
+          "name": "eth_memif_tx",
+          "samples": 1087,
+          "pct": 16.53
+        },
+        {
+          "name": "eth_memif_rx_zc",
+          "samples": 977,
+          "pct": 14.86
+        },
+        {
+          "name": "eth_memif_tx_zc",
+          "samples": 526,
+          "pct": 8.0
+        },
+        {
+          "name": "memif_free_stored_mbufs",
+          "samples": 220,
+          "pct": 3.35
+        },
+        {
+          "name": "common_ring_mp_enqueue",
+          "samples": 202,
+          "pct": 3.07
+        },
+        {
+          "name": "common_ring_mc_dequeue",
+          "samples": 189,
+          "pct": 2.87
+        },
+        {
+          "name": "menu_select",
+          "samples": 58,
+          "pct": 0.88
+        },
+        {
+          "name": "pkt_burst_io_forward",
+          "samples": 46,
+          "pct": 0.7
+        }
+      ],
+      "derived_metrics": {
+        "ipc": 0.543131,
+        "l1d_miss_rate": 0.034535,
+        "l3_miss_rate": 0.000123,
+        "branch_miss_rate": 0.000628,
+        "backend_bound": 0.713626
+      },
+      "diagnostics": [
+        {
+          "priority": 1,
+          "category": "pipeline_utilization",
+          "evidence": "ipc < 1.0, top function: eth_memif_rx (22.37%)",
+          "suggestions": [
+            "Inspect l1d_miss_rate and l3_miss \u2014 high values indicate working set exceeds cache.",
+            "Check for unaligned memory accesses (expensive on POWER).",
+            "Verify VSX/AltiVec SIMD paths are used in hot loops rather than scalar fallbacks."
+          ]
+        },
+        {
+          "priority": 3,
+          "category": "backend_stall",
+          "evidence": "backend_bound > 0.4, top function: eth_memif_rx (22.37%)",
+          "suggestions": [
+            "Cross-reference with cache miss data.",
+            "Look for division or modulo in hot paths \u2014 replace with shifts/masks where possible.",
+            "Check for false sharing on shared data structures (128B cache lines on POWER)."
+          ]
+        }
+      ],
+      "total_samples": 6575
+    }
+  },
+  "results_summary": "EAL: Detected CPU lcores: 128\r\nEAL: Detected NUMA nodes: 2\r\nEAL: Detected static linkage of DPDK\r\nEAL: Multi-process socket /var/run/dpdk/rte/mp_socket\r\nEAL: Selected IOVA mode 'VA'\r\nAuto-start selected\r\nPorts to start sending a burst of packets first\r\nSet io packet forwarding mode\r\nWarning: lsc_interrupt needs to be off when using tx_first. Disabling.\r\nWarning: NUMA should be configured manually by using --port-numa-config and --ring-numa-config parameters along with --numa.\r\ntestpmd: create a new mbuf pool <mb_pool_8>: n=203456, size=2176, socket=8\r\ntestpmd: preferred mempool ops selected: ring_mp_mc\r\nConfiguring Port 0 (socket 8)\r\nPort 0: E6:7E:68:E3:D0:D3\r\nConfiguring Port 1 (socket 8)\r\nPort 1: E2:A3:21:D8:1E:47\r\nChecking link statuses...\r\nPort 0 Link up at 100 Gbps FDX Autoneg None\r\nPort 1 Link up at 100 Gbps FDX Autoneg None\r\nDone\r\nNo commandline core given, start packet forwarding\r\nio packet forwarding - ports=2 - cores=7 - streams=8 - NUMA support enabled, MP allocation mode: native\r\nLogical Core 97 (socket 8) forwards packets on 1 streams:\r\n  RX P=0/Q=0 (socket 8) -> TX P=1/Q=0 (socket 8) peer=02:00:00:00:00:01\r\nLogical Core 98 (socket 8) forwards packets on 1 streams:\r\n  RX P=1/Q=0 (socket 8) -> TX P=0/Q=0 (socket 8) peer=02:00:00:00:00:00\r\nLogical Core 99 (socket 8) forwards packets on 1 streams:\r\n  RX P=0/Q=1 (socket 8) -> TX P=1/Q=1 (socket 8) peer=02:00:00:00:00:01\r\nLogical Core 100 (socket 8) forwards packets on 1 streams:\r\n  RX P=1/Q=1 (socket 8) -> TX P=0/Q=1 (socket 8) peer=02:00:00:00:00:00\r\nLogical Core 101 (socket 8) forwards packets on 1 streams:\r\n  RX P=0/Q=2 (socket 8) -> TX P=1/Q=2 (socket 8) peer=02:00:00:00:00:01\r\nLogical Core 102 (socket 8) forwards packets on 1 streams:\r\n  RX P=1/Q=2 (socket 8) -> TX P=0/Q=2 (socket 8) peer=02:00:00:00:00:00\r\nLogical Core 103 (socket 8) forwards packets on 2 streams:\r\n  RX P=0/Q=3 (socket 8) -> TX P=1/Q=3 (socket 8) peer=02:00:00:00:00:01\r\n  RX P=1/Q=3 (socket 8) -> TX P=0/Q=3 (socket 8) peer=02:00:00:00:00:00\r\n\r\n  io packet forwarding packets/burst=128\r\n  nb forwarding cores=7 - nb forwarding ports=2\r\n  port 0: RX queue number: 4 Tx queue number: 4\r\n    Rx offloads=0x0 Tx offloads=0x0\r\n    RX queue: 0\r\n      RX desc=4096 - RX free threshold=0\r\n      RX threshold registers: pthresh=0 hthresh=0  wthresh=0\r\n      RX Offloads=0x0\r\n    TX queue: 0\r\n      TX desc=4096 - TX free threshold=0\r\n      TX threshold registers: pthresh=0 hthresh=0  wthresh=0\r\n      TX offloads=0x0 - TX RS bit threshold=0\r\n  port 1: RX queue number: 4 Tx queue number: 4\r\n    Rx offloads=0x0 Tx offloads=0x0\r\n    RX queue: 0\r\n      RX desc=4096 - RX free threshold=0\r\n      RX threshold registers: pthresh=0 hthresh=0  wthresh=0\r\n      RX Offloads=0x0\r\n    TX queue: 0\r\n      TX desc=4096 - TX free threshold=0\r\n      TX threshold registers: pthresh=0 hthresh=0  wthresh=0\r\n      TX offloads=0x0 - TX RS bit threshold=0\r\nPress enter to exit\r\n\r\nTelling cores to stop...\r\nWaiting for lcores to finish...\r\n\r\n  ------- Forward Stats for RX Port= 0/Queue= 0 -> TX Port= 1/Queue= 0 -------\r\n  RX-packets: 484026496      TX-packets: 484026624      TX-dropped: 0             \r\n\r\n  ------- Forward Stats for RX Port= 1/Queue= 0 -> TX Port= 0/Queue= 0 -------\r\n  RX-packets: 386282880      TX-packets: 386283008      TX-dropped: 0             \r\n\r\n  ------- Forward Stats for RX Port= 0/Queue= 1 -> TX Port= 1/Queue= 1 -------\r\n  RX-packets: 587410560      TX-packets: 587410688      TX-dropped: 0             \r\n\r\n  ------- Forward Stats for RX Port= 1/Queue= 1 -> TX Port= 0/Queue= 1 -------\r\n  RX-packets: 363678336      TX-packets: 363678464      TX-dropped: 0             \r\n\r\n  ------- Forward Stats for RX Port= 0/Queue= 2 -> TX Port= 1/Queue= 2 -------\r\n  RX-packets: 447503744      TX-packets: 447503872      TX-dropped: 0             \r\n\r\n  ------- Forward Stats for RX Port= 1/Queue= 2 -> TX Port= 0/Queue= 2 -------\r\n  RX-packets: 372577280      TX-packets: 372577408      TX-dropped: 0             \r\n\r\n  ------- Forward Stats for RX Port= 0/Queue= 3 -> TX Port= 1/Queue= 3 -------\r\n  RX-packets: 210219136      TX-packets: 210219264      TX-dropped: 0             \r\n\r\n  ------- Forward Stats for RX Port= 1/Queue= 3 -> TX Port= 0/Queue= 3 -------\r\n  RX-packets: 210219136      TX-packets: 210219264      TX-dropped: 0             \r\n\r\n  ---------------------- Forward statistics for port 0  ----------------------\r\n  RX-packets: 1729159936     RX-dropped: 0             RX-total: 1729159936\r\n  TX-packets: 1332758144     TX-dropped: 0             TX-total: 1332758144\r\n  ----------------------------------------------------------------------------\r\n\r\n  ---------------------- Forward statistics for port 1  ----------------------\r\n  RX-packets: 1332757632     RX-dropped: 0             RX-total: 1332757632\r\n  TX-packets: 1729160448     TX-dropped: 0             TX-total: 1729160448\r\n  ----------------------------------------------------------------------------\r\n\r\n  +++++++++++++++ Accumulated forward statistics for all ports+++++++++++++++\r\n  RX-packets: 3061917568     RX-dropped: 0             RX-total: 3061917568\r\n  TX-packets: 3061918592     TX-dropped: 0             TX-total: 3061918592\r\n  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\r\n\r\nDone.\r\n\r\nPrimary: Sending 'stop_req' request to secondary...\r\n\r\nStopping port 0...\r\nStopping ports...\r\nDone\r\n\r\nStopping port 1...\r\nStopping ports...\r\nDone\r\n\r\nShutting down port 0...\r\nClosing ports...\r\nPort 0 is closed\r\nDone\r\n\r\nShutting down port 1...\r\nClosing ports...\r\nPort 1 is closed\r\nDone\r\n\r\nBye...\r\n",
+  "metric_value": 87.4834,
+  "error": null
+}

@@ -8,28 +8,25 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from src.protocol import DEFAULT_REQUESTS_DIR, TestRequest
+from src.protocol import TestRequest
 
 logger = logging.getLogger(__name__)
 
 
-def next_sequence(requests_dir: Path | None = None) -> int:
+def next_sequence(requests_dir: Path) -> int:
     """Return the next sequence number based on existing request files.
-
-    Scans the requests directory for JSON files, extracts the leading
-    sequence number from filenames, and returns max + 1 (or 1 if empty).
 
     Args:
         requests_dir: Directory containing request JSON files.
     """
-    directory = requests_dir or DEFAULT_REQUESTS_DIR
     max_seq = 0
-    for path in directory.glob("*.json"):
-        try:
-            seq = int(path.stem.split("_")[0])
-            max_seq = max(max_seq, seq)
-        except (ValueError, IndexError):
-            continue
+    if requests_dir.is_dir():
+        for path in requests_dir.glob("*.json"):
+            try:
+                seq = int(path.stem.split("_")[0])
+                max_seq = max(max_seq, seq)
+            except (ValueError, IndexError):
+                continue
     return max_seq + 1
 
 
@@ -38,23 +35,21 @@ def create_request(
     commit: str,
     campaign: dict,
     description: str,
-    requests_dir: Path | None = None,
+    requests_dir: Path,
 ) -> Path:
     """Create a new pending test request file.
 
     Args:
         seq: Sequence number for this iteration.
         commit: DPDK submodule commit SHA.
-        campaign: Campaign configuration dict (must have a 'metric' key;
-            optionally has 'test' or 'dts' sub-keys for test configuration).
+        campaign: Campaign configuration dict.
         description: Human-readable description of the change.
         requests_dir: Directory to write the request file into.
 
     Returns:
         Path to the newly created JSON file.
     """
-    directory = requests_dir or DEFAULT_REQUESTS_DIR
-    directory.mkdir(parents=True, exist_ok=True)
+    requests_dir.mkdir(parents=True, exist_ok=True)
 
     metric = campaign["metric"]
     test_cfg = campaign.get("test", {})
@@ -72,13 +67,13 @@ def create_request(
         backend=test_cfg.get("backend", "testpmd"),
     )
 
-    path = directory / request.filename
+    path = requests_dir / request.filename
     request.write(path)
     logger.info("Created request %04d at %s", seq, path)
     return path
 
 
-def find_latest_request(requests_dir: Path | None = None) -> TestRequest | None:
+def find_latest_request(requests_dir: Path) -> TestRequest | None:
     """Find the most recent request file by sequence number.
 
     Args:
@@ -87,11 +82,10 @@ def find_latest_request(requests_dir: Path | None = None) -> TestRequest | None:
     Returns:
         The TestRequest with the highest sequence number, or None if empty.
     """
-    directory = requests_dir or DEFAULT_REQUESTS_DIR
-    if not directory.is_dir():
+    if not requests_dir.is_dir():
         return None
 
-    json_files = sorted(directory.glob("*.json"), reverse=True)
+    json_files = sorted(requests_dir.glob("*.json"), reverse=True)
     for path in json_files:
         try:
             return TestRequest.read(path)
@@ -106,11 +100,9 @@ def poll_for_completion(
     seq: int,
     timeout: int = 3600,
     interval: int = 30,
-    requests_dir: Path | None = None,
+    requests_dir: Path = Path("requests"),
 ) -> TestRequest:
     """Poll git until the given request reaches a terminal state.
-
-    Runs `git pull --rebase` at each interval and checks the request status.
 
     Args:
         seq: Sequence number to poll for.
@@ -125,7 +117,6 @@ def poll_for_completion(
         TimeoutError: If the request does not complete within the timeout.
         FileNotFoundError: If the request file cannot be found.
     """
-    directory = requests_dir or DEFAULT_REQUESTS_DIR
     deadline = time.monotonic() + timeout
 
     while time.monotonic() < deadline:
@@ -138,9 +129,9 @@ def poll_for_completion(
         if pull_result.returncode != 0:
             logger.warning("git pull --rebase failed: %s", pull_result.stderr.strip())
 
-        matches = list(directory.glob(f"{seq:04d}_*.json"))
+        matches = list(requests_dir.glob(f"{seq:04d}_*.json"))
         if not matches:
-            msg = f"Request file for sequence {seq} not found in {directory}"
+            msg = f"Request file for sequence {seq} not found in {requests_dir}"
             raise FileNotFoundError(msg)
 
         request = TestRequest.read(matches[0])

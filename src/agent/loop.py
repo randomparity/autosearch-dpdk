@@ -1,42 +1,31 @@
-"""Main autoresearch optimization loop — CLI entry point."""
+"""Interactive optimization loop — manual fallback CLI entry point."""
 
 from __future__ import annotations
 
 import argparse
 import logging
-import sys
-import tomllib
 from pathlib import Path
 
-from src.agent.autonomous import (
-    _below_threshold,
-    _record_result_or_revert,
-    extract_profile_summary,
-    run_autonomous,
-)
-from src.agent.campaign import CampaignConfig
+from src.agent.campaign import CampaignConfig, load_campaign
 from src.agent.git_ops import (
     ensure_optimization_branch,
     git_add_commit_push,
     git_submodule_head,
+    record_result_or_revert,
 )
 from src.agent.history import append_result, best_result, load_history
+from src.agent.metric import below_threshold
 from src.agent.protocol import create_request, next_sequence, poll_for_completion
-from src.agent.strategy import format_context, format_profile_lines, validate_change
+from src.agent.sprint import failures_path, requests_dir, results_path
+from src.agent.strategy import (
+    extract_profile_summary,
+    format_context,
+    format_profile_lines,
+    validate_change,
+)
 from src.logging_config import setup_logging
 
 logger = logging.getLogger(__name__)
-
-
-def load_campaign(path: Path) -> CampaignConfig:
-    """Load and return the campaign TOML configuration.
-
-    Raises:
-        FileNotFoundError: If the config file does not exist.
-        tomllib.TOMLDecodeError: If the file is not valid TOML.
-    """
-    with open(path, "rb") as f:
-        return tomllib.load(f)
 
 
 def run_interactive_iteration(
@@ -48,7 +37,11 @@ def run_interactive_iteration(
 
     Returns True to continue, False to stop.
     """
-    history = load_history()
+    req = requests_dir(campaign)
+    res = results_path(campaign)
+    fail = failures_path(campaign)
+
+    history = load_history(res)
     metric_cfg = campaign["metric"]
     direction = metric_cfg.get("direction", "maximize")
     max_iter = campaign.get("campaign", {}).get("max_iterations", 50)
@@ -73,11 +66,11 @@ def run_interactive_iteration(
 
     commit = git_submodule_head(dpdk_path)
     description = input("Describe this change: ").strip() or "No description"
-    seq = next_sequence()
+    seq = next_sequence(req)
     poll_interval = campaign.get("agent", {}).get("poll_interval", 30)
     timeout = campaign.get("agent", {}).get("timeout_minutes", 60) * 60
 
-    request_path = create_request(seq, commit, campaign, description)
+    request_path = create_request(seq, commit, campaign, description, req)
 
     git_add_commit_push(
         [str(request_path), str(dpdk_path)],
@@ -88,36 +81,40 @@ def run_interactive_iteration(
 
     if dry_run:
         print("[dry-run] Skipping poll — no push was made.")
-        append_result(seq, commit, None, "dry_run", description)
+        append_result(seq, commit, None, "dry_run", description, path=res)
         return True
 
     try:
-        result = poll_for_completion(seq, timeout=timeout, interval=poll_interval)
+        result = poll_for_completion(
+            seq,
+            timeout=timeout,
+            interval=poll_interval,
+            requests_dir=req,
+        )
     except TimeoutError:
         print(f"Request {seq:04d} timed out.")
-        append_result(seq, commit, None, "timed_out", description)
+        append_result(seq, commit, None, "timed_out", description, path=res)
         return True
 
     if result.status == "failed":
         print(f"Request {seq:04d} FAILED: {result.error}")
-        append_result(seq, commit, None, "failed", description)
+        append_result(seq, commit, None, "failed", description, path=res)
         return True
 
     metric = result.metric_value
     print(f"Request {seq:04d} completed. Metric: {metric}")
 
-    # Display profiling summary if available
     profile_summary = extract_profile_summary(result)
     if profile_summary:
         for line in format_profile_lines(profile_summary):
             print(line)
 
-    current_best = best_result(direction=direction)
+    current_best = best_result(res, direction=direction)
     best_val = float(current_best["metric_value"]) if current_best is not None else None
 
-    append_result(seq, commit, metric, "completed", description)
+    append_result(seq, commit, metric, "completed", description, path=res)
 
-    _record_result_or_revert(
+    record_result_or_revert(
         metric,
         best_val,
         direction,
@@ -126,9 +123,11 @@ def run_interactive_iteration(
         description,
         dpdk_path,
         dry_run,
+        results_path=res,
+        failures_path=fail,
     )
 
-    if _below_threshold(metric, best_val, campaign):
+    if below_threshold(metric, best_val, campaign):
         threshold = campaign["metric"]["threshold"]
         print(f"Improvement below threshold ({threshold}). Stopping early.")
         return False
@@ -141,18 +140,15 @@ def run_baseline(
     dpdk_path: Path,
     dry_run: bool,
 ) -> None:
-    """Submit a baseline request for the current DPDK commit and wait for results.
-
-    Creates a test request with no code changes to exercise the full
-    agent → runner pipeline. Does not record to history or trigger revert logic.
-    """
+    """Submit a baseline request for the current DPDK commit and wait for results."""
+    req = requests_dir(campaign)
     commit = git_submodule_head(dpdk_path)
-    seq = next_sequence()
+    seq = next_sequence(req)
     description = "Baseline: unmodified DPDK"
     poll_interval = campaign.get("agent", {}).get("poll_interval", 30)
     timeout = campaign.get("agent", {}).get("timeout_minutes", 60) * 60
 
-    request_path = create_request(seq, commit, campaign, description)
+    request_path = create_request(seq, commit, campaign, description, req)
 
     git_add_commit_push(
         [str(request_path)],
@@ -166,7 +162,12 @@ def run_baseline(
         return
 
     try:
-        result = poll_for_completion(seq, timeout=timeout, interval=poll_interval)
+        result = poll_for_completion(
+            seq,
+            timeout=timeout,
+            interval=poll_interval,
+            requests_dir=req,
+        )
     except TimeoutError:
         print(f"Baseline request {seq:04d} timed out.")
         return
@@ -184,36 +185,18 @@ def run_baseline(
 
 
 def main() -> None:
-    """Entry point for the autosearch agent."""
-    parser = argparse.ArgumentParser(description="Autosearch DPDK optimization agent")
+    """Entry point for the interactive autosearch agent."""
+    parser = argparse.ArgumentParser(description="Autosearch DPDK interactive loop")
     parser.add_argument(
         "--campaign",
         default="config/campaign.toml",
         help="Path to campaign TOML config",
     )
+    parser.add_argument("--dry-run", action="store_true", help="Skip git push (local testing)")
     parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Skip git push (local testing)",
-    )
-
-    mode = parser.add_mutually_exclusive_group()
-    mode.add_argument(
-        "--autonomous",
-        action="store_true",
-        help="Use Claude API for automated change proposals",
-    )
-    mode.add_argument(
         "--baseline",
         action="store_true",
         help="Submit a baseline request (no code changes) to test the pipeline",
-    )
-
-    parser.add_argument(
-        "--provider",
-        choices=["anthropic", "openrouter"],
-        default="anthropic",
-        help="API provider for autonomous mode (default: anthropic)",
     )
     parser.add_argument(
         "--log-level",
@@ -221,11 +204,7 @@ def main() -> None:
         default=None,
         help="Log level (default: info, or LOG_LEVEL env var)",
     )
-    parser.add_argument(
-        "--log-file",
-        default=None,
-        help="Path to log file (logs to stdout and file)",
-    )
+    parser.add_argument("--log-file", default=None, help="Path to log file")
     args = parser.parse_args()
 
     setup_logging(args.log_level, args.log_file)
@@ -237,12 +216,6 @@ def main() -> None:
 
     if args.baseline:
         run_baseline(campaign, dpdk_path, args.dry_run)
-    elif args.autonomous:
-        try:
-            run_autonomous(campaign, dpdk_path, args.dry_run, args.provider)
-        except (ImportError, ValueError) as exc:
-            print(f"Error: {exc}")
-            sys.exit(1)
     else:
         while run_interactive_iteration(campaign, dpdk_path, args.dry_run):
             pass

@@ -9,9 +9,6 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_RESULTS_PATH = Path("results.tsv")
-DEFAULT_FAILURES_PATH = Path("failures.tsv")
-
 COLUMNS = ["sequence", "timestamp", "dpdk_commit", "metric_value", "status", "description"]
 FAILURE_COLUMNS = ["timestamp", "dpdk_commit", "metric_value", "description", "diff_summary"]
 
@@ -22,7 +19,7 @@ def append_result(
     metric: float | None,
     status: str,
     description: str,
-    path: Path | None = None,
+    path: Path,
 ) -> None:
     """Append an iteration result to the TSV history file.
 
@@ -34,24 +31,20 @@ def append_result(
         description: Human-readable description of the change.
         path: Path to the results.tsv file.
     """
-    results_path = path or DEFAULT_RESULTS_PATH
     timestamp = datetime.now(UTC).isoformat()
     metric_str = str(metric) if metric is not None else ""
 
     try:
-        with open(results_path, "a", newline="") as f:
+        with open(path, "a", newline="") as f:
             writer = csv.writer(f, delimiter="\t")
             writer.writerow([seq, timestamp, commit, metric_str, status, description])
     except OSError as exc:
-        msg = f"Failed to append result to {results_path}: {exc}"
+        msg = f"Failed to append result to {path}: {exc}"
         raise OSError(msg) from exc
 
 
-def load_history(path: Path | None = None) -> list[dict]:
+def load_history(path: Path) -> list[dict]:
     """Read the TSV history file into a list of dicts.
-
-    The file must have a header row matching COLUMNS. DictReader uses
-    the first row as field names, so data rows start from the second line.
 
     Args:
         path: Path to the results.tsv file.
@@ -59,26 +52,23 @@ def load_history(path: Path | None = None) -> list[dict]:
     Returns:
         List of row dicts keyed by column name.
     """
-    results_path = path or DEFAULT_RESULTS_PATH
-    if not results_path.exists():
+    if not path.exists():
         return []
 
     try:
-        with open(results_path, newline="") as f:
+        with open(path, newline="") as f:
             reader = csv.DictReader(f, delimiter="\t")
             return list(reader)
     except OSError as exc:
-        logger.warning("Failed to read history from %s: %s", results_path, exc)
+        logger.warning("Failed to read history from %s: %s", path, exc)
         return []
 
 
 def best_result(
-    path: Path | None = None,
+    path: Path,
     direction: str = "maximize",
 ) -> dict | None:
     """Return the history row with the best metric value.
-
-    Rows where metric_value is empty are skipped.
 
     Args:
         path: Path to the results.tsv file.
@@ -110,7 +100,7 @@ def append_failure(
     metric: float | None,
     description: str,
     diff_summary: str,
-    path: Path | None = None,
+    path: Path,
 ) -> None:
     """Record a failed optimization attempt.
 
@@ -121,23 +111,22 @@ def append_failure(
         diff_summary: Short git diff --stat of the reverted change.
         path: Path to the failures.tsv file.
     """
-    failures_path = path or DEFAULT_FAILURES_PATH
     timestamp = datetime.now(UTC).isoformat()
     metric_str = str(metric) if metric is not None else ""
 
     try:
-        write_header = not failures_path.exists()
-        with open(failures_path, "a", newline="") as f:
+        write_header = not path.exists()
+        with open(path, "a", newline="") as f:
             writer = csv.writer(f, delimiter="\t")
             if write_header:
                 writer.writerow(FAILURE_COLUMNS)
             writer.writerow([timestamp, commit, metric_str, description, diff_summary])
     except OSError as exc:
-        msg = f"Failed to append failure to {failures_path}: {exc}"
+        msg = f"Failed to append failure to {path}: {exc}"
         raise OSError(msg) from exc
 
 
-def load_failures(path: Path | None = None) -> list[dict]:
+def load_failures(path: Path) -> list[dict]:
     """Read the failures TSV file.
 
     Args:
@@ -146,16 +135,15 @@ def load_failures(path: Path | None = None) -> list[dict]:
     Returns:
         List of row dicts keyed by column name.
     """
-    failures_path = path or DEFAULT_FAILURES_PATH
-    if not failures_path.exists():
+    if not path.exists():
         return []
 
     try:
-        with open(failures_path, newline="") as f:
+        with open(path, newline="") as f:
             reader = csv.DictReader(f, delimiter="\t")
             return list(reader)
     except OSError as exc:
-        logger.warning("Failed to read failures from %s: %s", failures_path, exc)
+        logger.warning("Failed to read failures from %s: %s", path, exc)
         return []
 
 

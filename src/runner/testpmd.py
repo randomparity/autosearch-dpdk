@@ -65,18 +65,28 @@ def run_testpmd(
         )
 
     lcores = testpmd_cfg.get("lcores", "4-7")
-    pci_addrs = testpmd_cfg.get("pci", ["01:00.0", "01:00.1"])
+    pci_addrs = testpmd_cfg.get("pci", [])
+    vdevs = testpmd_cfg.get("vdev", [])
+    no_pci = testpmd_cfg.get("no_pci", False)
+    extra_eal_args = testpmd_cfg.get("extra_eal_args", [])
     nb_cores = int(testpmd_cfg.get("nb_cores", 2))
     rxq = int(testpmd_cfg.get("rxq", 1))
     txq = int(testpmd_cfg.get("txq", 1))
     rxd = int(testpmd_cfg.get("rxd", 1024))
     txd = int(testpmd_cfg.get("txd", 1024))
+    burst = int(testpmd_cfg.get("burst", 32))
+    forward_mode = testpmd_cfg.get("forward_mode", "io")
     warmup_seconds = int(testpmd_cfg.get("warmup_seconds", 5))
     measure_seconds = int(testpmd_cfg.get("measure_seconds", 10))
 
     eal_args = ["-l", lcores]
     for pci in pci_addrs:
         eal_args.extend(["-a", pci])
+    for vdev in vdevs:
+        eal_args.extend(["--vdev", vdev])
+    if no_pci:
+        eal_args.append("--no-pci")
+    eal_args.extend(extra_eal_args)
 
     use_sudo = testpmd_cfg.get("sudo", True)
     cmd = [
@@ -89,9 +99,10 @@ def run_testpmd(
         f"--txq={txq}",
         f"--rxd={rxd}",
         f"--txd={txd}",
+        f"--burst={burst}",
         "--auto-start",
         "--tx-first",
-        "--forward-mode=io",
+        f"--forward-mode={forward_mode}",
     ]
 
     logger.info("Starting testpmd: %s", " ".join(cmd))
@@ -208,7 +219,10 @@ def _measure_throughput(
     profile_summary = None
     if profile_config and profile_config.get("enabled"):
         profile_summary = _run_profiling(
-            proc.pid, measure, profile_config, lcores=lcores,
+            proc.pid,
+            measure,
+            profile_config,
+            lcores=lcores,
         )
     else:
         time.sleep(measure)
@@ -276,7 +290,11 @@ def _resolve_testpmd_pid(proc_pid: int, use_sudo: bool) -> int:
 
 
 def _run_profiling(
-    pid: int, duration: int, config: dict, *, lcores: str = "0",
+    pid: int,
+    duration: int,
+    config: dict,
+    *,
+    lcores: str = "0",
 ) -> dict | None:
     """Run perf profiling during the measurement window.
 

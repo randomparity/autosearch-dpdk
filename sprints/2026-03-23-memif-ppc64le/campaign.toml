@@ -1,0 +1,68 @@
+[campaign]
+name = "memif-throughput"
+max_iterations = 50
+
+[metric]
+name = "throughput_mpps"
+# Key path into the results JSON (dot-separated for nested dicts)
+path = "throughput_mpps"
+# "maximize" or "minimize"
+direction = "maximize"
+# Stop early if improvement between iterations falls below this value
+threshold = 0.01
+
+[test]
+# Test backend: "testpmd" for direct measurement, "dts" for DPDK Test Suite
+backend = "testpmd"
+test_suites = ["TestPmd"]
+perf = true
+
+[agent]
+# Seconds between polling for test results
+poll_interval = 30
+# Total wall-clock budget for a single test run
+timeout_minutes = 60
+
+[goal]
+# Freeform description injected into the Claude prompt. Use this to specify
+# hardware, optimization strategy, constraints, or any other context.
+description = """
+Target: memif PMD (shared-memory interface, no physical NIC required).
+Platform: POWER9 ppc64le, 128B cache lines, VSX/AltiVec SIMD.
+Workload: testpmd in io-fwd mode, bi-directional 64-byte frames between
+a memif server and client pair.
+
+Driver-level strategies: optimizing rte_memcpy in eth_memif_rx/tx hot paths,
+batch descriptor processing, loop unrolling in rx/tx burst functions,
+reducing atomic operation overhead on ring head/tail, improving mbuf
+bulk alloc/free patterns, and vectorized copy paths for small packets.
+
+Library-level strategies: POWER-optimized rte_memcpy (VSX vector loads/stores
+for small sizes), rte_prefetch tuning, mempool cache behavior, ring
+enqueue/dequeue optimization for POWER9 memory model, mbuf alloc/free
+fast paths, and atomic operation strength reduction.
+
+Constraints: do not change public API signatures, the memif wire protocol
+(memif.h), or break other PMDs or platforms. Library changes must be
+guarded by architecture ifdefs (RTE_ARCH_PPC_64) where appropriate.
+"""
+
+[profiling]
+# Include profiling summary in results pushed to agent
+enabled = true
+
+[dpdk]
+# Path to the DPDK git submodule relative to repo root
+submodule_path = "dpdk"
+# Branch in the submodule where good changes accumulate
+optimization_branch = "autosearch/optimize"
+# Source paths the agent is allowed to modify (relative to submodule_path)
+scope = [
+    "drivers/net/memif/",
+    "app/test-pmd/",
+    "lib/eal/ppc/",
+    "lib/eal/include/",
+    "lib/ring/",
+    "lib/mbuf/",
+    "lib/mempool/",
+]

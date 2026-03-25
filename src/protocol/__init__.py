@@ -1,7 +1,6 @@
 """Shared protocol definitions for agent-runner communication."""
 
 from src.protocol.schema import (
-    DEFAULT_REQUESTS_DIR,
     STATUS_BUILDING,
     STATUS_CLAIMED,
     STATUS_COMPLETED,
@@ -19,7 +18,6 @@ from src.protocol.schema import (
 )
 
 __all__ = [
-    "DEFAULT_REQUESTS_DIR",
     "STATUS_BUILDING",
     "STATUS_CLAIMED",
     "STATUS_COMPLETED",

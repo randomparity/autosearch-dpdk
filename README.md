@@ -31,32 +31,11 @@ Prerequisites: Python 3.13+, [uv](https://docs.astral.sh/uv/), git.
 git clone --recurse-submodules <repo-url>
 cd autosearch-dpdk
 uv sync
-uv run autosearch --dry-run          # local test (no git push)
+uv run autosearch context            # show current optimization state
+uv run autosearch-loop --dry-run     # interactive mode (no git push)
 ```
 
-### Autonomous mode
-
-The agent can use Claude to propose DPDK changes automatically. Set your
-API key and run with `--autonomous`:
-
-```bash
-# Using Anthropic directly
-export ANTHROPIC_API_KEY=sk-...
-uv run autosearch --autonomous --dry-run
-
-# Using OpenRouter
-export OPENROUTER_API_KEY=sk-or-...
-uv run autosearch --autonomous --provider openrouter --dry-run
-```
-
-| Flag | Description |
-|------|-------------|
-| `--dry-run` | Skip git push (local testing only) |
-| `--autonomous` | Use Claude API for automated change proposals |
-| `--provider` | API provider: `anthropic` (default) or `openrouter` |
-| `--campaign <path>` | Path to campaign TOML config (default: `config/campaign.toml`) |
-| `--log-level` | Log level: `debug`, `info`, `warning`, `error` (default: info) |
-| `--log-file <path>` | Also write logs to a file |
+The agent is Claude Code. Read `program.md` for the full autonomous workflow.
 
 For full setup, see the [agent guide](docs/agent.md) and
 [runner guide](docs/runner.md).
@@ -65,7 +44,7 @@ For full setup, see the [agent guide](docs/agent.md) and
 
 ```
 src/
-  agent/       Agent loop, protocol, history, metric, strategy
+  agent/       CLI subcommands, git ops, history, metric, sprint management
   runner/      Runner service, build, testpmd, execute (DTS), protocol
   protocol/    Shared schema (TestRequest dataclass)
   perf/        Profiling: perf record, stack analysis, arch profiles
@@ -73,10 +52,14 @@ src/
 config/
   campaign.toml           Campaign settings (metric, goal, test backend, scope)
   runner.toml.example     Runner-specific paths, build, and testpmd settings
-requests/      Test request JSON files (the communication protocol)
-results.tsv    Cumulative iteration history
-failures.tsv   Record of reverted optimization attempts
-dpdk/          DPDK v25.11 source (git submodule)
+sprints/       Per-sprint experiment artifacts
+  <name>/
+    requests/       Test request JSON files
+    results.tsv     Iteration history
+    failures.tsv    Reverted attempts (created on first failure)
+    campaign.toml   Frozen campaign config snapshot
+    docs/           Summaries and graphs
+dpdk/          DPDK source (git submodule)
 docs/          Documentation
 ```
 

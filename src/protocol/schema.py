@@ -7,8 +7,6 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Literal
 
-DEFAULT_REQUESTS_DIR = Path("requests")
-
 StatusLiteral = Literal["pending", "claimed", "building", "running", "completed", "failed"]
 
 STATUS_PENDING: StatusLiteral = "pending"
