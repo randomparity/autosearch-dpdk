@@ -9,7 +9,6 @@ from unittest.mock import patch
 import pytest
 
 from autoforge.agent.sprint import (
-    _set_sprint_name,
     init_sprint,
     list_sprints,
     switch_sprint,
@@ -17,11 +16,16 @@ from autoforge.agent.sprint import (
 )
 
 
-def _patch_sprints_root(sprints_dir):
-    """Patch both _sprints_root and _sprints_root_from_path to use a test dir."""
+def _patch_pointer(sprints_dir: Path, project: str = "test"):
+    """Patch _sprints_root_from_pointer and load_pointer for tests."""
+    pointer = {"project": project, "sprint": "2026-01-01-dummy"}
     return (
-        patch("autoforge.agent.sprint._sprints_root", return_value=sprints_dir),
-        patch("autoforge.agent.sprint._sprints_root_from_path", return_value=sprints_dir),
+        patch(
+            "autoforge.agent.sprint._sprints_root_from_pointer",
+            return_value=(sprints_dir, project),
+        ),
+        patch("autoforge.agent.sprint.load_pointer", return_value=pointer),
+        patch("autoforge.agent.sprint.save_pointer"),
     )
 
 
@@ -51,13 +55,13 @@ class TestValidateSprintName:
 
 class TestInitSprint:
     def test_creates_directory_structure(self, tmp_path: Path) -> None:
-        campaign_toml = tmp_path / "campaign.toml"
-        campaign_toml.write_text('[campaign]\nname = "test"\n')
+        template = tmp_path / "campaign.toml.example"
+        template.write_text('[campaign]\nname = "test"\n')
         sprints_dir = tmp_path / "sprints"
 
-        p1, p2 = _patch_sprints_root(sprints_dir)
-        with p1, p2:
-            sdir = init_sprint("2026-03-25-test", campaign_toml)
+        p1, p2, p3 = _patch_pointer(sprints_dir)
+        with p1, p2, p3:
+            sdir = init_sprint("2026-03-25-test", template=template)
 
         assert sdir.is_dir()
         assert (sdir / "requests").is_dir()
@@ -72,47 +76,56 @@ class TestInitSprint:
         assert header[3] == "metric_value"
 
     def test_duplicate_raises(self, tmp_path: Path) -> None:
-        campaign_toml = tmp_path / "campaign.toml"
-        campaign_toml.write_text('[campaign]\nname = "test"\n')
+        template = tmp_path / "campaign.toml.example"
+        template.write_text('[campaign]\nname = "test"\n')
         sprints_dir = tmp_path / "sprints"
 
-        p1, p2 = _patch_sprints_root(sprints_dir)
-        with p1, p2:
-            init_sprint("2026-03-25-test", campaign_toml)
+        p1, p2, p3 = _patch_pointer(sprints_dir)
+        with p1, p2, p3:
+            init_sprint("2026-03-25-test", template=template)
             with pytest.raises(FileExistsError, match="already exists"):
-                init_sprint("2026-03-25-test", campaign_toml)
+                init_sprint("2026-03-25-test", template=template)
 
-    def test_invalid_name_raises(self, tmp_path: Path) -> None:
-        campaign_toml = tmp_path / "campaign.toml"
-        campaign_toml.write_text('[campaign]\nname = "test"\n')
-
+    def test_invalid_name_raises(self) -> None:
         with pytest.raises(ValueError, match="Must match"):
-            init_sprint("BAD_NAME", campaign_toml)
+            init_sprint("BAD_NAME")
 
-    def test_sets_sprint_name_in_campaign(self, tmp_path: Path) -> None:
-        campaign_toml = tmp_path / "campaign.toml"
-        campaign_toml.write_text('[campaign]\nname = "test"\n')
+    def test_updates_pointer(self, tmp_path: Path) -> None:
+        template = tmp_path / "campaign.toml.example"
+        template.write_text('[campaign]\nname = "test"\n')
         sprints_dir = tmp_path / "sprints"
 
-        p1, p2 = _patch_sprints_root(sprints_dir)
-        with p1, p2:
-            init_sprint("2026-03-25-test", campaign_toml)
+        p1, p2, p3 = _patch_pointer(sprints_dir)
+        with p1, p2, p3 as mock_save:
+            init_sprint("2026-03-25-test", template=template)
 
-        content = campaign_toml.read_text()
-        assert 'name = "2026-03-25-test"' in content
+        mock_save.assert_called_once_with("test", "2026-03-25-test")
+
+    def test_from_sprint(self, tmp_path: Path) -> None:
+        sprints_dir = tmp_path / "sprints"
+        source = sprints_dir / "2026-03-24-source"
+        source.mkdir(parents=True)
+        (source / "campaign.toml").write_text('[campaign]\nname = "cloned"\n')
+
+        p1, p2, p3 = _patch_pointer(sprints_dir)
+        with p1, p2, p3:
+            sdir = init_sprint("2026-03-25-test", from_sprint="2026-03-24-source")
+
+        content = (sdir / "campaign.toml").read_text()
+        assert 'name = "cloned"' in content
 
 
 class TestListSprints:
     def test_no_sprints_dir(self, tmp_path: Path) -> None:
-        p1, p2 = _patch_sprints_root(tmp_path / "nonexistent")
-        with p1, p2:
+        p1, p2, p3 = _patch_pointer(tmp_path / "nonexistent")
+        with p1, p2, p3:
             assert list_sprints() == []
 
     def test_empty_sprints_dir(self, tmp_path: Path) -> None:
         sprints = tmp_path / "sprints"
         sprints.mkdir()
-        p1, p2 = _patch_sprints_root(sprints)
-        with p1, p2:
+        p1, p2, p3 = _patch_pointer(sprints)
+        with p1, p2, p3:
             assert list_sprints() == []
 
     def test_one_sprint_with_data(self, tmp_path: Path) -> None:
@@ -127,8 +140,8 @@ class TestListSprints:
             writer.writerow(["1", "2026-03-25T00:00:00", "abc", "86.25", "completed", "base"])
             writer.writerow(["2", "2026-03-25T00:05:00", "def", "90.00", "completed", "better"])
 
-        p1, p2 = _patch_sprints_root(sprints)
-        with p1, p2:
+        p1, p2, p3 = _patch_pointer(sprints)
+        with p1, p2, p3:
             result = list_sprints()
 
         assert len(result) == 1
@@ -141,8 +154,8 @@ class TestListSprints:
         (sprints / "not-a-sprint").mkdir(parents=True)
         (sprints / "2026-03-25-valid").mkdir(parents=True)
 
-        p1, p2 = _patch_sprints_root(sprints)
-        with p1, p2:
+        p1, p2, p3 = _patch_pointer(sprints)
+        with p1, p2, p3:
             result = list_sprints()
 
         assert len(result) == 1
@@ -153,67 +166,17 @@ class TestSwitchSprint:
     def test_switch_to_existing(self, tmp_path: Path) -> None:
         sprints = tmp_path / "sprints"
         (sprints / "2026-03-25-test").mkdir(parents=True)
-        campaign_toml = tmp_path / "campaign.toml"
-        campaign_toml.write_text('[sprint]\nname = "2026-03-24-old"\n')
 
-        p1, p2 = _patch_sprints_root(sprints)
-        with p1, p2:
-            switch_sprint("2026-03-25-test", campaign_toml)
+        p1, p2, p3 = _patch_pointer(sprints)
+        with p1, p2, p3 as mock_save:
+            switch_sprint("2026-03-25-test")
 
-        content = campaign_toml.read_text()
-        assert 'name = "2026-03-25-test"' in content
+        mock_save.assert_called_once_with("test", "2026-03-25-test")
 
     def test_switch_to_nonexistent_raises(self, tmp_path: Path) -> None:
         sprints = tmp_path / "sprints"
         sprints.mkdir()
-        campaign_toml = tmp_path / "campaign.toml"
-        campaign_toml.write_text('[sprint]\nname = "2026-03-24-old"\n')
 
-        p1, p2 = _patch_sprints_root(sprints)
-        with p1, p2, pytest.raises(FileNotFoundError, match="Sprint not found"):
-            switch_sprint("2026-03-25-missing", campaign_toml)
-
-
-class TestSetSprintName:
-    def test_existing_sprint_section(self, tmp_path: Path) -> None:
-        f = tmp_path / "campaign.toml"
-        f.write_text('[sprint]\nname = "old"\n\n[campaign]\nname = "test"\n')
-
-        _set_sprint_name(f, "2026-03-25-new")
-
-        content = f.read_text()
-        assert 'name = "2026-03-25-new"' in content
-        assert 'name = "old"' not in content
-        assert "[campaign]" in content
-
-    def test_no_sprint_section(self, tmp_path: Path) -> None:
-        f = tmp_path / "campaign.toml"
-        f.write_text('[campaign]\nname = "test"\n')
-
-        _set_sprint_name(f, "2026-03-25-new")
-
-        content = f.read_text()
-        assert "[sprint]" in content
-        assert 'name = "2026-03-25-new"' in content
-        assert "[campaign]" in content
-
-    def test_comment_between_sprint_and_name(self, tmp_path: Path) -> None:
-        f = tmp_path / "campaign.toml"
-        f.write_text('[sprint]\n# Active sprint\nname = "old"\n\n[campaign]\nname = "test"\n')
-
-        _set_sprint_name(f, "2026-03-25-new")
-
-        content = f.read_text()
-        assert 'name = "2026-03-25-new"' in content
-        assert 'name = "old"' not in content
-        assert "# Active sprint" in content
-
-    def test_blank_lines_between_sprint_and_name(self, tmp_path: Path) -> None:
-        f = tmp_path / "campaign.toml"
-        f.write_text('[sprint]\n\nname = "old"\n')
-
-        _set_sprint_name(f, "2026-03-25-new")
-
-        content = f.read_text()
-        assert 'name = "2026-03-25-new"' in content
-        assert 'name = "old"' not in content
+        p1, p2, p3 = _patch_pointer(sprints)
+        with p1, p2, p3, pytest.raises(FileNotFoundError, match="Sprint not found"):
+            switch_sprint("2026-03-25-missing")

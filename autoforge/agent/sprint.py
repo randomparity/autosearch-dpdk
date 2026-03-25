@@ -5,14 +5,14 @@ from __future__ import annotations
 import csv
 import re
 import shutil
-import tomllib
 from pathlib import Path
 from typing import TYPE_CHECKING
+
+from autoforge.agent.campaign import REPO_ROOT, load_pointer, save_pointer
 
 if TYPE_CHECKING:
     from autoforge.agent.campaign import CampaignConfig
 
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 SPRINT_NAME_RE = re.compile(r"^\d{4}-\d{2}-\d{2}-[a-z0-9][a-z0-9-]*$")
 
 RESULTS_COLUMNS = [
@@ -25,23 +25,20 @@ RESULTS_COLUMNS = [
 ]
 
 
-def _sprints_root(campaign: CampaignConfig | None = None) -> Path:
-    """Derive the sprints root from campaign config.
+def _sprints_root(project: str | None = None) -> Path:
+    """Derive the sprints root from project name.
 
     Sprints live under projects/<name>/sprints/ when a project name is set.
     """
-    if campaign is not None:
-        project_name = campaign.get("project", {}).get("name", "")
-        if project_name:
-            return REPO_ROOT / "projects" / project_name / "sprints"
+    if project:
+        return REPO_ROOT / "projects" / project / "sprints"
     return REPO_ROOT / "sprints"
 
 
-def _sprints_root_from_path(campaign_path: Path) -> Path:
-    """Load campaign TOML and derive sprints root."""
-    with open(campaign_path, "rb") as f:
-        campaign = tomllib.load(f)
-    return _sprints_root(campaign)
+def _sprints_root_from_pointer() -> tuple[Path, str]:
+    """Load pointer and return (sprints_root, project_name)."""
+    pointer = load_pointer()
+    return _sprints_root(pointer["project"]), pointer["project"]
 
 
 def validate_sprint_name(name: str) -> None:
@@ -54,22 +51,25 @@ def validate_sprint_name(name: str) -> None:
         raise ValueError(msg)
 
 
-def active_sprint_name(campaign: CampaignConfig) -> str:
-    """Return the active sprint name from campaign config.
+def active_sprint_name(campaign: CampaignConfig | None = None) -> str:
+    """Return the active sprint name from the .autoforge.toml pointer.
+
+    Args:
+        campaign: Ignored (kept for backward compatibility). Sprint identity
+            now comes from the pointer file, not campaign config.
 
     Raises:
         KeyError: If no sprint is configured.
+        FileNotFoundError: If pointer file doesn't exist.
     """
-    name = campaign.get("sprint", {}).get("name")
-    if not name:
-        msg = "No active sprint. Run 'autoforge sprint init <name>' first."
-        raise KeyError(msg)
-    return name
+    pointer = load_pointer()
+    return pointer["sprint"]
 
 
 def sprint_dir(campaign: CampaignConfig) -> Path:
     """Return the sprint root directory."""
-    return _sprints_root(campaign) / active_sprint_name(campaign)
+    pointer = load_pointer()
+    return _sprints_root(pointer["project"]) / pointer["sprint"]
 
 
 def requests_dir(campaign: CampaignConfig) -> Path:
@@ -92,19 +92,29 @@ def docs_dir(campaign: CampaignConfig) -> Path:
     return sprint_dir(campaign) / "docs"
 
 
-def init_sprint(name: str, campaign_path: Path) -> Path:
-    """Create a new sprint directory with frozen campaign config.
+def init_sprint(
+    name: str,
+    template: Path | None = None,
+    from_sprint: str | None = None,
+) -> Path:
+    """Create a new sprint directory with campaign config.
+
+    The campaign.toml is copied from one of:
+        1. ``from_sprint`` — an existing sprint's campaign.toml
+        2. ``template`` — an explicit template path
+        3. Default: config/campaign.toml.example
 
     Args:
         name: Sprint name (YYYY-MM-DD-slug format).
-        campaign_path: Path to the live campaign.toml.
+        template: Path to a campaign TOML template.
+        from_sprint: Name of an existing sprint to clone config from.
 
     Returns:
         Path to the created sprint directory.
     """
     validate_sprint_name(name)
 
-    root = _sprints_root_from_path(campaign_path)
+    root, project = _sprints_root_from_pointer()
     sdir = root / name
     if sdir.exists():
         msg = f"Sprint directory already exists: {sdir}"
@@ -113,34 +123,47 @@ def init_sprint(name: str, campaign_path: Path) -> Path:
     (sdir / "requests").mkdir(parents=True)
     (sdir / "docs").mkdir()
 
-    # Frozen snapshot of campaign config
-    shutil.copy2(campaign_path, sdir / "campaign.toml")
+    # Determine source for campaign.toml
+    if from_sprint:
+        validate_sprint_name(from_sprint)
+        source = root / from_sprint / "campaign.toml"
+        if not source.exists():
+            msg = f"Source sprint config not found: {source}"
+            raise FileNotFoundError(msg)
+    elif template:
+        source = template
+    else:
+        source = REPO_ROOT / "config" / "campaign.toml.example"
+        if not source.exists():
+            msg = f"Template not found: {source}"
+            raise FileNotFoundError(msg)
+
+    shutil.copy2(source, sdir / "campaign.toml")
 
     # Empty results.tsv with header
     with open(sdir / "results.tsv", "w", newline="") as f:
         writer = csv.writer(f, delimiter="\t")
         writer.writerow(RESULTS_COLUMNS)
 
-    # Write sprint name into live campaign.toml
-    _set_sprint_name(campaign_path, name)
+    # Activate the new sprint via pointer
+    save_pointer(project, name)
 
     return sdir
 
 
-def switch_sprint(name: str, campaign_path: Path) -> None:
+def switch_sprint(name: str) -> None:
     """Switch the active sprint to an existing one.
 
     Args:
         name: Sprint name to switch to.
-        campaign_path: Path to the live campaign.toml.
     """
     validate_sprint_name(name)
-    root = _sprints_root_from_path(campaign_path)
+    root, project = _sprints_root_from_pointer()
     sdir = root / name
     if not sdir.is_dir():
         msg = f"Sprint not found: {sdir}"
         raise FileNotFoundError(msg)
-    _set_sprint_name(campaign_path, name)
+    save_pointer(project, name)
 
 
 def list_sprints(campaign: CampaignConfig | None = None) -> list[dict]:
@@ -151,7 +174,16 @@ def list_sprints(campaign: CampaignConfig | None = None) -> list[dict]:
         sorted by name (chronological). max_metric is always the
         maximum value regardless of campaign direction.
     """
-    root = _sprints_root(campaign)
+    try:
+        root, _ = _sprints_root_from_pointer()
+    except (FileNotFoundError, KeyError):
+        # Fall back to campaign-based resolution if pointer missing
+        if campaign is not None:
+            project_name = campaign.get("project", {}).get("name", "")
+            root = _sprints_root(project_name)
+        else:
+            return []
+
     if not root.is_dir():
         return []
 
@@ -184,36 +216,3 @@ def list_sprints(campaign: CampaignConfig | None = None) -> list[dict]:
         sprints.append(info)
 
     return sprints
-
-
-def _set_sprint_name(campaign_path: Path, name: str) -> None:
-    """Write or update [sprint] name in campaign.toml.
-
-    Handles comments and blank lines between [sprint] and name =.
-    """
-    lines = campaign_path.read_text().splitlines(keepends=True)
-    sprint_line = f'name = "{name}"\n'
-
-    # Find [sprint] section and replace the next name = line
-    in_sprint = False
-    for i, line in enumerate(lines):
-        stripped = line.strip()
-        if stripped == "[sprint]":
-            in_sprint = True
-            continue
-        if in_sprint:
-            if stripped.startswith("[") and stripped.endswith("]"):
-                # Hit next section without finding name — insert before it
-                lines.insert(i, sprint_line)
-                break
-            if stripped.startswith("name") and "=" in stripped:
-                lines[i] = sprint_line
-                break
-    else:
-        if not in_sprint:
-            # No [sprint] section — prepend one
-            lines.insert(0, "[sprint]\n")
-            lines.insert(1, sprint_line)
-            lines.insert(2, "\n")
-
-    campaign_path.write_text("".join(lines))

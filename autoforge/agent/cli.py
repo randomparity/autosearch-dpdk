@@ -6,7 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from autoforge.agent.campaign import CampaignConfig, load_campaign
+from autoforge.agent.campaign import CampaignConfig, load_campaign, resolve_campaign_path
 from autoforge.agent.git_ops import (
     full_revert,
     git_add_commit_push,
@@ -21,6 +21,7 @@ from autoforge.agent.history import (
     load_failures,
     load_history,
 )
+from autoforge.agent.project import init_project
 from autoforge.agent.protocol import (
     create_request,
     find_latest_request,
@@ -43,8 +44,6 @@ from autoforge.agent.strategy import (
     format_profile_lines,
     validate_change,
 )
-
-DEFAULT_CAMPAIGN = Path(__file__).resolve().parent.parent.parent / "config" / "campaign.toml"
 
 
 def _source_path(campaign: CampaignConfig) -> Path:
@@ -318,15 +317,30 @@ def cmd_status(campaign: CampaignConfig) -> None:
     _print_result(latest)
 
 
-def cmd_sprint_init(name: str, campaign_path: Path) -> None:
+def cmd_sprint_init(
+    name: str,
+    template: Path | None = None,
+    from_sprint: str | None = None,
+) -> None:
     """Create a new sprint directory."""
     try:
-        sdir = init_sprint(name, campaign_path)
-    except (ValueError, FileExistsError) as exc:
+        sdir = init_sprint(name, template=template, from_sprint=from_sprint)
+    except (ValueError, FileExistsError, FileNotFoundError) as exc:
         print(f"ERROR: {exc}")
         sys.exit(1)
     print(f"Sprint initialized: {sdir}")
     print("  requests/  docs/  campaign.toml  results.tsv")
+
+
+def cmd_project_init(name: str) -> None:
+    """Create a new project directory skeleton."""
+    try:
+        pdir = init_project(name)
+    except (ValueError, FileExistsError) as exc:
+        print(f"ERROR: {exc}")
+        sys.exit(1)
+    print(f"Project initialized: {pdir}")
+    print("  builds/  deploys/  tests/  perfs/  sprints/")
 
 
 def cmd_sprint_list(campaign: CampaignConfig) -> None:
@@ -337,8 +351,8 @@ def cmd_sprint_list(campaign: CampaignConfig) -> None:
         return
 
     try:
-        active = active_sprint_name(campaign)
-    except KeyError:
+        active = active_sprint_name()
+    except (KeyError, FileNotFoundError):
         active = None
 
     print("Sprints:")
@@ -421,6 +435,17 @@ def main() -> None:
 
     init_p = sprint_sub.add_parser("init", help="Create a new sprint")
     init_p.add_argument("name", help="Sprint name (YYYY-MM-DD-slug)")
+    init_p.add_argument(
+        "--from",
+        dest="from_sprint",
+        default=None,
+        help="Clone campaign.toml from an existing sprint",
+    )
+    init_p.add_argument(
+        "--template",
+        default=None,
+        help="Path to a campaign.toml template",
+    )
 
     sprint_sub.add_parser("list", help="List all sprints")
     sprint_sub.add_parser("active", help="Print active sprint name")
@@ -428,16 +453,29 @@ def main() -> None:
     switch_p = sprint_sub.add_parser("switch", help="Switch to an existing sprint")
     switch_p.add_argument("name", help="Sprint name to switch to")
 
+    # Project subcommands
+    project_p = sub.add_parser("project", help="Project management")
+    project_sub = project_p.add_subparsers(dest="project_command", required=True)
+
+    project_init_p = project_sub.add_parser("init", help="Create a new project")
+    project_init_p.add_argument("name", help="Project name (lowercase alphanumeric + hyphens)")
+
     args = parser.parse_args()
 
-    campaign_path = Path(args.campaign) if args.campaign else DEFAULT_CAMPAIGN
+    campaign_path = Path(args.campaign) if args.campaign else None
 
-    # Sprint init doesn't need full campaign loaded
+    # Commands that don't need campaign loaded
     if args.command == "sprint" and args.sprint_command == "init":
-        cmd_sprint_init(args.name, campaign_path)
+        template = Path(args.template) if args.template else None
+        cmd_sprint_init(args.name, template=template, from_sprint=args.from_sprint)
         return
 
-    campaign = load_campaign(campaign_path)
+    if args.command == "project":
+        if args.project_command == "init":
+            cmd_project_init(args.name)
+        return
+
+    campaign = load_campaign(resolve_campaign_path(campaign_path))
 
     if args.command == "sprint":
         if args.sprint_command == "list":
@@ -445,7 +483,7 @@ def main() -> None:
         elif args.sprint_command == "active":
             cmd_sprint_active(campaign)
         elif args.sprint_command == "switch":
-            switch_sprint(args.name, campaign_path)
+            switch_sprint(args.name)
             print(f"Switched to sprint: {args.name}")
     elif args.command == "hints":
         cmd_hints(campaign, args.arch, args.topic, args.list_topics)

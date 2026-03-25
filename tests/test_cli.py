@@ -28,42 +28,34 @@ SAMPLE_CAMPAIGN = {
         "submodule_path": "dpdk",
         "optimization_branch": "autosearch/optimize",
     },
-    "sprint": {"name": "2026-01-01-test"},
 }
+
+SAMPLE_POINTER = {"project": "dpdk", "sprint": "2026-01-01-test"}
 
 
 class TestCmdSprintInit:
     def test_success(self, tmp_path: Path, capsys: pytest.CaptureFixture) -> None:
-        campaign_toml = tmp_path / "campaign.toml"
-        campaign_toml.write_text('[campaign]\nname = "test"\n')
-
         with patch("autoforge.agent.cli.init_sprint") as mock_init:
             mock_init.return_value = tmp_path / "sprints" / "2026-03-25-test"
-            cmd_sprint_init("2026-03-25-test", campaign_toml)
+            cmd_sprint_init("2026-03-25-test")
 
         captured = capsys.readouterr()
         assert "Sprint initialized" in captured.out
-        mock_init.assert_called_once_with("2026-03-25-test", campaign_toml)
+        mock_init.assert_called_once_with("2026-03-25-test", template=None, from_sprint=None)
 
-    def test_duplicate_exits(self, tmp_path: Path) -> None:
-        campaign_toml = tmp_path / "campaign.toml"
-        campaign_toml.write_text('[campaign]\nname = "test"\n')
-
+    def test_duplicate_exits(self) -> None:
         with (
             patch("autoforge.agent.cli.init_sprint", side_effect=FileExistsError("already exists")),
             pytest.raises(SystemExit, match="1"),
         ):
-            cmd_sprint_init("2026-03-25-test", campaign_toml)
+            cmd_sprint_init("2026-03-25-test")
 
-    def test_invalid_name_exits(self, tmp_path: Path) -> None:
-        campaign_toml = tmp_path / "campaign.toml"
-        campaign_toml.write_text('[campaign]\nname = "test"\n')
-
+    def test_invalid_name_exits(self) -> None:
         with (
             patch("autoforge.agent.cli.init_sprint", side_effect=ValueError("Must match")),
             pytest.raises(SystemExit, match="1"),
         ):
-            cmd_sprint_init("BAD", campaign_toml)
+            cmd_sprint_init("BAD")
 
 
 class TestCmdSprintList:
@@ -79,7 +71,10 @@ class TestCmdSprintList:
             {"name": "2026-01-01-test", "iterations": 5, "max_metric": 86.25},
             {"name": "2026-02-01-next", "iterations": 0, "max_metric": None},
         ]
-        with patch("autoforge.agent.cli.list_sprints", return_value=sprints):
+        with (
+            patch("autoforge.agent.cli.list_sprints", return_value=sprints),
+            patch("autoforge.agent.cli.active_sprint_name", return_value="2026-01-01-test"),
+        ):
             cmd_sprint_list(SAMPLE_CAMPAIGN)
 
         captured = capsys.readouterr()
@@ -91,13 +86,20 @@ class TestCmdSprintList:
 
 class TestCmdSprintActive:
     def test_active_sprint(self, capsys: pytest.CaptureFixture) -> None:
-        cmd_sprint_active(SAMPLE_CAMPAIGN)
+        with patch("autoforge.agent.cli.active_sprint_name", return_value="2026-01-01-test"):
+            cmd_sprint_active(SAMPLE_CAMPAIGN)
         captured = capsys.readouterr()
         assert "2026-01-01-test" in captured.out
 
     def test_no_active_sprint(self) -> None:
-        campaign = {"campaign": {"name": "test"}}
-        with pytest.raises(SystemExit, match="1"):
+        campaign: dict = {"campaign": {"name": "test"}}
+        with (
+            patch(
+                "autoforge.agent.cli.active_sprint_name",
+                side_effect=KeyError("No active sprint"),
+            ),
+            pytest.raises(SystemExit, match="1"),
+        ):
             cmd_sprint_active(campaign)
 
 

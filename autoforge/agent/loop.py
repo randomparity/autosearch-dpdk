@@ -6,7 +6,7 @@ import argparse
 import logging
 from pathlib import Path
 
-from autoforge.agent.campaign import CampaignConfig, load_campaign
+from autoforge.agent.campaign import CampaignConfig, load_campaign, resolve_campaign_path
 from autoforge.agent.git_ops import (
     ensure_optimization_branch,
     git_add_commit_push,
@@ -191,7 +191,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Autoforge interactive loop")
     parser.add_argument(
         "--campaign",
-        default="config/campaign.toml",
+        default=None,
         help="Path to campaign TOML config",
     )
     parser.add_argument("--dry-run", action="store_true", help="Skip git push (local testing)")
@@ -211,7 +211,8 @@ def main() -> None:
 
     setup_logging(args.log_level, args.log_file)
 
-    campaign = load_campaign(Path(args.campaign))
+    explicit = Path(args.campaign) if args.campaign else None
+    campaign = load_campaign(resolve_campaign_path(explicit))
     source_path = Path(campaign.get("project", {}).get("submodule_path", "dpdk"))
     opt_branch = campaign.get("project", {}).get("optimization_branch", "autosearch/optimize")
     ensure_optimization_branch(source_path, opt_branch)

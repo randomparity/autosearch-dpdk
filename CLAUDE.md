@@ -19,6 +19,11 @@ uv run autoforge baseline                              # submit baseline (no cha
 uv run autoforge hints                                 # show arch optimization hints
 uv run autoforge hints --list                           # list available hint topics
 uv run autoforge hints --topic perf-counters            # show perf counter reference
+uv run autoforge project init <name>                     # scaffold new project
+uv run autoforge sprint init <name>                      # create new sprint
+uv run autoforge sprint init <name> --from <sprint>      # clone sprint config
+uv run autoforge sprint list                              # list all sprints
+uv run autoforge sprint switch <name>                    # switch active sprint
 uv run autoforge-loop --dry-run                         # interactive mode (manual fallback)
 ```
 
@@ -59,11 +64,12 @@ autoforge_dpdk/        DPDK plugin: meson+ninja build, testpmd/DTS testing
 
 ### Agent modules
 
-- `cli.py` — CLI subcommands (`context`, `submit`, `poll`, `judge`, `baseline`, `revert`, `build-log`, `status`, `hints`) for Claude Code
+- `cli.py` — CLI subcommands (`context`, `submit`, `poll`, `judge`, `baseline`, `revert`, `build-log`, `status`, `hints`, `sprint`, `project`) for Claude Code
 - `hints.py` — architecture-specific optimization hints lookup (supports topics: optimization, perf-counters)
 - `loop.py` — interactive iteration loop (manual fallback)
 - `git_ops.py` — git subprocess wrappers (`GIT_TIMEOUT=60`), `record_result_or_revert()`, `full_revert()`, `force_push_source()`
-- `campaign.py` — `CampaignConfig` TypedDict, `load_campaign()`
+- `campaign.py` — `CampaignConfig` TypedDict, `load_campaign()`, `resolve_campaign_path()`, pointer load/save
+- `project.py` — `init_project()` for scaffolding new projects
 - `strategy.py` — `format_context()`, `validate_change()`, `extract_profile_summary()`
 - `history.py` — TSV-based results/failures tracking
 - `metric.py` — `compare_metric()`, `below_threshold()`, `Direction` Literal type
@@ -82,9 +88,13 @@ autoforge_dpdk/        DPDK plugin: meson+ninja build, testpmd/DTS testing
 
 ### Configuration
 
-- `config/campaign.toml` — what to optimize (metric, goal, project scope, test backend, plugin selection)
+- `.autoforge.toml` — pointer file at repo root, sets active project + sprint (tracked in git)
+- `config/campaign.toml.example` — template for new sprint campaign configs
 - `config/runner.toml` — where to build/test (paths, PCI addresses, lcores, timeouts). Gitignored; copy from `runner.toml.example`
+- `projects/<project>/sprints/<sprint>/campaign.toml` — authoritative campaign config per sprint
 - `pyelftools` in dependencies is required by DPDK's meson build, not by this project's Python code
+
+Campaign config resolution order: explicit `--campaign` flag → `AUTOFORGE_CAMPAIGN` env var → `.autoforge.toml` pointer
 
 ### Key types
 
@@ -101,17 +111,17 @@ Each sprint has a `program.md` with optimization instructions specific to that s
 
 ## Sprint organization
 
-All experiment artifacts are organized per-sprint under `sprints/<name>/`:
+All experiment artifacts are organized per-sprint under `projects/<project>/sprints/<name>/`:
 ```
-sprints/2026-03-23-memif-ppc64le/
-  campaign.toml     # frozen snapshot of campaign config
+projects/dpdk/sprints/2026-03-23-memif-ppc64le/
+  campaign.toml     # authoritative campaign config for this sprint
   requests/         # request JSON files
   results.tsv       # iteration history
   failures.tsv      # failed optimization attempts (created on first failure)
   docs/             # summary, graphs
 ```
 
-The active sprint is set in `config/campaign.toml` under `[sprint] name = "..."`. Use `uv run autoforge sprint init <name>` to create a new sprint. Sprint names must match `YYYY-MM-DD-slug` format.
+The active sprint is set in `.autoforge.toml` at the repo root. Use `uv run autoforge sprint init <name>` to create a new sprint (copies from `config/campaign.toml.example` or `--from <sprint>`). Sprint names must match `YYYY-MM-DD-slug` format.
 
 Never commit test or scratch request files — they will pollute the real results history. Tests should use `tmp_path` fixtures, not sprint directories.
 

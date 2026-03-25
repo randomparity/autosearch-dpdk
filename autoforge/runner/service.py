@@ -5,8 +5,9 @@ from __future__ import annotations
 import logging
 import os
 import tomllib
-from pathlib import Path
 
+from autoforge.agent.campaign import load_campaign, resolve_campaign_path
+from autoforge.agent.sprint import requests_dir
 from autoforge.logging_config import setup_logging
 from autoforge.runner.base import (
     BuildRunner,
@@ -32,30 +33,6 @@ def load_config(path: str | None = None) -> dict:
         return tomllib.load(f)
 
 
-def _load_campaign() -> dict:
-    """Load campaign.toml from the repo root."""
-    repo_root = Path(__file__).resolve().parent.parent.parent
-    campaign_path = repo_root / "config" / "campaign.toml"
-    if not campaign_path.exists():
-        msg = f"Campaign config not found: {campaign_path}"
-        raise FileNotFoundError(msg)
-    with open(campaign_path, "rb") as f:
-        return tomllib.load(f)
-
-
-def _load_requests_dir(campaign: dict) -> Path:
-    """Derive the requests directory from campaign sprint config."""
-    repo_root = Path(__file__).resolve().parent.parent.parent
-    sprint_name = campaign.get("sprint", {}).get("name")
-    if not sprint_name:
-        msg = "No [sprint] name in campaign.toml. Run 'autoforge sprint init' first."
-        raise ValueError(msg)
-    project_name = campaign.get("project", {}).get("name", "")
-    if project_name:
-        return repo_root / "projects" / project_name / "sprints" / sprint_name / "requests"
-    return repo_root / "sprints" / sprint_name / "requests"
-
-
 def main() -> None:
     """Runner service entry point."""
     config = load_config()
@@ -66,8 +43,9 @@ def main() -> None:
         log_file=runner_cfg.get("log_file"),
     )
 
-    campaign = _load_campaign()
-    req_dir = _load_requests_dir(campaign)
+    campaign_path = resolve_campaign_path()
+    campaign = load_campaign(campaign_path)
+    req_dir = requests_dir(campaign)
 
     phase = runner_cfg.get("phase", "all")
     runner_cls = PHASE_RUNNERS.get(phase)
