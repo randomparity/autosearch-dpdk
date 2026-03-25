@@ -11,7 +11,7 @@
   "metric_path": "throughput_mpps",
   "description": "hoist desc_len and region addr out of zc rx refill loop",
   "backend": "testpmd",
-  "status": "claimed",
+  "status": "building",
   "claimed_at": "2026-03-25T03:05:51.987435+00:00",
   "completed_at": null,
   "build_log_snippet": null,
