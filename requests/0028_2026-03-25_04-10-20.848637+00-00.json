@@ -1,0 +1,22 @@
+{
+  "sequence": 28,
+  "created_at": "2026-03-25T04:10:20.848637+00:00",
+  "dpdk_commit": "a08e840df54cafbb723f6b3bdc2a4d2fecd711f5",
+  "test_suites": [
+    "TestPmd"
+  ],
+  "test_cases": null,
+  "perf": true,
+  "metric_name": "throughput_mpps",
+  "metric_path": "throughput_mpps",
+  "description": "use rte_mov64 for <=64B packets in 4x unrolled rx, skip rte_memcpy branches",
+  "backend": "testpmd",
+  "status": "pending",
+  "claimed_at": null,
+  "completed_at": null,
+  "build_log_snippet": null,
+  "results_json": null,
+  "results_summary": null,
+  "metric_value": null,
+  "error": null
+}
