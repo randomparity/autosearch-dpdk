@@ -8,6 +8,7 @@ from pathlib import Path
 
 from src.agent.campaign import CampaignConfig, load_campaign
 from src.agent.git_ops import (
+    full_revert,
     git_add_commit_push,
     git_submodule_head,
     record_result_or_revert,
@@ -22,6 +23,7 @@ from src.agent.history import (
 from src.agent.protocol import (
     create_request,
     find_latest_request,
+    find_request_by_seq,
     next_sequence,
     poll_for_completion,
 )
@@ -191,6 +193,7 @@ def cmd_judge(campaign: CampaignConfig, dry_run: bool) -> None:
         dry_run,
         results_path=res,
         failures_path=fail,
+        optimization_branch=_optimization_branch(campaign),
     )
 
 
@@ -229,6 +232,55 @@ def cmd_baseline(campaign: CampaignConfig, dry_run: bool) -> None:
         return
 
     _print_result(result)
+
+
+def _optimization_branch(campaign: CampaignConfig) -> str:
+    return campaign.get("dpdk", {}).get("optimization_branch", "")
+
+
+def cmd_revert(campaign: CampaignConfig, dry_run: bool) -> None:
+    """Revert the last DPDK submodule commit and force-push the fork."""
+    dpdk_path = _dpdk_path(campaign)
+    branch = _optimization_branch(campaign)
+
+    old_head = full_revert(dpdk_path, branch, dry_run)
+    new_head = git_submodule_head(dpdk_path)
+
+    print(f"Reverted {old_head[:12]} -> {new_head[:12]}")
+    if branch and not dry_run:
+        print(f"Force-pushed {branch} to origin.")
+    elif dry_run:
+        print("[dry-run] Skipped push.")
+
+
+def _format_build_log(log: str) -> str:
+    """Highlight error lines in a build log for readability."""
+    error_patterns = ("error:", "FAILED", "fatal:", "undefined reference")
+    lines = []
+    for line in log.splitlines():
+        if any(pat in line for pat in error_patterns):
+            lines.append(f">>> {line}")
+        else:
+            lines.append(f"    {line}")
+    return "\n".join(lines)
+
+
+def cmd_build_log(campaign: CampaignConfig, seq: int) -> None:
+    """Print the build log for a given request sequence number."""
+    req = _req_dir(campaign)
+    request = find_request_by_seq(seq, req)
+
+    if request is None:
+        print(f"ERROR: No request found for sequence {seq:04d}.")
+        sys.exit(1)
+
+    snippet = request.build_log_snippet
+    if not snippet:
+        print(f"No build log for request {seq:04d}.")
+        return
+
+    print(f"Build log for request {seq:04d}:")
+    print(_format_build_log(snippet))
 
 
 def cmd_status(campaign: CampaignConfig) -> None:
@@ -301,6 +353,7 @@ def main() -> None:
     sub.add_parser("poll", help="Poll until latest request completes")
     sub.add_parser("judge", help="Compare result to best, keep or revert")
     sub.add_parser("baseline", help="Submit baseline request")
+    sub.add_parser("revert", help="Revert last DPDK change and force-push fork")
 
     submit_p = sub.add_parser("submit", help="Submit a code change for testing")
     submit_p.add_argument(
@@ -308,6 +361,15 @@ def main() -> None:
         "-d",
         required=True,
         help="Description of the change",
+    )
+
+    buildlog_p = sub.add_parser("build-log", help="Print build log for a request")
+    buildlog_p.add_argument(
+        "--seq",
+        "-s",
+        type=int,
+        required=True,
+        help="Request sequence number",
     )
 
     # Sprint subcommands
@@ -352,6 +414,10 @@ def main() -> None:
         cmd_judge(campaign, args.dry_run)
     elif args.command == "baseline":
         cmd_baseline(campaign, args.dry_run)
+    elif args.command == "revert":
+        cmd_revert(campaign, args.dry_run)
+    elif args.command == "build-log":
+        cmd_build_log(campaign, args.seq)
     elif args.command == "status":
         cmd_status(campaign)
 

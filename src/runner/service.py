@@ -27,7 +27,7 @@ from src.runner.protocol import (
     find_pending,
     update_status,
 )
-from src.runner.testpmd import run_testpmd
+from src.runner.testpmd import run_testpmd_repeated
 
 logger = logging.getLogger(__name__)
 
@@ -163,7 +163,7 @@ def execute_request(request: TestRequest, request_path: Path, config: dict) -> N
     else:
         logger.info("Running testpmd measurement")
         profile_config = config.get("profiling", {})
-        testpmd_result = run_testpmd(
+        testpmd_result = run_testpmd_repeated(
             build_dir=build_dir,
             config=config,
             timeout=test_timeout,

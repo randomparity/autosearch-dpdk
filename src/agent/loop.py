@@ -114,6 +114,7 @@ def run_interactive_iteration(
 
     append_result(seq, commit, metric, "completed", description, path=res)
 
+    opt_branch = campaign.get("dpdk", {}).get("optimization_branch", "")
     record_result_or_revert(
         metric,
         best_val,
@@ -125,6 +126,7 @@ def run_interactive_iteration(
         dry_run,
         results_path=res,
         failures_path=fail,
+        optimization_branch=opt_branch,
     )
 
     if below_threshold(metric, best_val, campaign):

@@ -1,6 +1,8 @@
 """Agent-side modules for the autosearch optimization loop."""
 
 from src.agent.git_ops import (
+    force_push_submodule,
+    full_revert,
     git_add_commit_push,
     git_submodule_head,
     record_result_or_revert,
@@ -11,6 +13,7 @@ from src.agent.metric import below_threshold, compare_metric
 from src.agent.protocol import (
     create_request,
     find_latest_request,
+    find_request_by_seq,
     next_sequence,
     poll_for_completion,
 )
@@ -24,7 +27,10 @@ __all__ = [
     "create_request",
     "extract_profile_summary",
     "find_latest_request",
+    "find_request_by_seq",
+    "force_push_submodule",
     "format_context",
+    "full_revert",
     "git_add_commit_push",
     "git_submodule_head",
     "load_history",

@@ -8,6 +8,7 @@ import os
 import pty
 import re
 import select
+import statistics
 import subprocess
 import time
 from dataclasses import dataclass
@@ -17,6 +18,23 @@ logger = logging.getLogger(__name__)
 
 RX_PACKETS_RE = re.compile(r"RX-packets:\s+(\d+)")
 RX_PPS_RE = re.compile(r"Rx-pps:\s+(\d+)")
+
+
+def validate_vdev_config(vdevs: list[str]) -> list[str]:
+    """Check for misconfigured vdev strings.
+
+    Returns a list of warning messages (empty if no issues found).
+    """
+    warnings: list[str] = []
+    for vdev in vdevs:
+        parts = vdev.split(",")
+        has_server = any(p.strip() == "role=server" for p in parts)
+        has_zc = any(p.strip() == "zero-copy=yes" for p in parts)
+        if has_server and has_zc:
+            warnings.append(
+                f"vdev '{vdev}': server role ignores zero-copy=yes (only client supports ZC)"
+            )
+    return warnings
 
 
 @dataclass
@@ -67,6 +85,8 @@ def run_testpmd(
     lcores = testpmd_cfg.get("lcores", "4-7")
     pci_addrs = testpmd_cfg.get("pci", [])
     vdevs = testpmd_cfg.get("vdev", [])
+    for warning in validate_vdev_config(vdevs):
+        logger.warning(warning)
     no_pci = testpmd_cfg.get("no_pci", False)
     extra_eal_args = testpmd_cfg.get("extra_eal_args", [])
     nb_cores = int(testpmd_cfg.get("nb_cores", 2))
@@ -375,3 +395,72 @@ def _ensure_stopped(proc: subprocess.Popen, fd: int) -> None:
 
     with contextlib.suppress(OSError):
         os.close(fd)
+
+
+def run_testpmd_repeated(
+    build_dir: Path,
+    config: dict,
+    timeout: int = 600,
+    profile_config: dict | None = None,
+) -> TestpmdResult:
+    """Run testpmd one or more times and return the median result.
+
+    When ``repeat_count`` is 1 (default), delegates directly to
+    :func:`run_testpmd` with zero overhead.  For N > 1, runs testpmd
+    N times, profiles only the final run, and returns the median
+    throughput.
+
+    Args:
+        build_dir: Path to the DPDK build directory.
+        config: Runner configuration dictionary.
+        timeout: Maximum total seconds across all runs.
+        profile_config: Optional profiling configuration dict.
+
+    Returns:
+        A TestpmdResult with median throughput across all runs.
+    """
+    repeat_count = int(config.get("testpmd", {}).get("repeat_count", 1))
+
+    if repeat_count <= 1:
+        return run_testpmd(build_dir, config, timeout, profile_config)
+
+    per_run_timeout = timeout // repeat_count
+    results: list[TestpmdResult] = []
+
+    for i in range(repeat_count):
+        is_last = i == repeat_count - 1
+        run_profile = profile_config if is_last else None
+        result = run_testpmd(build_dir, config, per_run_timeout, run_profile)
+
+        if not result.success:
+            logger.warning("Run %d/%d failed, aborting", i + 1, repeat_count)
+            return result
+
+        logger.info(
+            "Run %d/%d: %.4f Mpps",
+            i + 1,
+            repeat_count,
+            result.throughput_mpps or 0,
+        )
+        results.append(result)
+
+    throughputs = [r.throughput_mpps for r in results if r.throughput_mpps is not None]
+    median = statistics.median(throughputs)
+    total_duration = sum(r.duration_seconds for r in results)
+
+    logger.info(
+        "Median of %d runs: %.4f Mpps (individual: %s)",
+        len(throughputs),
+        median,
+        ", ".join(f"{t:.4f}" for t in throughputs),
+    )
+
+    last = results[-1]
+    return TestpmdResult(
+        success=True,
+        throughput_mpps=round(median, 4),
+        port_stats=last.port_stats,
+        error=None,
+        duration_seconds=total_duration,
+        profile_summary=last.profile_summary,
+    )

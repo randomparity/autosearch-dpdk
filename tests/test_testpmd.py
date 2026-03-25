@@ -1,8 +1,15 @@
-"""Tests for testpmd output parsing."""
+"""Tests for testpmd output parsing, vdev validation, and repeated runs."""
 
 from __future__ import annotations
 
-from src.runner.testpmd import _parse_throughput
+from unittest.mock import patch
+
+from src.runner.testpmd import (
+    TestpmdResult,
+    _parse_throughput,
+    run_testpmd_repeated,
+    validate_vdev_config,
+)
 
 SAMPLE_TESTPMD_OUTPUT = """\
 EAL: Detected 8 lcore(s)
@@ -53,3 +60,103 @@ class TestParseThroughput:
     def test_zero_duration_returns_none(self) -> None:
         result = _parse_throughput(SAMPLE_TESTPMD_OUTPUT, duration=0.0)
         assert result is None
+
+
+class TestValidateVdevConfig:
+    def test_no_vdevs(self) -> None:
+        assert validate_vdev_config([]) == []
+
+    def test_client_zc_ok(self) -> None:
+        assert validate_vdev_config(["net_memif0,role=client,zero-copy=yes"]) == []
+
+    def test_server_zc_warns(self) -> None:
+        warnings = validate_vdev_config(["net_memif0,role=server,zero-copy=yes"])
+        assert len(warnings) == 1
+        assert "server role ignores zero-copy=yes" in warnings[0]
+
+    def test_server_no_zc_ok(self) -> None:
+        assert validate_vdev_config(["net_memif0,role=server,zero-copy=no"]) == []
+
+    def test_mixed_pair(self) -> None:
+        vdevs = [
+            "net_memif0,role=server,id=0,zero-copy=yes",
+            "net_memif1,role=client,id=0,zero-copy=yes",
+        ]
+        warnings = validate_vdev_config(vdevs)
+        assert len(warnings) == 1
+        assert "server" in warnings[0]
+
+
+def _make_result(mpps: float, duration: float = 15.0) -> TestpmdResult:
+    return TestpmdResult(
+        success=True,
+        throughput_mpps=mpps,
+        port_stats="stats",
+        error=None,
+        duration_seconds=duration,
+    )
+
+
+def _make_failure(error: str = "boom") -> TestpmdResult:
+    return TestpmdResult(
+        success=False,
+        throughput_mpps=None,
+        port_stats=None,
+        error=error,
+        duration_seconds=1.0,
+    )
+
+
+class TestRunTestpmdRepeated:
+    def test_single_run_delegates(self) -> None:
+        config = {"testpmd": {"repeat_count": 1}}
+        result = _make_result(86.0)
+        with patch("src.runner.testpmd.run_testpmd", return_value=result) as mock:
+            out = run_testpmd_repeated("/build", config, timeout=600)
+        mock.assert_called_once()
+        assert out.throughput_mpps == 86.0
+
+    def test_default_repeat_count_delegates(self) -> None:
+        config = {"testpmd": {}}
+        result = _make_result(86.0)
+        with patch("src.runner.testpmd.run_testpmd", return_value=result) as mock:
+            out = run_testpmd_repeated("/build", config, timeout=600)
+        mock.assert_called_once()
+        assert out.throughput_mpps == 86.0
+
+    def test_median_of_three(self) -> None:
+        config = {"testpmd": {"repeat_count": 3}}
+        results = [_make_result(80.0), _make_result(86.0), _make_result(83.0)]
+        with patch("src.runner.testpmd.run_testpmd", side_effect=results):
+            out = run_testpmd_repeated("/build", config, timeout=600)
+        assert out.throughput_mpps == 83.0
+        assert out.success is True
+
+    def test_failure_aborts_early(self) -> None:
+        config = {"testpmd": {"repeat_count": 3}}
+        results = [_make_result(80.0), _make_failure()]
+        with patch("src.runner.testpmd.run_testpmd", side_effect=results) as mock:
+            out = run_testpmd_repeated("/build", config, timeout=600)
+        assert out.success is False
+        assert mock.call_count == 2
+
+    def test_profile_only_last_run(self) -> None:
+        config = {"testpmd": {"repeat_count": 3}}
+        results = [_make_result(80.0), _make_result(83.0), _make_result(86.0)]
+        profile_cfg = {"enabled": True, "frequency": 99}
+
+        with patch("src.runner.testpmd.run_testpmd", side_effect=results) as mock:
+            run_testpmd_repeated("/build", config, timeout=600, profile_config=profile_cfg)
+
+        # profile_config is the 4th positional arg (index 3)
+        assert mock.call_count == 3
+        assert mock.call_args_list[0][0][3] is None
+        assert mock.call_args_list[1][0][3] is None
+        assert mock.call_args_list[2][0][3] == profile_cfg
+
+    def test_duration_is_sum(self) -> None:
+        config = {"testpmd": {"repeat_count": 3}}
+        results = [_make_result(80.0, 10.0), _make_result(83.0, 12.0), _make_result(86.0, 11.0)]
+        with patch("src.runner.testpmd.run_testpmd", side_effect=results):
+            out = run_testpmd_repeated("/build", config, timeout=600)
+        assert out.duration_seconds == 33.0

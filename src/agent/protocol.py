@@ -96,6 +96,22 @@ def find_latest_request(requests_dir: Path) -> TestRequest | None:
     return None
 
 
+def find_request_by_seq(seq: int, requests_dir: Path) -> TestRequest | None:
+    """Find a request file by its sequence number.
+
+    Args:
+        seq: Sequence number to look up.
+        requests_dir: Directory containing request JSON files.
+
+    Returns:
+        The TestRequest if found, or None.
+    """
+    matches = list(requests_dir.glob(f"{seq:04d}_*.json"))
+    if not matches:
+        return None
+    return TestRequest.read(matches[0])
+
+
 def poll_for_completion(
     seq: int,
     timeout: int = 3600,

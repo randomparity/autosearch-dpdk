@@ -113,6 +113,41 @@ def revert_last_change(dpdk_path: Path) -> None:
     logger.info("Reverted DPDK submodule to %s", git_submodule_head(dpdk_path)[:12])
 
 
+def force_push_submodule(dpdk_path: Path, branch: str) -> None:
+    """Force-push the DPDK submodule's optimization branch to its remote."""
+    subprocess.run(
+        ["git", "-C", str(dpdk_path), "push", "--force", "origin", branch],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=GIT_TIMEOUT,
+    )
+    logger.info("Force-pushed %s to origin in %s", branch, dpdk_path)
+
+
+def full_revert(dpdk_path: Path, branch: str, dry_run: bool) -> str:
+    """Revert the last DPDK submodule commit and force-push.
+
+    Args:
+        dpdk_path: Path to the DPDK submodule.
+        branch: Optimization branch name to force-push.
+        dry_run: If True, skip push operations.
+
+    Returns:
+        The commit SHA that was reverted (before reset).
+    """
+    old_head = git_submodule_head(dpdk_path)
+    revert_last_change(dpdk_path)
+    if not dry_run:
+        force_push_submodule(dpdk_path, branch)
+    git_add_commit_push(
+        [str(dpdk_path)],
+        "revert: manual revert of DPDK submodule",
+        dry_run=dry_run,
+    )
+    return old_head
+
+
 def record_result_or_revert(
     metric: float | None,
     best_val: float | None,
@@ -124,8 +159,13 @@ def record_result_or_revert(
     dry_run: bool,
     results_path: Path,
     failures_path: Path,
+    optimization_branch: str = "",
 ) -> bool:
     """Record a successful result or revert the change and record a failure.
+
+    Args:
+        optimization_branch: If set, force-push this branch in the submodule
+            after reverting so the fork stays in sync.
 
     Returns True if the result was an improvement.
     """
@@ -145,6 +185,8 @@ def record_result_or_revert(
         print(f"No improvement ({metric} vs best {best_val}). Reverting.")
         diff_summary = get_diff_summary(dpdk_path)
         revert_last_change(dpdk_path)
+        if optimization_branch and not dry_run:
+            force_push_submodule(dpdk_path, optimization_branch)
         append_failure(commit, metric, description, diff_summary, path=failures_path)
         files = [str(results_path), str(failures_path), str(dpdk_path)]
         git_add_commit_push(files, f"revert: iteration {seq:04d}", dry_run=dry_run)

@@ -7,7 +7,14 @@ from unittest.mock import patch
 
 import pytest
 
-from src.agent.cli import cmd_sprint_active, cmd_sprint_init, cmd_sprint_list
+from src.agent.cli import (
+    _format_build_log,
+    cmd_build_log,
+    cmd_revert,
+    cmd_sprint_active,
+    cmd_sprint_init,
+    cmd_sprint_list,
+)
 
 SAMPLE_CAMPAIGN = {
     "campaign": {"name": "test", "max_iterations": 50},
@@ -86,3 +93,74 @@ class TestCmdSprintActive:
         campaign = {"campaign": {"name": "test"}}
         with pytest.raises(SystemExit, match="1"):
             cmd_sprint_active(campaign)
+
+
+class TestCmdRevert:
+    def test_revert_calls_full_revert(self, capsys: pytest.CaptureFixture) -> None:
+        with (
+            patch("src.agent.cli.full_revert", return_value="abc123def456") as mock_revert,
+            patch("src.agent.cli.git_submodule_head", return_value="def456abc123"),
+        ):
+            cmd_revert(SAMPLE_CAMPAIGN, dry_run=False)
+
+        mock_revert.assert_called_once_with(
+            Path("dpdk"),
+            "autosearch/optimize",
+            False,
+        )
+        captured = capsys.readouterr()
+        assert "abc123def456" in captured.out
+        assert "def456abc123" in captured.out
+        assert "Force-pushed" in captured.out
+
+    def test_revert_dry_run(self, capsys: pytest.CaptureFixture) -> None:
+        with (
+            patch("src.agent.cli.full_revert", return_value="abc123def456"),
+            patch("src.agent.cli.git_submodule_head", return_value="def456abc123"),
+        ):
+            cmd_revert(SAMPLE_CAMPAIGN, dry_run=True)
+
+        captured = capsys.readouterr()
+        assert "dry-run" in captured.out
+
+
+class TestFormatBuildLog:
+    def test_error_lines_highlighted(self) -> None:
+        log = "compiling foo.c\nerror: undefined symbol\nok"
+        formatted = _format_build_log(log)
+        assert ">>> error: undefined symbol" in formatted
+
+    def test_fatal_highlighted(self) -> None:
+        log = "fatal: something broke"
+        assert ">>> fatal:" in _format_build_log(log)
+
+    def test_normal_lines_indented(self) -> None:
+        log = "compiling bar.c"
+        assert _format_build_log(log).startswith("    ")
+
+
+class TestCmdBuildLog:
+    def test_build_log_not_found(self) -> None:
+        campaign = {**SAMPLE_CAMPAIGN}
+        with (
+            patch("src.agent.cli.find_request_by_seq", return_value=None),
+            pytest.raises(SystemExit, match="1"),
+        ):
+            cmd_build_log(campaign, seq=99)
+
+    def test_build_log_empty(self, capsys: pytest.CaptureFixture) -> None:
+        mock_req = type("Req", (), {"build_log_snippet": None})()
+        with patch("src.agent.cli.find_request_by_seq", return_value=mock_req):
+            cmd_build_log(SAMPLE_CAMPAIGN, seq=1)
+
+        captured = capsys.readouterr()
+        assert "No build log" in captured.out
+
+    def test_build_log_found(self, capsys: pytest.CaptureFixture) -> None:
+        mock_req = type("Req", (), {"build_log_snippet": "error: bad thing\nok line"})()
+        with patch("src.agent.cli.find_request_by_seq", return_value=mock_req):
+            cmd_build_log(SAMPLE_CAMPAIGN, seq=1)
+
+        captured = capsys.readouterr()
+        assert ">>> error: bad thing" in captured.out
+        assert "    ok line" in captured.out

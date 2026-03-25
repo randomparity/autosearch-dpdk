@@ -55,8 +55,9 @@ lcores = "4-7"
 # pci = ["01:00.0", "01:00.1"]
 
 # Virtual devices (e.g. memif pair). Each string is passed as --vdev to EAL.
-# The client uses zero-copy (ZC). The server zero-copy flag is accepted but
-# silently ignored by the memif PMD — the server always uses the copy path.
+# WARNING: The memif PMD silently ignores zero-copy=yes on the server role.
+# Only the client supports zero-copy. Setting it on a server vdev has no
+# effect and may cause misleading performance expectations.
 vdev = [
     "net_memif0,role=server,id=0,zero-copy=yes,bsize=2048,rsize=12",
     "net_memif1,role=client,id=0,zero-copy=yes,bsize=2048,rsize=12",
@@ -90,6 +91,10 @@ warmup_seconds = 5
 
 # Seconds to collect throughput measurement
 measure_seconds = 10
+
+# Number of measurement runs; median throughput is reported.
+# Use 3-5 for sub-1% gain detection. Default 1 preserves single-run behavior.
+repeat_count = 1
 
 # Run testpmd with sudo (requires passwordless sudo for the testpmd binary)
 sudo = true
