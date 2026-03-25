@@ -1,3 +1,4 @@
 sequence	timestamp	dpdk_commit	metric_value	status	description
 4	2026-03-25T01:13:08.403461+00:00	a69c4e75ec4fe88da27c5891d41c453480ac7be8	77.6119	completed	add descriptor and buffer prefetch to eth_memif_rx fast path (retry)
 7	2026-03-25T01:26:27.217274+00:00	27f206f7ca203a55f1b89d2bb01c62c57fa32169	81.711	completed	allocate exact mbuf count in rx to eliminate wasted alloc/free
+8	2026-03-25T01:31:44.380427+00:00	4d0f374657a2376d81234a95f971d28b4dad66ec	85.3501	completed	batch n_bytes stats accumulation in rx/tx to reduce per-pkt memory writes
