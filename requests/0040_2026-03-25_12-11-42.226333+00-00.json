@@ -11,7 +11,7 @@
   "metric_path": "throughput_mpps",
   "description": "cache region 0 base addr in 4x rx loop, eliminate per-pkt pointer chase",
   "backend": "testpmd",
-  "status": "building",
+  "status": "running",
   "claimed_at": "2026-03-25T12:13:10.896669+00:00",
   "completed_at": null,
   "build_log_snippet": null,
