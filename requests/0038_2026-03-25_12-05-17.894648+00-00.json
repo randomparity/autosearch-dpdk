@@ -11,7 +11,7 @@
   "metric_path": "throughput_mpps",
   "description": "remove zc rx prefetch (hurts on POWER9) and cache d0->length locally",
   "backend": "testpmd",
-  "status": "claimed",
+  "status": "building",
   "claimed_at": "2026-03-25T12:06:56.515817+00:00",
   "completed_at": null,
   "build_log_snippet": null,
