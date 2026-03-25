@@ -21,3 +21,5 @@ timestamp	dpdk_commit	metric_value	description	diff_summary
  1 file changed, 16 insertions(+), 5 deletions(-)"
 2026-03-25T04:12:08.469858+00:00	a08e840df54cafbb723f6b3bdc2a4d2fecd711f5	87.4834	use rte_mov64 for <=64B packets in 4x unrolled rx, skip rte_memcpy branches	"drivers/net/memif/rte_eth_memif.c | 29 +++++++++++++++++++++--------
  1 file changed, 21 insertions(+), 8 deletions(-)"
+2026-03-25T11:42:39.151883+00:00	d1e55591c37ee8813398df086fe4746f3797d866	115.9509	4x unroll non-ZC tx with interleaved copy+desc writes	"drivers/net/memif/rte_eth_memif.c | 55 +++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 55 insertions(+)"

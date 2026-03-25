@@ -22,3 +22,4 @@ sequence	timestamp	dpdk_commit	metric_value	status	description
 29	2026-03-25T04:17:16.350306+00:00	494731e2e9835f676e7e8264e0909be5c12d134e	106.1945	completed	increase testpmd mempool cache from 250 to 512 to reduce ring contention
 30	2026-03-25T10:59:55.853331+00:00	e16d52b6e420df08a861b826fb9cd9b6117ebbc0	111.2303	completed	bypass rte_pktmbuf_free_bulk in non-ZC tx, use direct mempool put
 32	2026-03-25T11:05:20.644312+00:00	0c84450175b85e884c2cd61273286c3659a45169	118.4331	completed	ZC tx fast free: use mbuf->pool directly, not mq->mempool (fix)
+33	2026-03-25T11:42:39.105689+00:00	d1e55591c37ee8813398df086fe4746f3797d866	115.9509	completed	4x unroll non-ZC tx with interleaved copy+desc writes
