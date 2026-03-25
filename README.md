@@ -35,7 +35,7 @@ uv run autosearch context            # show current optimization state
 uv run autosearch-loop --dry-run     # interactive mode (no git push)
 ```
 
-The agent is Claude Code. Read `program.md` for the full autonomous workflow.
+The agent is Claude Code. Each sprint has a `program.md` with its optimization goals — read the active sprint's program file for the full autonomous workflow.
 
 For full setup, see the [agent guide](docs/agent.md) and
 [runner guide](docs/runner.md).

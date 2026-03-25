@@ -97,7 +97,7 @@ autoforge_dpdk/        DPDK plugin: meson+ninja build, testpmd/DTS testing
 
 ## Agent mode (Claude Code)
 
-Read `program.md` for autonomous optimization instructions. The agent uses CLI subcommands (`uv run autoforge context/submit/poll/judge`) to interact with the remote runner. Start with: "read program.md and start experimenting".
+Each sprint has a `program.md` with optimization instructions specific to that sprint's goals. Read the active sprint's program file: `projects/dpdk/sprints/<active-sprint>/program.md`. The agent uses CLI subcommands (`uv run autoforge context/submit/poll/judge`) to interact with the remote runner. Start with: "read the active sprint's program.md and start experimenting".
 
 ## Sprint organization
 
