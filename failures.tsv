@@ -17,3 +17,5 @@ timestamp	dpdk_commit	metric_value	description	diff_summary
  1 file changed, 36 insertions(+)"
 2026-03-25T03:12:16.448538+00:00	fc0cb129eb29b5bacae33b160c6cb43df4a5f449	86.9027	prefetch next mbuf pointer in zc rx loop alongside descriptor	"drivers/net/memif/rte_eth_memif.c | 9 ++++++---
  1 file changed, 6 insertions(+), 3 deletions(-)"
+2026-03-25T03:15:16.732473+00:00	65b546f9ac6f4392a9d471da488d524c9d7b0ffa	88.1636	bulk free stored mbufs instead of per-mbuf free_seg (FIXME tag)	"drivers/net/memif/rte_eth_memif.c | 21 ++++++++++++++++-----
+ 1 file changed, 16 insertions(+), 5 deletions(-)"
