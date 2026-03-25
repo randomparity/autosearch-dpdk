@@ -50,6 +50,10 @@ def _dpdk_path(campaign: CampaignConfig) -> Path:
     return Path(campaign.get("dpdk", {}).get("submodule_path", "dpdk"))
 
 
+def _optimization_branch(campaign: CampaignConfig) -> str:
+    return campaign.get("dpdk", {}).get("optimization_branch", "")
+
+
 def _req_dir(campaign: CampaignConfig) -> Path:
     return requests_dir(campaign)
 
@@ -232,10 +236,6 @@ def cmd_baseline(campaign: CampaignConfig, dry_run: bool) -> None:
         return
 
     _print_result(result)
-
-
-def _optimization_branch(campaign: CampaignConfig) -> str:
-    return campaign.get("dpdk", {}).get("optimization_branch", "")
 
 
 def cmd_revert(campaign: CampaignConfig, dry_run: bool) -> None:

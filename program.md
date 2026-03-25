@@ -64,6 +64,8 @@ All commands: `uv run autosearch <subcommand>`
 | `uv run autosearch sprint list` | List all sprints with iteration counts |
 | `uv run autosearch sprint active` | Print active sprint name |
 | `uv run autosearch sprint switch <name>` | Switch active sprint in `campaign.toml` |
+| `uv run autosearch revert` | Revert last DPDK submodule commit and force-push fork |
+| `uv run autosearch build-log --seq N` | Print formatted build log for request sequence N |
 
 ## Output format
 
@@ -104,7 +106,7 @@ LOOP FOREVER:
 
 ## Error handling
 
-- **Build failure**: `poll` will show the error. Read the build log, fix the code in the submodule, commit, and `submit` again.
+- **Build failure**: `poll` will show the error. Run `uv run autosearch build-log --seq N` to see the full formatted build log with error lines highlighted. Fix the code in the submodule, commit, and `submit` again.
 - **Test failure**: `judge` will revert the submodule. Move on to a different approach.
 - **Timeout**: Treat as failure. `judge` will revert. Consider simplifying the change.
 - **Poll shows "still running"**: Wait and poll again. The runner may be building.

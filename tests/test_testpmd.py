@@ -145,14 +145,20 @@ class TestRunTestpmdRepeated:
         results = [_make_result(80.0), _make_result(83.0), _make_result(86.0)]
         profile_cfg = {"enabled": True, "frequency": 99}
 
-        with patch("src.runner.testpmd.run_testpmd", side_effect=results) as mock:
+        calls = []
+        orig_results = iter(results)
+
+        def capture_call(build_dir, cfg, timeout, profile_config=None):
+            calls.append(profile_config)
+            return next(orig_results)
+
+        with patch("src.runner.testpmd.run_testpmd", side_effect=capture_call):
             run_testpmd_repeated("/build", config, timeout=600, profile_config=profile_cfg)
 
-        # profile_config is the 4th positional arg (index 3)
-        assert mock.call_count == 3
-        assert mock.call_args_list[0][0][3] is None
-        assert mock.call_args_list[1][0][3] is None
-        assert mock.call_args_list[2][0][3] == profile_cfg
+        assert len(calls) == 3
+        assert calls[0] is None
+        assert calls[1] is None
+        assert calls[2] == profile_cfg
 
     def test_duration_is_sum(self) -> None:
         config = {"testpmd": {"repeat_count": 3}}

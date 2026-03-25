@@ -138,7 +138,7 @@ def full_revert(dpdk_path: Path, branch: str, dry_run: bool) -> str:
     """
     old_head = git_submodule_head(dpdk_path)
     revert_last_change(dpdk_path)
-    if not dry_run:
+    if not dry_run and branch:
         force_push_submodule(dpdk_path, branch)
     git_add_commit_push(
         [str(dpdk_path)],

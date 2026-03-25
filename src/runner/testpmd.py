@@ -424,7 +424,7 @@ def run_testpmd_repeated(
     if repeat_count <= 1:
         return run_testpmd(build_dir, config, timeout, profile_config)
 
-    per_run_timeout = timeout // repeat_count
+    per_run_timeout = max(60, timeout // repeat_count)
     results: list[TestpmdResult] = []
 
     for i in range(repeat_count):

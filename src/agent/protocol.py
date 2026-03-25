@@ -109,7 +109,11 @@ def find_request_by_seq(seq: int, requests_dir: Path) -> TestRequest | None:
     matches = list(requests_dir.glob(f"{seq:04d}_*.json"))
     if not matches:
         return None
-    return TestRequest.read(matches[0])
+    try:
+        return TestRequest.read(matches[0])
+    except (ValueError, KeyError, TypeError) as exc:
+        logger.warning("Malformed request file %s: %s", matches[0].name, exc)
+        return None
 
 
 def poll_for_completion(

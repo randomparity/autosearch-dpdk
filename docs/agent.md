@@ -76,6 +76,8 @@ to interact with the remote runner. See `program.md` for the full workflow.
 | `autosearch sprint list` | List all sprints with iteration counts |
 | `autosearch sprint active` | Print active sprint name |
 | `autosearch sprint switch <name>` | Switch active sprint in `campaign.toml` |
+| `autosearch revert` | Revert last DPDK submodule commit and force-push fork |
+| `autosearch build-log --seq N` | Print formatted build log for request N (`-s N` short form) |
 
 Global flags (before the subcommand):
 
@@ -119,7 +121,8 @@ changes are committed to this branch.
 After each measurement:
 - **Metric improves**: the commit is kept and the submodule pointer is updated
 - **Metric worsens or stays flat**: the commit is reverted (`git reset --hard
-  HEAD~1`) and the failed attempt is recorded in `failures.tsv`
+  HEAD~1`), the submodule's optimization branch is force-pushed to keep the
+  fork in sync, and the failed attempt is recorded in `failures.tsv`
 
 Recent failures are included in the `context` output so the agent avoids
 repeating failed approaches.

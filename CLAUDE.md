@@ -45,14 +45,14 @@ src/perf/        Profiling: perf record orchestration, stack analysis, arch prof
 
 ### Agent modules
 
-- `cli.py` — CLI subcommands (`context`, `submit`, `poll`, `judge`, `baseline`, `status`) for Claude Code
+- `cli.py` — CLI subcommands (`context`, `submit`, `poll`, `judge`, `baseline`, `revert`, `build-log`, `status`) for Claude Code
 - `loop.py` — interactive iteration loop (manual fallback)
-- `git_ops.py` — git subprocess wrappers (`GIT_TIMEOUT=60`), `record_result_or_revert()`
+- `git_ops.py` — git subprocess wrappers (`GIT_TIMEOUT=60`), `record_result_or_revert()`, `full_revert()`, `force_push_submodule()`
 - `campaign.py` — `CampaignConfig` TypedDict, `load_campaign()`
 - `strategy.py` — `format_context()`, `validate_change()`, `extract_profile_summary()`
 - `history.py` — TSV-based results/failures tracking
 - `metric.py` — `compare_metric()`, `below_threshold()`, `Direction` Literal type
-- `protocol.py` — request creation (`create_request()`), sequence numbering, `poll_for_completion()`
+- `protocol.py` — request creation (`create_request()`), sequence numbering, `poll_for_completion()`, `find_request_by_seq()`
 
 ### Runner modules
 

@@ -67,12 +67,24 @@ Configure in `config/runner.toml`:
 |-----|-------------|
 | `[testpmd].lcores` | EAL lcore mask (e.g. `"4-7"`) |
 | `[testpmd].pci` | PCI addresses of NIC ports |
+| `[testpmd].vdev` | Virtual device strings (e.g. memif pair); each passed as `--vdev` to EAL |
+| `[testpmd].no_pci` | Disable PCI bus scanning (default: `false`) |
+| `[testpmd].extra_eal_args` | Additional EAL arguments (list of strings) |
 | `[testpmd].nb_cores` | Forwarding cores (excluding main lcore) |
 | `[testpmd].rxq` / `txq` | Queues per port |
 | `[testpmd].rxd` / `txd` | Descriptors per queue |
+| `[testpmd].burst` | RX/TX burst size (default: 32) |
+| `[testpmd].forward_mode` | Forwarding mode: `"io"`, `"macswap"`, etc. (default: `"io"`) |
 | `[testpmd].warmup_seconds` | Seconds before measurement starts |
 | `[testpmd].measure_seconds` | Measurement window duration |
+| `[testpmd].repeat_count` | Runs per measurement; median is reported (default: `1`). Use 3–5 for sub-1% gain detection. |
 | `[testpmd].sudo` | Run testpmd with sudo (default: `true`) |
+
+When using memif vdevs, the runner logs a warning at startup if a server-role
+vdev has `zero-copy=yes` set — the memif PMD silently ignores zero-copy on
+the server side; only the client role supports it.
+
+See `config/runner.toml.example` for the full annotated list of options.
 
 testpmd requires root for hugepages and device access. The runner uses `sudo`
 by default. Configure passwordless sudo for the testpmd binary:
