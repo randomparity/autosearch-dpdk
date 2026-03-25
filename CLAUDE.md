@@ -16,7 +16,10 @@ uv run autosearch submit -d "description"              # submit change for testi
 uv run autosearch poll                                 # wait for runner result
 uv run autosearch judge                                # keep or revert based on metric
 uv run autosearch baseline                             # submit baseline (no changes)
-uv run autosearch-loop --dry-run                       # interactive mode (manual fallback)
+uv run autosearch hints                                 # show arch optimization hints
+uv run autosearch hints --list                          # list available hint topics
+uv run autosearch hints --topic perf-counters           # show perf counter reference
+uv run autosearch-loop --dry-run                        # interactive mode (manual fallback)
 ```
 
 ## Architecture
@@ -46,7 +49,7 @@ src/perf/        Profiling: perf record orchestration, stack analysis, arch prof
 ### Agent modules
 
 - `cli.py` — CLI subcommands (`context`, `submit`, `poll`, `judge`, `baseline`, `revert`, `build-log`, `status`, `hints`) for Claude Code
-- `hints.py` — architecture-specific optimization hints lookup
+- `hints.py` — architecture-specific optimization hints lookup (supports topics: optimization, perf-counters)
 - `loop.py` — interactive iteration loop (manual fallback)
 - `git_ops.py` — git subprocess wrappers (`GIT_TIMEOUT=60`), `record_result_or_revert()`, `full_revert()`, `force_push_submodule()`
 - `campaign.py` — `CampaignConfig` TypedDict, `load_campaign()`
