@@ -11,7 +11,7 @@
   "metric_path": "throughput_mpps",
   "description": "remove useless pointer-array prefetch in zc rx refill loop",
   "backend": "testpmd",
-  "status": "claimed",
+  "status": "building",
   "claimed_at": "2026-03-25T12:10:03.861965+00:00",
   "completed_at": null,
   "build_log_snippet": null,
