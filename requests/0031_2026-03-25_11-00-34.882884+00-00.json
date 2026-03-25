@@ -11,7 +11,7 @@
   "metric_path": "throughput_mpps",
   "description": "bypass rte_pktmbuf_free_bulk in ZC tx stored mbuf free",
   "backend": "testpmd",
-  "status": "claimed",
+  "status": "building",
   "claimed_at": "2026-03-25T11:02:30.986754+00:00",
   "completed_at": null,
   "build_log_snippet": null,
