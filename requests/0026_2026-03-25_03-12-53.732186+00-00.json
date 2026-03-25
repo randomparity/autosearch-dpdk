@@ -1,0 +1,22 @@
+{
+  "sequence": 26,
+  "created_at": "2026-03-25T03:12:53.732186+00:00",
+  "dpdk_commit": "65b546f9ac6f4392a9d471da488d524c9d7b0ffa",
+  "test_suites": [
+    "TestPmd"
+  ],
+  "test_cases": null,
+  "perf": true,
+  "metric_name": "throughput_mpps",
+  "metric_path": "throughput_mpps",
+  "description": "bulk free stored mbufs instead of per-mbuf free_seg (FIXME tag)",
+  "backend": "testpmd",
+  "status": "pending",
+  "claimed_at": null,
+  "completed_at": null,
+  "build_log_snippet": null,
+  "results_json": null,
+  "results_summary": null,
+  "metric_value": null,
+  "error": null
+}
