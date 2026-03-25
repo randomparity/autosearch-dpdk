@@ -6,6 +6,9 @@ import logging
 import subprocess
 from pathlib import Path
 
+from src.agent.history import append_failure
+from src.agent.metric import compare_metric
+
 logger = logging.getLogger(__name__)
 
 GIT_TIMEOUT = 60
@@ -108,3 +111,40 @@ def revert_last_change(dpdk_path: Path) -> None:
         timeout=GIT_TIMEOUT,
     )
     logger.info("Reverted DPDK submodule to %s", git_submodule_head(dpdk_path)[:12])
+
+
+def record_result_or_revert(
+    metric: float | None,
+    best_val: float | None,
+    direction: str,
+    seq: int,
+    commit: str,
+    description: str,
+    dpdk_path: Path,
+    dry_run: bool,
+) -> bool:
+    """Record a successful result or revert the change and record a failure.
+
+    Returns True if the result was an improvement.
+    """
+    improved = best_val is None or (
+        metric is not None and compare_metric(metric, best_val, direction)
+    )
+
+    if improved:
+        print(
+            f"Improvement! {best_val} -> {metric}"
+            if best_val is not None
+            else f"Baseline: {metric}"
+        )
+        files = ["results.tsv", str(dpdk_path)]
+        git_add_commit_push(files, f"results: iteration {seq:04d}", dry_run=dry_run)
+    else:
+        print(f"No improvement ({metric} vs best {best_val}). Reverting.")
+        diff_summary = get_diff_summary(dpdk_path)
+        revert_last_change(dpdk_path)
+        append_failure(commit, metric, description, diff_summary)
+        files = ["results.tsv", "failures.tsv", str(dpdk_path)]
+        git_add_commit_push(files, f"revert: iteration {seq:04d}", dry_run=dry_run)
+
+    return improved

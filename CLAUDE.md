@@ -6,12 +6,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 uv sync --group dev          # install deps + dev tools
-uv run pytest -q             # run all tests (152 tests)
+uv run pytest -q             # run all tests
 uv run pytest tests/test_schema.py -q                 # run one test file
 uv run pytest tests/test_schema.py::TestSerialization  # run one test class
 uv run ruff check src/ tests/                          # lint
 uv run ruff format src/ tests/                         # format
-uv run autosearch --dry-run                            # run agent locally (no git push)
+uv run autosearch context                              # show optimization state
+uv run autosearch submit -d "description"              # submit change for testing
+uv run autosearch poll                                 # wait for runner result
+uv run autosearch judge                                # keep or revert based on metric
+uv run autosearch baseline                             # submit baseline (no changes)
+uv run autosearch-loop --dry-run                       # interactive mode (manual fallback)
 ```
 
 ## Architecture
@@ -31,7 +36,7 @@ pending → claimed → building → running → completed
 
 ```
 src/protocol/    Shared: TestRequest, status constants, StatusLiteral, extract_metric
-src/agent/       Workstation: optimization loop, Claude API, git ops, history tracking
+src/agent/       Workstation: CLI subcommands, git ops, history tracking
 src/runner/      Lab machine: build DPDK, run testpmd/DTS, push results
 src/perf/        Profiling: perf record orchestration, stack analysis, arch profiles, diff comparison
 ```
@@ -40,13 +45,13 @@ src/perf/        Profiling: perf record orchestration, stack analysis, arch prof
 
 ### Agent modules
 
-- `loop.py` — CLI entry point, interactive iteration loop
-- `autonomous.py` — Claude API loop, `_record_result_or_revert` (shared by both loops), `_below_threshold`
-- `git_ops.py` — all git subprocess wrappers (`GIT_TIMEOUT=60` on every call)
-- `campaign.py` — `CampaignConfig` TypedDict matching `config/campaign.toml`
-- `strategy.py` — `format_context()` for prompt building, `validate_change()` for submodule diff
+- `cli.py` — CLI subcommands (`context`, `submit`, `poll`, `judge`, `baseline`, `status`) for Claude Code
+- `loop.py` — interactive iteration loop (manual fallback)
+- `git_ops.py` — git subprocess wrappers (`GIT_TIMEOUT=60`), `record_result_or_revert()`
+- `campaign.py` — `CampaignConfig` TypedDict, `load_campaign()`
+- `strategy.py` — `format_context()`, `validate_change()`, `extract_profile_summary()`
 - `history.py` — TSV-based results/failures tracking
-- `metric.py` — `compare_metric()` with `Direction` Literal type
+- `metric.py` — `compare_metric()`, `below_threshold()`, `Direction` Literal type
 - `protocol.py` — request creation (`create_request()`), sequence numbering, `poll_for_completion()`
 
 ### Runner modules
@@ -69,6 +74,10 @@ src/perf/        Profiling: perf record orchestration, stack analysis, arch prof
 - `CampaignConfig` — TypedDict hierarchy matching campaign TOML structure
 - `Direction` — `Literal["maximize", "minimize"]`
 - Result dataclasses: `BuildResult`, `TestpmdResult`, `DtsResult` — all have `success`, `error`, `duration_seconds`
+
+## Agent mode (Claude Code)
+
+Read `program.md` for autonomous optimization instructions. The agent uses CLI subcommands (`uv run autosearch context/submit/poll/judge`) to interact with the remote runner. Start with: "read program.md and start experimenting".
 
 ## Working with request/result files
 

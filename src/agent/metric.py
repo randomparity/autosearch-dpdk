@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
+
+if TYPE_CHECKING:
+    from src.agent.campaign import CampaignConfig
 
 Direction = Literal["maximize", "minimize"]
 
@@ -24,3 +27,15 @@ def compare_metric(current: float, best: float, direction: Direction) -> bool:
         return current < best
     msg = f"Unknown direction {direction!r}, must be 'maximize' or 'minimize'"
     raise ValueError(msg)
+
+
+def below_threshold(
+    metric: float | None,
+    best_val: float | None,
+    campaign: CampaignConfig,
+) -> bool:
+    """Check if improvement between metric and best_val is below threshold."""
+    threshold = campaign.get("metric", {}).get("threshold")
+    if threshold is None or metric is None or best_val is None:
+        return False
+    return abs(metric - best_val) < threshold

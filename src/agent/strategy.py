@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import subprocess
 from typing import TYPE_CHECKING
@@ -115,6 +116,30 @@ def format_profile_lines(summary: dict) -> list[str]:
         for d in diags[:5]:
             lines.append(f"    - {d.get('category', '?')}: {d.get('evidence', '')}")
     return lines
+
+
+def extract_profile_summary(result: object) -> dict | None:
+    """Extract profiling summary from a completed test result.
+
+    Args:
+        result: TestRequest with results_json field.
+
+    Returns:
+        Profile summary dict, or None if not available.
+    """
+    raw = getattr(result, "results_json", None)
+    if raw is None:
+        return None
+    if isinstance(raw, str):
+        try:
+            data = json.loads(raw)
+        except (json.JSONDecodeError, TypeError):
+            return None
+    elif isinstance(raw, dict):
+        data = raw
+    else:
+        return None
+    return data.get("profiling")
 
 
 def validate_change(dpdk_path: Path) -> bool:

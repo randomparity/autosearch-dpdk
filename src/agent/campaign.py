@@ -1,7 +1,9 @@
-"""Campaign configuration type definitions."""
+"""Campaign configuration type definitions and loading."""
 
 from __future__ import annotations
 
+import tomllib
+from pathlib import Path
 from typing import TypedDict
 
 
@@ -67,3 +69,18 @@ class CampaignConfig(TypedDict, total=False):
     dpdk: DpdkConfig
     goal: GoalConfig
     profiling: ProfilingConfig
+
+
+def load_campaign(path: Path | None = None) -> CampaignConfig:
+    """Load and return the campaign TOML configuration.
+
+    Args:
+        path: Path to the campaign TOML. Defaults to config/campaign.toml.
+
+    Raises:
+        FileNotFoundError: If the config file does not exist.
+        tomllib.TOMLDecodeError: If the file is not valid TOML.
+    """
+    config_path = path or Path("config/campaign.toml")
+    with open(config_path, "rb") as f:
+        return tomllib.load(f)

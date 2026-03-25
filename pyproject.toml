@@ -4,14 +4,14 @@ version = "0.1.0"
 description = "Iterative DPDK optimization via two-system architecture"
 requires-python = ">=3.13"
 dependencies = [
-    "anthropic>=0.52.0",
     # Required by DPDK meson build (dpdk/buildtools/pmdinfogen.py) — the runner
     # executes meson inside this venv, so pyelftools must be available here.
     "pyelftools>=0.31",
 ]
 
 [project.scripts]
-autosearch = "src.agent.loop:main"
+autosearch = "src.agent.cli:main"
+autosearch-loop = "src.agent.loop:main"
 
 [build-system]
 requires = ["hatchling"]
