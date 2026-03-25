@@ -1,0 +1,22 @@
+{
+  "sequence": 40,
+  "created_at": "2026-03-25T12:11:42.226333+00:00",
+  "dpdk_commit": "2ebdb824d18ed93d7500d864f5f4a6cd9ecd5263",
+  "test_suites": [
+    "TestPmd"
+  ],
+  "test_cases": null,
+  "perf": true,
+  "metric_name": "throughput_mpps",
+  "metric_path": "throughput_mpps",
+  "description": "cache region 0 base addr in 4x rx loop, eliminate per-pkt pointer chase",
+  "backend": "testpmd",
+  "status": "pending",
+  "claimed_at": null,
+  "completed_at": null,
+  "build_log_snippet": null,
+  "results_json": null,
+  "results_summary": null,
+  "metric_value": null,
+  "error": null
+}
