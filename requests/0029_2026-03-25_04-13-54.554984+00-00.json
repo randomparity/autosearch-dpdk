@@ -11,7 +11,7 @@
   "metric_path": "throughput_mpps",
   "description": "increase testpmd mempool cache from 250 to 512 to reduce ring contention",
   "backend": "testpmd",
-  "status": "claimed",
+  "status": "building",
   "claimed_at": "2026-03-25T04:16:51.843254+00:00",
   "completed_at": null,
   "build_log_snippet": null,
