@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.agent.campaign import CampaignConfig
+    from autoforge.agent.campaign import CampaignConfig
 
 SPRINTS_ROOT = Path(__file__).resolve().parent.parent.parent / "sprints"
 SPRINT_NAME_RE = re.compile(r"^\d{4}-\d{2}-\d{2}-[a-z0-9][a-z0-9-]*$")
@@ -17,7 +17,7 @@ SPRINT_NAME_RE = re.compile(r"^\d{4}-\d{2}-\d{2}-[a-z0-9][a-z0-9-]*$")
 RESULTS_COLUMNS = [
     "sequence",
     "timestamp",
-    "dpdk_commit",
+    "source_commit",
     "metric_value",
     "status",
     "description",
@@ -42,7 +42,7 @@ def active_sprint_name(campaign: CampaignConfig) -> str:
     """
     name = campaign.get("sprint", {}).get("name")
     if not name:
-        msg = "No active sprint. Run 'autosearch sprint init <name>' first."
+        msg = "No active sprint. Run 'autoforge sprint init <name>' first."
         raise KeyError(msg)
     return name
 

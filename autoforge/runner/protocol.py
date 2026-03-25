@@ -7,7 +7,7 @@ import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
-from src.protocol import (
+from autoforge.protocol import (
     STATUS_CLAIMED,
     STATUS_FAILED,
     STATUS_PENDING,

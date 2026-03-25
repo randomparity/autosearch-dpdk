@@ -7,12 +7,12 @@ import logging
 import subprocess
 from typing import TYPE_CHECKING
 
-from src.agent.hints import resolve_arch
+from autoforge.agent.hints import resolve_arch
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from src.agent.campaign import CampaignConfig
+    from autoforge.agent.campaign import CampaignConfig
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ def format_context(
         A multi-line string suitable for display or prompt injection.
     """
     metric_cfg = campaign.get("metric", {})
-    dpdk_cfg = campaign.get("dpdk", {})
+    project_cfg = campaign.get("project", {})
     campaign_cfg = campaign.get("campaign", {})
 
     goal = campaign.get("goal", {}).get("description", "").strip()
@@ -42,7 +42,7 @@ def format_context(
     lines = [
         f"Campaign: {campaign_cfg.get('name', 'unnamed')}",
         f"Objective: {metric_cfg.get('direction', 'maximize')} {metric_cfg.get('name', '?')}",
-        f"DPDK scope: {', '.join(dpdk_cfg.get('scope', []))}",
+        f"Project scope: {', '.join(project_cfg.get('scope', []))}",
         f"Iterations: {len(history)} / {campaign_cfg.get('max_iterations', '?')}",
         "",
     ]
@@ -76,7 +76,7 @@ def format_context(
     arch = resolve_arch(campaign)
     if arch:
         lines.append("")
-        lines.append(f"Tip: run `uv run autosearch hints` for {arch} optimization guidance.")
+        lines.append(f"Tip: run `uv run autoforge hints` for {arch} optimization guidance.")
 
     return "\n".join(lines)
 
@@ -149,23 +149,23 @@ def extract_profile_summary(result: object) -> dict | None:
     return data.get("profiling")
 
 
-def validate_change(dpdk_path: Path) -> bool:
-    """Check whether the DPDK submodule pointer differs from the outer repo.
+def validate_change(source_path: Path) -> bool:
+    """Check whether the source submodule pointer differs from the outer repo.
 
     Args:
-        dpdk_path: Path to the DPDK submodule directory.
+        source_path: Path to the source submodule directory.
 
     Returns:
         True if the outer repo's submodule pointer has changed (i.e. the
         submodule has a different commit than what is currently tracked).
     """
     outer_diff = subprocess.run(
-        ["git", "diff", "--submodule=short", "--", str(dpdk_path)],
+        ["git", "diff", "--submodule=short", "--", str(source_path)],
         capture_output=True,
         text=True,
         timeout=30,
     )
     has_change = bool(outer_diff.stdout.strip())
     if not has_change:
-        logger.warning("No submodule pointer change detected in %s", dpdk_path)
+        logger.warning("No submodule pointer change detected in %s", source_path)
     return has_change

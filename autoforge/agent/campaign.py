@@ -32,9 +32,14 @@ class AgentConfig(TypedDict, total=False):
     timeout_minutes: int
 
 
-class DpdkConfig(TypedDict, total=False):
-    """DPDK submodule configuration from campaign TOML."""
+class ProjectConfig(TypedDict, total=False):
+    """Project-specific configuration from campaign TOML.
 
+    The 'plugin' key selects the autoforge plugin. All other keys
+    are passed through to the plugin as project_config.
+    """
+
+    plugin: str
     submodule_path: str
     optimization_branch: str
     scope: list[str]
@@ -78,7 +83,7 @@ class CampaignConfig(TypedDict, total=False):
     metric: MetricConfig
     test: TestConfig
     agent: AgentConfig
-    dpdk: DpdkConfig
+    project: ProjectConfig
     goal: GoalConfig
     profiling: ProfilingConfig
     sprint: SprintConfig

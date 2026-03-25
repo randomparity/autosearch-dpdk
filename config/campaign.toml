@@ -57,8 +57,10 @@ guarded by architecture ifdefs (RTE_ARCH_PPC_64) where appropriate.
 # Include profiling summary in results pushed to agent
 enabled = true
 
-[dpdk]
-# Path to the DPDK git submodule relative to repo root
+[project]
+# Plugin name — selects the autoforge plugin (e.g., "dpdk", "vllm", "kernel")
+plugin = "dpdk"
+# Path to the source git submodule relative to repo root
 submodule_path = "dpdk"
 # Branch in the submodule where good changes accumulate
 optimization_branch = "autosearch/optimize"

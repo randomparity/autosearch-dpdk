@@ -6,31 +6,31 @@ import argparse
 import logging
 from pathlib import Path
 
-from src.agent.campaign import CampaignConfig, load_campaign
-from src.agent.git_ops import (
+from autoforge.agent.campaign import CampaignConfig, load_campaign
+from autoforge.agent.git_ops import (
     ensure_optimization_branch,
     git_add_commit_push,
     git_submodule_head,
     record_result_or_revert,
 )
-from src.agent.history import append_result, best_result, load_history
-from src.agent.metric import below_threshold
-from src.agent.protocol import create_request, next_sequence, poll_for_completion
-from src.agent.sprint import failures_path, requests_dir, results_path
-from src.agent.strategy import (
+from autoforge.agent.history import append_result, best_result, load_history
+from autoforge.agent.metric import below_threshold
+from autoforge.agent.protocol import create_request, next_sequence, poll_for_completion
+from autoforge.agent.sprint import failures_path, requests_dir, results_path
+from autoforge.agent.strategy import (
     extract_profile_summary,
     format_context,
     format_profile_lines,
     validate_change,
 )
-from src.logging_config import setup_logging
+from autoforge.logging_config import setup_logging
 
 logger = logging.getLogger(__name__)
 
 
 def run_interactive_iteration(
     campaign: CampaignConfig,
-    dpdk_path: Path,
+    source_path: Path,
     dry_run: bool,
 ) -> bool:
     """Run one iteration of the interactive optimization loop.
@@ -60,11 +60,11 @@ def run_interactive_iteration(
     if user_input.lower() in ("quit", "exit", "q"):
         return False
 
-    if not validate_change(dpdk_path):
+    if not validate_change(source_path):
         print("No submodule change detected. Skipping iteration.")
         return True
 
-    commit = git_submodule_head(dpdk_path)
+    commit = git_submodule_head(source_path)
     description = input("Describe this change: ").strip() or "No description"
     seq = next_sequence(req)
     poll_interval = campaign.get("agent", {}).get("poll_interval", 30)
@@ -73,7 +73,7 @@ def run_interactive_iteration(
     request_path = create_request(seq, commit, campaign, description, req)
 
     git_add_commit_push(
-        [str(request_path), str(dpdk_path)],
+        [str(request_path), str(source_path)],
         f"iteration {seq:04d}: {description}",
         dry_run=dry_run,
     )
@@ -114,7 +114,7 @@ def run_interactive_iteration(
 
     append_result(seq, commit, metric, "completed", description, path=res)
 
-    opt_branch = campaign.get("dpdk", {}).get("optimization_branch", "")
+    opt_branch = campaign.get("project", {}).get("optimization_branch", "")
     record_result_or_revert(
         metric,
         best_val,
@@ -122,7 +122,7 @@ def run_interactive_iteration(
         seq,
         commit,
         description,
-        dpdk_path,
+        source_path,
         dry_run,
         results_path=res,
         failures_path=fail,
@@ -139,12 +139,12 @@ def run_interactive_iteration(
 
 def run_baseline(
     campaign: CampaignConfig,
-    dpdk_path: Path,
+    source_path: Path,
     dry_run: bool,
 ) -> None:
     """Submit a baseline request for the current DPDK commit and wait for results."""
     req = requests_dir(campaign)
-    commit = git_submodule_head(dpdk_path)
+    commit = git_submodule_head(source_path)
     seq = next_sequence(req)
     description = "Baseline: unmodified DPDK"
     poll_interval = campaign.get("agent", {}).get("poll_interval", 30)
@@ -187,8 +187,8 @@ def run_baseline(
 
 
 def main() -> None:
-    """Entry point for the interactive autosearch agent."""
-    parser = argparse.ArgumentParser(description="Autosearch DPDK interactive loop")
+    """Entry point for the interactive autoforge agent."""
+    parser = argparse.ArgumentParser(description="Autoforge interactive loop")
     parser.add_argument(
         "--campaign",
         default="config/campaign.toml",
@@ -212,14 +212,14 @@ def main() -> None:
     setup_logging(args.log_level, args.log_file)
 
     campaign = load_campaign(Path(args.campaign))
-    dpdk_path = Path(campaign.get("dpdk", {}).get("submodule_path", "dpdk"))
-    opt_branch = campaign.get("dpdk", {}).get("optimization_branch", "autosearch/optimize")
-    ensure_optimization_branch(dpdk_path, opt_branch)
+    source_path = Path(campaign.get("project", {}).get("submodule_path", "dpdk"))
+    opt_branch = campaign.get("project", {}).get("optimization_branch", "autosearch/optimize")
+    ensure_optimization_branch(source_path, opt_branch)
 
     if args.baseline:
-        run_baseline(campaign, dpdk_path, args.dry_run)
+        run_baseline(campaign, source_path, args.dry_run)
     else:
-        while run_interactive_iteration(campaign, dpdk_path, args.dry_run):
+        while run_interactive_iteration(campaign, source_path, args.dry_run):
             pass
 
     print("Optimization loop finished.")

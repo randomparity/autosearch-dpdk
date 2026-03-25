@@ -8,7 +8,7 @@ import json
 import sys
 from pathlib import Path
 
-from src.perf.profile import profile_pid
+from autoforge.perf.profile import profile_pid
 
 
 def main() -> None:

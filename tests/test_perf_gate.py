@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from src.perf.gate import EXIT_FAIL, EXIT_PASS, EXIT_WARN, check_regression
+from autoforge.perf.gate import EXIT_FAIL, EXIT_PASS, EXIT_WARN, check_regression
 
 
 def _make_diff(changes: list[dict], assessment: str = "neutral") -> dict:

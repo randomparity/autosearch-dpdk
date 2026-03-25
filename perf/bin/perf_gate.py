@@ -8,7 +8,7 @@ import json
 import sys
 from pathlib import Path
 
-from src.perf.gate import check_regression
+from autoforge.perf.gate import check_regression
 
 
 def main() -> None:

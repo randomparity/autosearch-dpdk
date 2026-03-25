@@ -8,7 +8,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from src.protocol import TestRequest
+from autoforge.protocol import TestRequest
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +57,7 @@ def create_request(
     request = TestRequest(
         sequence=seq,
         created_at=datetime.now(timezone.utc).isoformat(),  # noqa: UP017
-        dpdk_commit=commit,
+        source_commit=commit,
         test_suites=test_cfg.get("test_suites", []),
         test_cases=test_cfg.get("test_cases"),
         perf=test_cfg.get("perf", True),

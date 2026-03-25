@@ -5,8 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import patch
 
-from src.perf.arch import COMMON_EVENTS, detect_arch, load_arch_profile
-from src.perf.profile import ProfileResult, fold_stacks, parse_perf_stat, write_folded
+from autoforge.perf.arch import COMMON_EVENTS, detect_arch, load_arch_profile
+from autoforge.perf.profile import ProfileResult, fold_stacks, parse_perf_stat, write_folded
 
 # -- Realistic perf script output for testing --
 
@@ -124,7 +124,7 @@ class TestDetectArch:
         assert isinstance(arch, str)
         assert len(arch) > 0
 
-    @patch("src.perf.arch.platform.machine", return_value="ppc64le")
+    @patch("autoforge.perf.arch.platform.machine", return_value="ppc64le")
     def test_mocked_arch(self, _mock):
         assert detect_arch() == "ppc64le"
 
@@ -178,9 +178,9 @@ class TestProfileResult:
 
 
 class TestProfilePidMissing:
-    @patch("src.perf.profile.shutil.which", return_value=None)
+    @patch("autoforge.perf.profile.shutil.which", return_value=None)
     def test_perf_not_found(self, _mock, tmp_path: Path):
-        from src.perf.profile import profile_pid
+        from autoforge.perf.profile import profile_pid
 
         result = profile_pid(pid=1234, duration=5, output_dir=tmp_path)
         assert not result.success

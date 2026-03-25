@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from src.perf.diff import diff_counters, diff_stacks, load_folded
+from autoforge.perf.diff import diff_counters, diff_stacks, load_folded
 
 BASELINE_STACKS = {
     "main;func_a;hot_func": 50,

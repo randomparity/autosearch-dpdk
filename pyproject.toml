@@ -1,7 +1,7 @@
 [project]
-name = "autosearch-dpdk"
-version = "0.1.0"
-description = "Iterative DPDK optimization via two-system architecture"
+name = "autoforge"
+version = "0.2.0"
+description = "Plugin-based iterative optimization framework"
 requires-python = ">=3.13"
 dependencies = [
     # Required by DPDK meson build (dpdk/buildtools/pmdinfogen.py) — the runner
@@ -10,15 +10,18 @@ dependencies = [
 ]
 
 [project.scripts]
-autosearch = "src.agent.cli:main"
-autosearch-loop = "src.agent.loop:main"
+autoforge = "autoforge.agent.cli:main"
+autoforge-loop = "autoforge.agent.loop:main"
+
+[project.entry-points."autoforge.plugins"]
+dpdk = "autoforge_dpdk:DpdkPlugin"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src"]
+packages = ["autoforge", "autoforge_dpdk"]
 
 [tool.ruff]
 line-length = 100
@@ -30,6 +33,9 @@ select = ["E", "F", "W", "I", "N", "UP", "B", "A", "SIM"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+filterwarnings = [
+    "ignore::pytest.PytestCollectionWarning",
+]
 
 [dependency-groups]
 dev = [

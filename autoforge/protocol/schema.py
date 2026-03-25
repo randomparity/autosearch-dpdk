@@ -45,7 +45,7 @@ class TestRequest:
 
     sequence: int
     created_at: str
-    dpdk_commit: str
+    source_commit: str
     test_suites: list[str]
     test_cases: list[str] | None
     perf: bool
@@ -83,6 +83,9 @@ class TestRequest:
     def from_json(cls, raw: str) -> TestRequest:
         """Deserialize from a JSON string."""
         data = json.loads(raw)
+        # Temporary migration: accept legacy "dpdk_commit" key
+        if "dpdk_commit" in data and "source_commit" not in data:
+            data["source_commit"] = data.pop("dpdk_commit")
         return cls(**data)
 
     @classmethod

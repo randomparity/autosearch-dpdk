@@ -6,8 +6,8 @@ import json
 from pathlib import Path
 from unittest.mock import patch
 
-from src.agent.loop import run_baseline
-from src.agent.metric import below_threshold
+from autoforge.agent.loop import run_baseline
+from autoforge.agent.metric import below_threshold
 
 
 class TestBelowThreshold:
@@ -41,7 +41,7 @@ SAMPLE_CAMPAIGN = {
     "metric": {"name": "throughput_mpps", "path": "throughput_mpps", "direction": "maximize"},
     "test": {"backend": "testpmd", "perf": True, "test_suites": ["TestPmd"]},
     "agent": {"poll_interval": 5, "timeout_minutes": 1},
-    "dpdk": {"submodule_path": "dpdk", "optimization_branch": "autosearch/optimize"},
+    "project": {"submodule_path": "dpdk", "optimization_branch": "autosearch/optimize"},
     "sprint": {"name": "2026-01-01-test"},
 }
 
@@ -53,13 +53,13 @@ class TestRunBaseline:
         fake_commit = "abc123def456"
 
         with (
-            patch("src.agent.loop.requests_dir", return_value=sprint_req_dir),
-            patch("src.agent.loop.git_submodule_head", return_value=fake_commit),
-            patch("src.agent.loop.next_sequence", return_value=1),
-            patch("src.agent.loop.create_request", wraps=None) as mock_create,
-            patch("src.agent.loop.git_add_commit_push") as mock_git,
+            patch("autoforge.agent.loop.requests_dir", return_value=sprint_req_dir),
+            patch("autoforge.agent.loop.git_submodule_head", return_value=fake_commit),
+            patch("autoforge.agent.loop.next_sequence", return_value=1),
+            patch("autoforge.agent.loop.create_request", wraps=None) as mock_create,
+            patch("autoforge.agent.loop.git_add_commit_push") as mock_git,
         ):
-            from src.agent.protocol import create_request as real_create
+            from autoforge.agent.protocol import create_request as real_create
 
             def fake_create(seq, commit, campaign, description, req_dir):
                 return real_create(seq, commit, campaign, description, requests_dir=req_dir)
@@ -79,7 +79,7 @@ class TestRunBaseline:
         request_files = list(sprint_req_dir.glob("0001_*.json"))
         assert len(request_files) == 1
         data = json.loads(request_files[0].read_text())
-        assert data["dpdk_commit"] == fake_commit
+        assert data["source_commit"] == fake_commit
         assert data["perf"] is True
         assert data["status"] == "pending"
         assert data["backend"] == "testpmd"
@@ -89,12 +89,12 @@ class TestRunBaseline:
         sprint_req_dir = tmp_path / "sprints" / "2026-01-01-test" / "requests"
         sprint_req_dir.mkdir(parents=True)
         with (
-            patch("src.agent.loop.requests_dir", return_value=sprint_req_dir),
-            patch("src.agent.loop.git_submodule_head", return_value="abc123"),
-            patch("src.agent.loop.next_sequence", return_value=1),
-            patch("src.agent.loop.create_request") as mock_create,
-            patch("src.agent.loop.git_add_commit_push"),
-            patch("src.agent.loop.poll_for_completion") as mock_poll,
+            patch("autoforge.agent.loop.requests_dir", return_value=sprint_req_dir),
+            patch("autoforge.agent.loop.git_submodule_head", return_value="abc123"),
+            patch("autoforge.agent.loop.next_sequence", return_value=1),
+            patch("autoforge.agent.loop.create_request") as mock_create,
+            patch("autoforge.agent.loop.git_add_commit_push"),
+            patch("autoforge.agent.loop.poll_for_completion") as mock_poll,
         ):
             mock_create.return_value = tmp_path / "requests" / "0001_test.json"
             run_baseline(SAMPLE_CAMPAIGN, tmp_path / "dpdk", dry_run=True)
@@ -105,11 +105,11 @@ class TestRunBaseline:
         sprint_req_dir = tmp_path / "sprints" / "2026-01-01-test" / "requests"
         sprint_req_dir.mkdir(parents=True)
         with (
-            patch("src.agent.loop.requests_dir", return_value=sprint_req_dir),
-            patch("src.agent.loop.git_submodule_head", return_value="abc123"),
-            patch("src.agent.loop.next_sequence", return_value=1),
-            patch("src.agent.loop.create_request") as mock_create,
-            patch("src.agent.loop.git_add_commit_push") as mock_git,
+            patch("autoforge.agent.loop.requests_dir", return_value=sprint_req_dir),
+            patch("autoforge.agent.loop.git_submodule_head", return_value="abc123"),
+            patch("autoforge.agent.loop.next_sequence", return_value=1),
+            patch("autoforge.agent.loop.create_request") as mock_create,
+            patch("autoforge.agent.loop.git_add_commit_push") as mock_git,
         ):
             mock_create.return_value = tmp_path / "requests" / "0001_test.json"
             run_baseline(SAMPLE_CAMPAIGN, tmp_path / "dpdk", dry_run=True)

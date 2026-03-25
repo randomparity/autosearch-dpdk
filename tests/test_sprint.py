@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.agent.sprint import (
+from autoforge.agent.sprint import (
     _set_sprint_name,
     init_sprint,
     list_sprints,
@@ -46,7 +46,7 @@ class TestInitSprint:
         campaign_toml = tmp_path / "campaign.toml"
         campaign_toml.write_text('[campaign]\nname = "test"\n')
 
-        with patch("src.agent.sprint.SPRINTS_ROOT", tmp_path / "sprints"):
+        with patch("autoforge.agent.sprint.SPRINTS_ROOT", tmp_path / "sprints"):
             sdir = init_sprint("2026-03-25-test", campaign_toml)
 
         assert sdir.is_dir()
@@ -65,7 +65,7 @@ class TestInitSprint:
         campaign_toml = tmp_path / "campaign.toml"
         campaign_toml.write_text('[campaign]\nname = "test"\n')
 
-        with patch("src.agent.sprint.SPRINTS_ROOT", tmp_path / "sprints"):
+        with patch("autoforge.agent.sprint.SPRINTS_ROOT", tmp_path / "sprints"):
             init_sprint("2026-03-25-test", campaign_toml)
             with pytest.raises(FileExistsError, match="already exists"):
                 init_sprint("2026-03-25-test", campaign_toml)
@@ -81,7 +81,7 @@ class TestInitSprint:
         campaign_toml = tmp_path / "campaign.toml"
         campaign_toml.write_text('[campaign]\nname = "test"\n')
 
-        with patch("src.agent.sprint.SPRINTS_ROOT", tmp_path / "sprints"):
+        with patch("autoforge.agent.sprint.SPRINTS_ROOT", tmp_path / "sprints"):
             init_sprint("2026-03-25-test", campaign_toml)
 
         content = campaign_toml.read_text()
@@ -90,13 +90,13 @@ class TestInitSprint:
 
 class TestListSprints:
     def test_no_sprints_dir(self, tmp_path: Path) -> None:
-        with patch("src.agent.sprint.SPRINTS_ROOT", tmp_path / "nonexistent"):
+        with patch("autoforge.agent.sprint.SPRINTS_ROOT", tmp_path / "nonexistent"):
             assert list_sprints() == []
 
     def test_empty_sprints_dir(self, tmp_path: Path) -> None:
         sprints = tmp_path / "sprints"
         sprints.mkdir()
-        with patch("src.agent.sprint.SPRINTS_ROOT", sprints):
+        with patch("autoforge.agent.sprint.SPRINTS_ROOT", sprints):
             assert list_sprints() == []
 
     def test_one_sprint_with_data(self, tmp_path: Path) -> None:
@@ -104,14 +104,14 @@ class TestListSprints:
         sdir = sprints / "2026-03-25-test"
         sdir.mkdir(parents=True)
         tsv = sdir / "results.tsv"
-        header = ["sequence", "timestamp", "dpdk_commit", "metric_value", "status", "description"]
+        header = ["sequence", "timestamp", "source_commit", "metric_value", "status", "description"]
         with open(tsv, "w", newline="") as f:
             writer = csv.writer(f, delimiter="\t")
             writer.writerow(header)
             writer.writerow(["1", "2026-03-25T00:00:00", "abc", "86.25", "completed", "base"])
             writer.writerow(["2", "2026-03-25T00:05:00", "def", "90.00", "completed", "better"])
 
-        with patch("src.agent.sprint.SPRINTS_ROOT", sprints):
+        with patch("autoforge.agent.sprint.SPRINTS_ROOT", sprints):
             result = list_sprints()
 
         assert len(result) == 1
@@ -124,7 +124,7 @@ class TestListSprints:
         (sprints / "not-a-sprint").mkdir(parents=True)
         (sprints / "2026-03-25-valid").mkdir(parents=True)
 
-        with patch("src.agent.sprint.SPRINTS_ROOT", sprints):
+        with patch("autoforge.agent.sprint.SPRINTS_ROOT", sprints):
             result = list_sprints()
 
         assert len(result) == 1
@@ -138,7 +138,7 @@ class TestSwitchSprint:
         campaign_toml = tmp_path / "campaign.toml"
         campaign_toml.write_text('[sprint]\nname = "2026-03-24-old"\n')
 
-        with patch("src.agent.sprint.SPRINTS_ROOT", sprints):
+        with patch("autoforge.agent.sprint.SPRINTS_ROOT", sprints):
             switch_sprint("2026-03-25-test", campaign_toml)
 
         content = campaign_toml.read_text()
@@ -151,7 +151,7 @@ class TestSwitchSprint:
         campaign_toml.write_text('[sprint]\nname = "2026-03-24-old"\n')
 
         with (
-            patch("src.agent.sprint.SPRINTS_ROOT", sprints),
+            patch("autoforge.agent.sprint.SPRINTS_ROOT", sprints),
             pytest.raises(FileNotFoundError, match="Sprint not found"),
         ):
             switch_sprint("2026-03-25-missing", campaign_toml)

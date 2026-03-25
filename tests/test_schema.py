@@ -6,7 +6,7 @@ import json
 
 import pytest
 
-from src.protocol.schema import (
+from autoforge.protocol.schema import (
     STATUS_BUILDING,
     STATUS_CLAIMED,
     STATUS_COMPLETED,
@@ -24,7 +24,7 @@ def make_request(**overrides: object) -> TestRequest:
     defaults = {
         "sequence": 1,
         "created_at": "2025-01-15T10:30:00",
-        "dpdk_commit": "abc123def456",
+        "source_commit": "abc123def456",
         "test_suites": ["TestPmd"],
         "test_cases": None,
         "perf": True,
@@ -42,7 +42,7 @@ class TestSerialization:
         raw = req.to_json()
         restored = TestRequest.from_json(raw)
         assert restored.sequence == req.sequence
-        assert restored.dpdk_commit == req.dpdk_commit
+        assert restored.source_commit == req.source_commit
         assert restored.test_suites == req.test_suites
         assert restored.status == STATUS_PENDING
 

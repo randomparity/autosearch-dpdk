@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-from src.runner.testpmd import (
+from autoforge_dpdk.tester import (
     TestpmdResult,
     _parse_throughput,
     run_testpmd_repeated,
@@ -111,7 +111,7 @@ class TestRunTestpmdRepeated:
     def test_single_run_delegates(self) -> None:
         config = {"testpmd": {"repeat_count": 1}}
         result = _make_result(86.0)
-        with patch("src.runner.testpmd.run_testpmd", return_value=result) as mock:
+        with patch("autoforge_dpdk.tester.run_testpmd", return_value=result) as mock:
             out = run_testpmd_repeated("/build", config, timeout=600)
         mock.assert_called_once()
         assert out.throughput_mpps == 86.0
@@ -119,7 +119,7 @@ class TestRunTestpmdRepeated:
     def test_default_repeat_count_delegates(self) -> None:
         config = {"testpmd": {}}
         result = _make_result(86.0)
-        with patch("src.runner.testpmd.run_testpmd", return_value=result) as mock:
+        with patch("autoforge_dpdk.tester.run_testpmd", return_value=result) as mock:
             out = run_testpmd_repeated("/build", config, timeout=600)
         mock.assert_called_once()
         assert out.throughput_mpps == 86.0
@@ -127,7 +127,7 @@ class TestRunTestpmdRepeated:
     def test_median_of_three(self) -> None:
         config = {"testpmd": {"repeat_count": 3}}
         results = [_make_result(80.0), _make_result(86.0), _make_result(83.0)]
-        with patch("src.runner.testpmd.run_testpmd", side_effect=results):
+        with patch("autoforge_dpdk.tester.run_testpmd", side_effect=results):
             out = run_testpmd_repeated("/build", config, timeout=600)
         assert out.throughput_mpps == 83.0
         assert out.success is True
@@ -135,7 +135,7 @@ class TestRunTestpmdRepeated:
     def test_failure_aborts_early(self) -> None:
         config = {"testpmd": {"repeat_count": 3}}
         results = [_make_result(80.0), _make_failure()]
-        with patch("src.runner.testpmd.run_testpmd", side_effect=results) as mock:
+        with patch("autoforge_dpdk.tester.run_testpmd", side_effect=results) as mock:
             out = run_testpmd_repeated("/build", config, timeout=600)
         assert out.success is False
         assert mock.call_count == 2
@@ -152,7 +152,7 @@ class TestRunTestpmdRepeated:
             calls.append(profile_config)
             return next(orig_results)
 
-        with patch("src.runner.testpmd.run_testpmd", side_effect=capture_call):
+        with patch("autoforge_dpdk.tester.run_testpmd", side_effect=capture_call):
             run_testpmd_repeated("/build", config, timeout=600, profile_config=profile_cfg)
 
         assert len(calls) == 3
@@ -163,6 +163,6 @@ class TestRunTestpmdRepeated:
     def test_duration_is_sum(self) -> None:
         config = {"testpmd": {"repeat_count": 3}}
         results = [_make_result(80.0, 10.0), _make_result(83.0, 12.0), _make_result(86.0, 11.0)]
-        with patch("src.runner.testpmd.run_testpmd", side_effect=results):
+        with patch("autoforge_dpdk.tester.run_testpmd", side_effect=results):
             out = run_testpmd_repeated("/build", config, timeout=600)
         assert out.duration_seconds == 33.0

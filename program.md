@@ -1,4 +1,4 @@
-# autosearch-dpdk
+# autoforge-dpdk
 
 Autonomous DPDK optimization via iterative experimentation.
 
@@ -6,12 +6,12 @@ Autonomous DPDK optimization via iterative experimentation.
 
 To set up a new experiment run, work with the user to:
 
-1. **Create a sprint**: `uv run autosearch sprint init YYYY-MM-DD-slug` (e.g. `2026-03-25-memif-zc`).
+1. **Create a sprint**: `uv run autoforge sprint init YYYY-MM-DD-slug` (e.g. `2026-03-25-memif-zc`).
 2. **Read the campaign config**: `config/campaign.toml` defines the metric, scope, goal, and constraints.
-3. **Check history**: `uv run autosearch context` shows current state, best result, recent attempts, profiling data, and past failures.
+3. **Check history**: `uv run autoforge context` shows current state, best result, recent attempts, profiling data, and past failures.
 4. **Verify the DPDK submodule**: `ls dpdk/` should contain the DPDK source tree.
-5. **Ensure the submodule optimization branch exists**: `git -C dpdk checkout -b autosearch/optimize 2>/dev/null || git -C dpdk checkout autosearch/optimize`. All DPDK changes accumulate on this branch inside the submodule.
-6. **Establish baseline** (if no history): `uv run autosearch baseline` submits the unmodified DPDK for testing and waits for the result.
+5. **Ensure the submodule optimization branch exists**: `git -C dpdk checkout -b autoforge/optimize 2>/dev/null || git -C dpdk checkout autoforge/optimize`. All DPDK changes accumulate on this branch inside the submodule.
+6. **Establish baseline** (if no history): `uv run autoforge baseline` submits the unmodified DPDK for testing and waits for the result.
 7. **Confirm and go**: Confirm setup looks good, then begin experimentation.
 
 All artifacts (requests, results, failures, docs) are stored under `sprints/<name>/`.
@@ -27,7 +27,7 @@ You cannot run testpmd locally — the runner machine has the hardware/setup. Co
 
 ## What you CAN do
 
-- Modify files in the DPDK submodule under the scoped paths from `campaign.toml` `[dpdk] scope`:
+- Modify files in the DPDK submodule under the scoped paths from `campaign.toml` `[project] scope`:
   - `drivers/net/memif/` — the memif PMD (rx/tx burst functions, descriptor handling)
   - `app/test-pmd/` — testpmd forwarding application
   - `lib/eal/ppc/` — POWER-specific EAL: rte_memcpy, rte_prefetch, rte_atomic, rte_pause
@@ -40,7 +40,7 @@ You cannot run testpmd locally — the runner machine has the hardware/setup. Co
 
 ## What you CANNOT do
 
-- Modify `src/runner/`, `src/protocol/`, or `src/perf/` — these run on the remote machine.
+- Modify `autoforge/runner/`, `autoforge/protocol/`, or `autoforge/perf/` — these run on the remote machine.
 - Run testpmd locally — there are no NICs or memif setup on this workstation.
 - Add new Python dependencies.
 - Change the memif wire protocol (`dpdk/drivers/net/memif/memif.h`).
@@ -50,25 +50,25 @@ You cannot run testpmd locally — the runner machine has the hardware/setup. Co
 
 ## CLI commands
 
-All commands: `uv run autosearch <subcommand>`
+All commands: `uv run autoforge <subcommand>`
 
 | Command | What it does |
 |---------|-------------|
-| `uv run autosearch context` | Print campaign state, history, failures, and profiling data |
-| `uv run autosearch submit -d "description"` | Validate submodule change, create request, commit, push |
-| `uv run autosearch poll` | Poll git until latest request completes, print result |
-| `uv run autosearch judge` | Compare result to best, keep or revert, record in TSV |
-| `uv run autosearch baseline` | Submit baseline (no changes), wait for result |
-| `uv run autosearch status` | Print latest request status without polling |
-| `uv run autosearch sprint init <name>` | Create a new sprint (YYYY-MM-DD-slug) |
-| `uv run autosearch sprint list` | List all sprints with iteration counts |
-| `uv run autosearch sprint active` | Print active sprint name |
-| `uv run autosearch sprint switch <name>` | Switch active sprint in `campaign.toml` |
-| `uv run autosearch revert` | Revert last DPDK submodule commit and force-push fork |
-| `uv run autosearch build-log --seq N` | Print formatted build log for request sequence N |
-| `uv run autosearch hints` | Show arch optimization checklist for the campaign's target architecture |
-| `uv run autosearch hints --list` | List available hint topics (e.g., `optimization`, `perf-counters`) |
-| `uv run autosearch hints --topic perf-counters` | Show PMU performance counter reference for the architecture |
+| `uv run autoforge context` | Print campaign state, history, failures, and profiling data |
+| `uv run autoforge submit -d "description"` | Validate submodule change, create request, commit, push |
+| `uv run autoforge poll` | Poll git until latest request completes, print result |
+| `uv run autoforge judge` | Compare result to best, keep or revert, record in TSV |
+| `uv run autoforge baseline` | Submit baseline (no changes), wait for result |
+| `uv run autoforge status` | Print latest request status without polling |
+| `uv run autoforge sprint init <name>` | Create a new sprint (YYYY-MM-DD-slug) |
+| `uv run autoforge sprint list` | List all sprints with iteration counts |
+| `uv run autoforge sprint active` | Print active sprint name |
+| `uv run autoforge sprint switch <name>` | Switch active sprint in `campaign.toml` |
+| `uv run autoforge revert` | Revert last DPDK submodule commit and force-push fork |
+| `uv run autoforge build-log --seq N` | Print formatted build log for request sequence N |
+| `uv run autoforge hints` | Show arch optimization checklist for the campaign's target architecture |
+| `uv run autoforge hints --list` | List available hint topics (e.g., `optimization`, `perf-counters`) |
+| `uv run autoforge hints --topic perf-counters` | Show PMU performance counter reference for the architecture |
 
 ## Output format
 
@@ -95,21 +95,21 @@ No improvement (85.10 vs best 86.25). Reverting.
 
 LOOP FOREVER:
 
-1. `uv run autosearch context` — read current state, profile hotspots, past failures
+1. `uv run autoforge context` — read current state, profile hotspots, past failures
 2. Read the DPDK source files in scope. Think about what to optimize based on the profiling data. Study the hot functions. Consider what prior failures tell you.
 3. Edit the DPDK source files directly in `dpdk/`. Make a single, focused change.
 4. Commit in the submodule:
    ```
    git -C dpdk add -A && git -C dpdk commit -m "short description of change"
    ```
-5. `uv run autosearch submit -d "short description of change"` — creates the request and pushes
-6. `uv run autosearch poll` — wait ~3 minutes for the runner to build and test
-7. `uv run autosearch judge` — automatically keeps or reverts based on the metric
+5. `uv run autoforge submit -d "short description of change"` — creates the request and pushes
+6. `uv run autoforge poll` — wait ~3 minutes for the runner to build and test
+7. `uv run autoforge judge` — automatically keeps or reverts based on the metric
 8. Repeat from step 1
 
 ## Error handling
 
-- **Build failure**: `poll` will show the error. Run `uv run autosearch build-log --seq N` to see the full formatted build log with error lines highlighted. Fix the code in the submodule, commit, and `submit` again.
+- **Build failure**: `poll` will show the error. Run `uv run autoforge build-log --seq N` to see the full formatted build log with error lines highlighted. Fix the code in the submodule, commit, and `submit` again.
 - **Test failure**: `judge` will revert the submodule. Move on to a different approach.
 - **Timeout**: Treat as failure. `judge` will revert. Consider simplifying the change.
 - **Poll shows "still running"**: Wait and poll again. The runner may be building.
@@ -125,7 +125,7 @@ LOOP FOREVER:
 - **Avoid UB.** DPDK runs with `-O3`; undefined behavior will be exploited by the optimizer.
 - **Guard arch-specific changes.** Use `#ifdef RTE_ARCH_PPC_64` for POWER-only optimizations in library code.
 - **Read past failures.** The `context` command shows what was tried and failed. Don't repeat failed approaches.
-- **Read arch-specific hints.** Run `uv run autosearch hints` for the target architecture's optimization checklist (cache lines, SIMD, memory ordering, compiler flags). Run `uv run autosearch hints --list` to see available topics. Run `uv run autosearch hints --topic perf-counters` for the PMU event reference.
+- **Read arch-specific hints.** Run `uv run autoforge hints` for the target architecture's optimization checklist (cache lines, SIMD, memory ordering, compiler flags). Run `uv run autoforge hints --list` to see available topics. Run `uv run autoforge hints --topic perf-counters` for the PMU event reference.
 
 ### Sprint 001 observations (POWER9 memif)
 

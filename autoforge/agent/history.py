@@ -9,8 +9,8 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-COLUMNS = ["sequence", "timestamp", "dpdk_commit", "metric_value", "status", "description"]
-FAILURE_COLUMNS = ["timestamp", "dpdk_commit", "metric_value", "description", "diff_summary"]
+COLUMNS = ["sequence", "timestamp", "source_commit", "metric_value", "status", "description"]
+FAILURE_COLUMNS = ["timestamp", "source_commit", "metric_value", "description", "diff_summary"]
 
 
 def append_result(

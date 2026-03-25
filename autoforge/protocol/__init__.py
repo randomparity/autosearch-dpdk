@@ -1,6 +1,6 @@
 """Shared protocol definitions for agent-runner communication."""
 
-from src.protocol.schema import (
+from autoforge.protocol.schema import (
     STATUS_BUILDING,
     STATUS_CLAIMED,
     STATUS_COMPLETED,

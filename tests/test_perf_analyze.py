@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from src.perf.analyze import (
+from autoforge.perf.analyze import (
     compute_derived_metrics,
     diagnose,
     hot_paths,

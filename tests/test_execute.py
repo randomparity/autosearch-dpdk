@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 
-from src.runner.execute import _read_json_file, _read_text_file
+from autoforge_dpdk.tester import _read_json_file, _read_text_file
 
 
 class TestReadJsonFile:

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from src.runner.build import _truncate_log
+from autoforge_dpdk.builder import _truncate_log
 
 
 class TestTruncateLog:

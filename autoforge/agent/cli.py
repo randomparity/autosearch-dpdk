@@ -6,29 +6,29 @@ import argparse
 import sys
 from pathlib import Path
 
-from src.agent.campaign import CampaignConfig, load_campaign
-from src.agent.git_ops import (
+from autoforge.agent.campaign import CampaignConfig, load_campaign
+from autoforge.agent.git_ops import (
     full_revert,
     git_add_commit_push,
     git_submodule_head,
     record_result_or_revert,
 )
-from src.agent.hints import hints_summary, list_topics, resolve_arch
-from src.agent.history import (
+from autoforge.agent.hints import hints_summary, list_topics, resolve_arch
+from autoforge.agent.history import (
     append_result,
     best_result,
     format_failures,
     load_failures,
     load_history,
 )
-from src.agent.protocol import (
+from autoforge.agent.protocol import (
     create_request,
     find_latest_request,
     find_request_by_seq,
     next_sequence,
     poll_for_completion,
 )
-from src.agent.sprint import (
+from autoforge.agent.sprint import (
     active_sprint_name,
     failures_path,
     init_sprint,
@@ -37,7 +37,7 @@ from src.agent.sprint import (
     results_path,
     switch_sprint,
 )
-from src.agent.strategy import (
+from autoforge.agent.strategy import (
     extract_profile_summary,
     format_context,
     format_profile_lines,
@@ -47,12 +47,12 @@ from src.agent.strategy import (
 DEFAULT_CAMPAIGN = Path(__file__).resolve().parent.parent.parent / "config" / "campaign.toml"
 
 
-def _dpdk_path(campaign: CampaignConfig) -> Path:
-    return Path(campaign.get("dpdk", {}).get("submodule_path", "dpdk"))
+def _source_path(campaign: CampaignConfig) -> Path:
+    return Path(campaign.get("project", {}).get("submodule_path", "dpdk"))
 
 
 def _optimization_branch(campaign: CampaignConfig) -> str:
-    return campaign.get("dpdk", {}).get("optimization_branch", "")
+    return campaign.get("project", {}).get("optimization_branch", "")
 
 
 def _req_dir(campaign: CampaignConfig) -> Path:
@@ -95,19 +95,19 @@ def cmd_context(campaign: CampaignConfig) -> None:
 
 def cmd_submit(campaign: CampaignConfig, description: str, dry_run: bool) -> None:
     """Validate submodule change, create request, commit, push."""
-    dpdk_path = _dpdk_path(campaign)
+    source_path = _source_path(campaign)
     req = _req_dir(campaign)
 
-    if not validate_change(dpdk_path):
+    if not validate_change(source_path):
         print("ERROR: No submodule change detected. Commit in the submodule first.")
         sys.exit(1)
 
-    commit = git_submodule_head(dpdk_path)
+    commit = git_submodule_head(source_path)
     seq = next_sequence(req)
     request_path = create_request(seq, commit, campaign, description, req)
 
     git_add_commit_push(
-        [str(request_path), str(dpdk_path)],
+        [str(request_path), str(source_path)],
         f"iteration {seq:04d}: {description}",
         dry_run=dry_run,
     )
@@ -163,7 +163,7 @@ def _print_result(result: object) -> None:
 
 def cmd_judge(campaign: CampaignConfig, dry_run: bool) -> None:
     """Compare latest result to best, keep or revert, record in TSV."""
-    dpdk_path = _dpdk_path(campaign)
+    source_path = _source_path(campaign)
     req = _req_dir(campaign)
     res = _res_path(campaign)
     fail = _fail_path(campaign)
@@ -179,7 +179,7 @@ def cmd_judge(campaign: CampaignConfig, dry_run: bool) -> None:
         sys.exit(1)
 
     metric = latest.metric_value if latest.status == "completed" else None
-    commit = latest.dpdk_commit
+    commit = latest.source_commit
     description = latest.description or ""
 
     current_best = best_result(res, direction=direction)
@@ -194,7 +194,7 @@ def cmd_judge(campaign: CampaignConfig, dry_run: bool) -> None:
         latest.sequence,
         commit,
         description,
-        dpdk_path,
+        source_path,
         dry_run,
         results_path=res,
         failures_path=fail,
@@ -204,9 +204,9 @@ def cmd_judge(campaign: CampaignConfig, dry_run: bool) -> None:
 
 def cmd_baseline(campaign: CampaignConfig, dry_run: bool) -> None:
     """Submit a baseline request (no code changes) and optionally poll."""
-    dpdk_path = _dpdk_path(campaign)
+    source_path = _source_path(campaign)
     req = _req_dir(campaign)
-    commit = git_submodule_head(dpdk_path)
+    commit = git_submodule_head(source_path)
     seq = next_sequence(req)
     description = "Baseline: unmodified DPDK"
 
@@ -241,11 +241,11 @@ def cmd_baseline(campaign: CampaignConfig, dry_run: bool) -> None:
 
 def cmd_revert(campaign: CampaignConfig, dry_run: bool) -> None:
     """Revert the last DPDK submodule commit and force-push the fork."""
-    dpdk_path = _dpdk_path(campaign)
+    source_path = _source_path(campaign)
     branch = _optimization_branch(campaign)
 
-    old_head = full_revert(dpdk_path, branch, dry_run)
-    new_head = git_submodule_head(dpdk_path)
+    old_head = full_revert(source_path, branch, dry_run)
+    new_head = git_submodule_head(source_path)
 
     print(f"Reverted {old_head[:12]} -> {new_head[:12]}")
     if branch and not dry_run:
@@ -359,8 +359,8 @@ def cmd_sprint_active(campaign: CampaignConfig) -> None:
 
 
 def main() -> None:
-    """CLI entry point for autosearch subcommands."""
-    parser = argparse.ArgumentParser(prog="autosearch")
+    """CLI entry point for autoforge subcommands."""
+    parser = argparse.ArgumentParser(prog="autoforge")
     parser.add_argument(
         "--campaign",
         default=None,

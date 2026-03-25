@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import json
 
-from src.agent.protocol import create_request, find_latest_request, next_sequence
-from src.protocol import STATUS_PENDING, TestRequest
+from autoforge.agent.protocol import create_request, find_latest_request, next_sequence
+from autoforge.protocol import STATUS_PENDING, TestRequest
 
 SAMPLE_CAMPAIGN = {
     "metric": {
@@ -56,7 +56,7 @@ class TestCreateRequest:
         )
         data = json.loads(path.read_text())
         assert data["sequence"] == 1
-        assert data["dpdk_commit"] == "abc123"
+        assert data["source_commit"] == "abc123"
         assert data["status"] == STATUS_PENDING
         assert data["test_suites"] == ["TestPmd"]
         assert data["perf"] is True
@@ -85,7 +85,7 @@ class TestReadRequest:
         )
         req = TestRequest.read(path)
         assert req.sequence == 1
-        assert req.dpdk_commit == "abc123"
+        assert req.source_commit == "abc123"
 
 
 class TestFindLatestRequest:
@@ -99,4 +99,4 @@ class TestFindLatestRequest:
         latest = find_latest_request(requests_dir=tmp_path)
         assert latest is not None
         assert latest.sequence == 3
-        assert latest.dpdk_commit == "ccc"
+        assert latest.source_commit == "ccc"

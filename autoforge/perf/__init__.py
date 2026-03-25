@@ -2,17 +2,17 @@
 
 from __future__ import annotations
 
-from src.perf.analyze import (
+from autoforge.perf.analyze import (
     compute_derived_metrics,
     diagnose,
     hot_paths,
     summarize,
     top_functions,
 )
-from src.perf.arch import COMMON_EVENTS, detect_arch, load_arch_profile
-from src.perf.diff import diff_counters, diff_stacks, load_folded
-from src.perf.gate import EXIT_ERROR, EXIT_FAIL, EXIT_PASS, EXIT_WARN, check_regression
-from src.perf.profile import (
+from autoforge.perf.arch import COMMON_EVENTS, detect_arch, load_arch_profile
+from autoforge.perf.diff import diff_counters, diff_stacks, load_folded
+from autoforge.perf.gate import EXIT_ERROR, EXIT_FAIL, EXIT_PASS, EXIT_WARN, check_regression
+from autoforge.perf.profile import (
     ProfileResult,
     fold_stacks,
     parse_perf_stat,

@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from src.agent.history import append_result, best_result, load_history
-from src.agent.metric import compare_metric
-from src.agent.protocol import create_request
-from src.protocol import (
+from autoforge.agent.history import append_result, best_result, load_history
+from autoforge.agent.metric import compare_metric
+from autoforge.agent.protocol import create_request
+from autoforge.protocol import (
     STATUS_COMPLETED,
     STATUS_FAILED,
     TestRequest,
@@ -54,7 +54,7 @@ class TestFullIteration:
         requests_dir.mkdir()
         results_path = tmp_path / "results.tsv"
         results_path.write_text(
-            "sequence\ttimestamp\tdpdk_commit\tmetric_value\tstatus\tdescription\n"
+            "sequence\ttimestamp\tsource_commit\tmetric_value\tstatus\tdescription\n"
         )
 
         # Agent creates request
@@ -98,7 +98,7 @@ class TestFullIteration:
         requests_dir.mkdir()
         results_path = tmp_path / "results.tsv"
         results_path.write_text(
-            "sequence\ttimestamp\tdpdk_commit\tmetric_value\tstatus\tdescription\n"
+            "sequence\ttimestamp\tsource_commit\tmetric_value\tstatus\tdescription\n"
         )
 
         path = create_request(
@@ -120,7 +120,7 @@ class TestFullIteration:
     def test_metric_improvement_tracking(self, tmp_path) -> None:
         results_path = tmp_path / "results.tsv"
         results_path.write_text(
-            "sequence\ttimestamp\tdpdk_commit\tmetric_value\tstatus\tdescription\n"
+            "sequence\ttimestamp\tsource_commit\tmetric_value\tstatus\tdescription\n"
         )
 
         append_result(1, "aaa", 10.0, "completed", "baseline", path=results_path)
@@ -128,7 +128,7 @@ class TestFullIteration:
         append_result(3, "ccc", 11.0, "completed", "regression", path=results_path)
 
         best = best_result(path=results_path, direction="maximize")
-        assert best["dpdk_commit"] == "bbb"
+        assert best["source_commit"] == "bbb"
 
         # Sequence 3 was a regression
         assert not compare_metric(11.0, 12.0, "maximize")

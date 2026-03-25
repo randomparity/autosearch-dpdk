@@ -10,7 +10,7 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from src.perf.arch import COMMON_EVENTS, load_arch_profile
+from autoforge.perf.arch import COMMON_EVENTS, load_arch_profile
 
 logger = logging.getLogger(__name__)
 
