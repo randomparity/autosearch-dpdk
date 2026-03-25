@@ -1,0 +1,22 @@
+{
+  "sequence": 17,
+  "created_at": "2026-03-25T02:43:56.298645+00:00",
+  "dpdk_commit": "82796c2debcf4da696ab3c32f5bbebe5a4a95097",
+  "test_suites": [
+    "TestPmd"
+  ],
+  "test_cases": null,
+  "perf": true,
+  "metric_name": "throughput_mpps",
+  "metric_path": "throughput_mpps",
+  "description": "4-at-a-time unrolled tx fast path for single-segment packets",
+  "backend": "testpmd",
+  "status": "pending",
+  "claimed_at": null,
+  "completed_at": null,
+  "build_log_snippet": null,
+  "results_json": null,
+  "results_summary": null,
+  "metric_value": null,
+  "error": null
+}
