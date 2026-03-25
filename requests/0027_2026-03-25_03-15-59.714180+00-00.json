@@ -11,7 +11,7 @@
   "metric_path": "throughput_mpps",
   "description": "batch free stored mbufs in groups of 32 with ring-order locality",
   "backend": "testpmd",
-  "status": "building",
+  "status": "running",
   "claimed_at": "2026-03-25T03:18:12.956434+00:00",
   "completed_at": null,
   "build_log_snippet": null,
