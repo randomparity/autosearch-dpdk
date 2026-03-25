@@ -11,7 +11,7 @@
   "metric_path": "throughput_mpps",
   "description": "increase MAX_PKT_BURST 32->128 to match testpmd burst size",
   "backend": "testpmd",
-  "status": "building",
+  "status": "running",
   "claimed_at": "2026-03-25T12:18:03.735550+00:00",
   "completed_at": null,
   "build_log_snippet": null,
