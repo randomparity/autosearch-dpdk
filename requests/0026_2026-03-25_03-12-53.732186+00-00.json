@@ -11,7 +11,7 @@
   "metric_path": "throughput_mpps",
   "description": "bulk free stored mbufs instead of per-mbuf free_seg (FIXME tag)",
   "backend": "testpmd",
-  "status": "building",
+  "status": "running",
   "claimed_at": "2026-03-25T03:15:07.958231+00:00",
   "completed_at": null,
   "build_log_snippet": null,
