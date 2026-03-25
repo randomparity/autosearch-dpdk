@@ -1,0 +1,87 @@
+[sprint]
+name = "2026-03-25-ppc64le-mem-alignment"
+
+[platform]
+arch = "ppc64le"
+
+[campaign]
+name = "memif-throughput"
+max_iterations = 50
+
+[metric]
+name = "throughput_mpps"
+# Key path into the results JSON (dot-separated for nested dicts)
+path = "throughput_mpps"
+# "maximize" or "minimize"
+direction = "maximize"
+# Stop early if improvement between iterations falls below this value
+threshold = 0.01
+
+[agent]
+# Seconds between polling for test results
+poll_interval = 30
+# Total wall-clock budget for a single test run
+timeout_minutes = 60
+
+[goal]
+# Freeform description injected into the Claude prompt. Use this to specify
+# hardware, optimization strategy, constraints, or any other context.
+description = """
+Target: memif PMD (shared-memory interface, no physical NIC required).
+Platform: POWER9 ppc64le, 128B cache lines, 8 NUMA nodes.
+Workload: testpmd in io-fwd mode, bi-directional 64-byte frames between
+a memif server and client pair (lcores 96-103 on NUMA node 8).
+
+Focus: NUMA-local memory allocation and physical memory alignment.
+The primary hypothesis is that mbufs, mempools, descriptors, and ring
+buffers may be allocated from memory banks distant from the CPUs
+running the forwarding lcores, causing cross-NUMA memory accesses on
+every packet.
+
+Starting point: arch_mem_object_align() — understand how DPDK aligns
+memory objects on POWER9 and whether alignment respects NUMA locality.
+
+Strategy areas:
+- EAL memory subsystem: hugepage allocation, memseg management,
+  malloc_heap per-socket allocation in lib/eal/common/
+- Mempool NUMA affinity: ensure rte_mempool_create uses the correct
+  socket_id for the lcores that will access the pool
+- Memzone placement: verify rte_memzone_reserve respects socket
+  preference for descriptor rings and shared structures
+- Physical memory layout: discover NUMA topology on POWER9 (which
+  memory controllers serve which CPUs), verify hugepage placement
+- Cache-line alignment: ensure frequently accessed structures are
+  128B-aligned (POWER9 cache line size, not x86 64B)
+- mbuf pool locality: rte_pktmbuf_pool_create socket_id parameter,
+  per-lcore mempool cache behavior across NUMA boundaries
+
+Constraints: do not change public API signatures, the memif wire protocol
+(memif.h), or break other PMDs or platforms. Library changes must be
+guarded by architecture ifdefs (RTE_ARCH_PPC_64) where appropriate.
+"""
+
+[profiling]
+# Include profiling summary in results pushed to agent
+enabled = true
+
+[project]
+name = "dpdk"
+build = "local-server"
+deploy = "local"
+test = "testpmd-memif"
+profiler = "perf-record"
+# Path to the source git submodule relative to repo root
+submodule_path = "projects/dpdk/repo"
+# Branch in the submodule where good changes accumulate
+optimization_branch = "autosearch/optimize"
+# Source paths the agent is allowed to modify (relative to submodule_path)
+scope = [
+    "drivers/net/memif/",
+    "app/test-pmd/",
+    "lib/eal/ppc/",
+    "lib/eal/include/",
+    "lib/eal/common/",
+    "lib/ring/",
+    "lib/mbuf/",
+    "lib/mempool/",
+]

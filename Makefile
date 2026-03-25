@@ -8,8 +8,9 @@ VENV := .venv
 
 # ── Setup targets ──────────────────────────────────────────────────
 
-setup: check-common venv  ## Full setup (common deps + venv)
-	@echo "Setup complete. Run 'uv run autosearch --dry-run' to verify."
+setup: check-common venv  ## Full setup (common deps + venv + hooks)
+	$(UV) run pre-commit install
+	@echo "Setup complete. Run 'uv run autoforge context' to verify."
 
 setup-agent: check-common check-agent venv  ## Setup for agent workstation
 	@echo "Agent setup complete."
@@ -64,16 +65,16 @@ check-runner:
 # ── Development targets ────────────────────────────────────────────
 
 lint:  ## Run linter
-	$(UV) run ruff check src/ tests/
+	$(UV) run ruff check autoforge/ tests/
 
 format:  ## Run formatter
-	$(UV) run ruff format src/ tests/
+	$(UV) run ruff format autoforge/ tests/
 
 test:  ## Run tests
 	$(UV) run pytest -q
 
 clean:  ## Remove build artifacts and caches
-	rm -rf $(VENV) .ruff_cache .pytest_cache src/__pycache__
+	rm -rf $(VENV) .ruff_cache .pytest_cache autoforge/__pycache__
 	find . -path ./dpdk -prune -o -name '__pycache__' -print | xargs rm -rf
 
 # ── Help ───────────────────────────────────────────────────────────

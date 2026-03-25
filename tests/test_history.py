@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from src.agent.history import append_result, best_result, load_history
+from autoforge.agent.history import append_result, best_result, load_history
 
 
 def make_tsv(tmp_path: Path) -> Path:
     """Create a results.tsv with header."""
     path = tmp_path / "results.tsv"
-    path.write_text("sequence\ttimestamp\tdpdk_commit\tmetric_value\tstatus\tdescription\n")
+    path.write_text("sequence\ttimestamp\tsource_commit\tmetric_value\tstatus\tdescription\n")
     return path
 
 
@@ -21,7 +21,7 @@ class TestAppendResult:
         rows = load_history(path=path)
         assert len(rows) == 1
         assert rows[0]["sequence"] == "1"
-        assert rows[0]["dpdk_commit"] == "abc123"
+        assert rows[0]["source_commit"] == "abc123"
         assert rows[0]["metric_value"] == "14.5"
 
     def test_appends_multiple_rows(self, tmp_path) -> None:
@@ -84,7 +84,7 @@ class TestBestResult:
         append_result(2, "b", 14.0, "completed", "ok", path=path)
         best = best_result(path=path, direction="maximize")
         assert best is not None
-        assert best["dpdk_commit"] == "b"
+        assert best["source_commit"] == "b"
 
     def test_empty_history_returns_none(self, tmp_path) -> None:
         path = make_tsv(tmp_path)

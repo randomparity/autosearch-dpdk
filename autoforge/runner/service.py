@@ -1,0 +1,65 @@
+"""Runner service entry point — dispatches to phase-specific runners."""
+
+from __future__ import annotations
+
+import logging
+import os
+import tomllib
+
+from autoforge.campaign import REPO_ROOT, load_campaign, load_pointer, resolve_campaign_path
+from autoforge.logging_config import setup_logging
+from autoforge.runner.base import (
+    BuildRunner,
+    DeployRunner,
+    FullRunner,
+    TestRunner,
+)
+
+logger = logging.getLogger(__name__)
+
+PHASE_RUNNERS = {
+    "all": FullRunner,
+    "build": BuildRunner,
+    "deploy": DeployRunner,
+    "test": TestRunner,
+}
+
+
+def load_config(path: str | None = None) -> dict:
+    """Load runner configuration from a TOML file."""
+    default = str(REPO_ROOT / "config" / "runner.toml")
+    config_path = path or os.environ.get("AUTOFORGE_CONFIG", default)
+    with open(config_path, "rb") as f:
+        return tomllib.load(f)
+
+
+def main() -> None:
+    """Runner service entry point."""
+    config = load_config()
+    runner_cfg = config.get("runner", {})
+
+    setup_logging(
+        level_name=runner_cfg.get("log_level"),
+        log_file=runner_cfg.get("log_file"),
+    )
+
+    campaign_path = resolve_campaign_path()
+    campaign = load_campaign(campaign_path)
+    pointer = load_pointer()
+    req_dir = (
+        REPO_ROOT / "projects" / pointer["project"] / "sprints" / pointer["sprint"] / "requests"
+    )
+
+    phase = runner_cfg.get("phase", "all")
+    runner_cls = PHASE_RUNNERS.get(phase)
+    if runner_cls is None:
+        msg = f"Unknown runner phase {phase!r}, must be one of {sorted(PHASE_RUNNERS)}"
+        raise ValueError(msg)
+
+    runner = runner_cls(config=config, campaign=campaign, requests_dir=req_dir)
+    logger.info("Starting %s runner (id=%s)", phase, runner.runner_id or "unset")
+    runner.poll_loop()
+
+
+if __name__ == "__main__":
+    main()

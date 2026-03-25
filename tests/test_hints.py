@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.agent.hints import HINTS_DIR, hints_path, hints_summary, list_topics, resolve_arch
+from autoforge.agent.hints import HINTS_DIR, hints_path, hints_summary, list_topics, resolve_arch
 
 
 class TestHintsPath:
@@ -22,7 +22,7 @@ class TestHintsPath:
 
     def test_missing_file(self) -> None:
         with (
-            patch("src.agent.hints.HINTS_DIR", Path("/nonexistent/dir")),
+            patch("autoforge.agent.hints.HINTS_DIR", Path("/nonexistent/dir")),
             pytest.raises(FileNotFoundError, match="No .* hints"),
         ):
             hints_path("aarch64")
@@ -38,7 +38,7 @@ class TestHintsPath:
 
     def test_missing_perf_counters(self) -> None:
         with (
-            patch("src.agent.hints.HINTS_DIR", Path("/nonexistent/dir")),
+            patch("autoforge.agent.hints.HINTS_DIR", Path("/nonexistent/dir")),
             pytest.raises(FileNotFoundError, match="No perf-counters hints"),
         ):
             hints_path("ppc64le", topic="perf-counters")
@@ -68,7 +68,7 @@ class TestListTopics:
             list_topics("mips64")
 
     def test_missing_dir(self) -> None:
-        with patch("src.agent.hints.HINTS_DIR", Path("/nonexistent/dir")):
+        with patch("autoforge.agent.hints.HINTS_DIR", Path("/nonexistent/dir")):
             topics = list_topics("ppc64le")
             assert topics == []
 

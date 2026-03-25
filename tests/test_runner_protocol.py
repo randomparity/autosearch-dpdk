@@ -2,18 +2,19 @@
 
 from __future__ import annotations
 
-from src.agent.protocol import create_request
-from src.protocol import STATUS_CLAIMED, STATUS_PENDING
-from src.runner.protocol import find_pending
+from autoforge.agent.protocol import create_request
+from autoforge.protocol import STATUS_CLAIMED, STATUS_PENDING
+from autoforge.runner.protocol import find_pending
 
 SAMPLE_CAMPAIGN = {
     "metric": {
         "name": "throughput_mpps",
         "path": "results.throughput_mpps",
     },
-    "test": {
-        "test_suites": ["TestPmd"],
-        "perf": True,
+    "project": {
+        "build": "local-server",
+        "deploy": "local",
+        "test": "testpmd-memif",
     },
 }
 
@@ -35,7 +36,7 @@ class TestFindPending:
 
     def test_skips_claimed_request(self, tmp_path) -> None:
         path = create_request(1, "abc123", SAMPLE_CAMPAIGN, "test", tmp_path)
-        from src.protocol import TestRequest
+        from autoforge.protocol import TestRequest
 
         req = TestRequest.read(path)
         req.status = STATUS_CLAIMED

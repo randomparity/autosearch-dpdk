@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from src.agent.strategy import format_context
+from autoforge.agent.strategy import format_context
 
 
 def _row(seq: str, metric: str, status: str, desc: str) -> dict:
@@ -19,7 +19,7 @@ SAMPLE_CAMPAIGN = {
         "name": "throughput_mpps",
         "direction": "maximize",
     },
-    "dpdk": {
+    "project": {
         "scope": ["drivers/net/mlx5"],
     },
     "campaign": {
@@ -77,7 +77,7 @@ class TestFormatContext:
     def test_includes_hints_tip_when_arch_set(self) -> None:
         campaign = {**SAMPLE_CAMPAIGN, "platform": {"arch": "ppc64le"}}
         result = format_context([], campaign)
-        assert "autosearch hints" in result
+        assert "autoforge hints" in result
         assert "ppc64le" in result
 
     def test_no_hints_tip_when_arch_absent(self) -> None:

@@ -8,14 +8,14 @@ import json
 import sys
 from pathlib import Path
 
-from src.perf.analyze import (
+from autoforge.perf.analyze import (
     diagnose,
     hot_paths,
     summarize,
     top_functions,
 )
-from src.perf.arch import load_arch_profile
-from src.perf.diff import load_folded
+from autoforge.perf.arch import load_arch_profile
+from autoforge.perf.diff import load_folded
 
 
 def cmd_top_functions(args: argparse.Namespace) -> None:

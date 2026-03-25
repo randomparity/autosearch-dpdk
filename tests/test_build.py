@@ -2,7 +2,24 @@
 
 from __future__ import annotations
 
-from src.runner.build import _truncate_log
+import importlib.util
+import sys
+from pathlib import Path
+
+PLUGIN_PATH = Path(__file__).parent.parent / "projects" / "dpdk" / "builds" / "local-server.py"
+MODULE_NAME = "autoforge_plugin_local_server"
+
+
+def _load_builder_module():
+    spec = importlib.util.spec_from_file_location(MODULE_NAME, PLUGIN_PATH)
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[MODULE_NAME] = mod
+    spec.loader.exec_module(mod)
+    return mod
+
+
+_mod = _load_builder_module()
+_truncate_log = _mod._truncate_log
 
 
 class TestTruncateLog:

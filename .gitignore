@@ -6,6 +6,7 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+config/campaign.toml
 config/runner.toml
 config/nodes.yaml
 config/test_run.yaml

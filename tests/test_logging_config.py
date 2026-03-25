@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 
-from src.logging_config import setup_logging
+from autoforge.logging_config import setup_logging
 
 
 class TestSetupLogging:

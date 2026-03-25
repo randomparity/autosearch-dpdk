@@ -13,7 +13,7 @@
 log_level = "info"
 
 # Optional log file path (logs to both stdout and file when set)
-# log_file = "/var/log/autosearch-runner.log"
+# log_file = "/var/log/autoforge-runner.log"
 
 # Seconds between polling for new requests
 poll_interval = 30

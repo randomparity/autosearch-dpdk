@@ -8,7 +8,7 @@ import json
 import sys
 from pathlib import Path
 
-from src.perf.diff import diff_stacks, load_folded
+from autoforge.perf.diff import diff_stacks, load_folded
 
 
 def main() -> None:

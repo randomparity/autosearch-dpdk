@@ -56,9 +56,10 @@ the request).
 
 ## Autonomous mode (Claude Code)
 
-Autonomous mode is handled by Claude Code reading `program.md` directly.
-Claude Code uses the CLI subcommands (`context`, `submit`, `poll`, `judge`)
-to interact with the remote runner. See `program.md` for the full workflow.
+Autonomous mode is handled by Claude Code reading the active sprint's `program.md`.
+Each sprint directory contains a `program.md` tailored to that sprint's optimization
+goals. Claude Code uses the CLI subcommands (`context`, `submit`, `poll`, `judge`)
+to interact with the remote runner.
 
 ## CLI reference
 

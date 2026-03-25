@@ -1,0 +1,20 @@
+[project]
+name = "autoforge-runner"
+version = "0.2.0"
+description = "Runner service for autoforge test execution"
+requires-python = ">=3.13"
+dependencies = []
+
+[project.scripts]
+autoforge-runner = "autoforge.runner.service:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "SIM"]

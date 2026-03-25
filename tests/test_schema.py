@@ -6,10 +6,13 @@ import json
 
 import pytest
 
-from src.protocol.schema import (
+from autoforge.protocol import (
     STATUS_BUILDING,
+    STATUS_BUILT,
     STATUS_CLAIMED,
     STATUS_COMPLETED,
+    STATUS_DEPLOYED,
+    STATUS_DEPLOYING,
     STATUS_FAILED,
     STATUS_PENDING,
     STATUS_RUNNING,
@@ -24,13 +27,13 @@ def make_request(**overrides: object) -> TestRequest:
     defaults = {
         "sequence": 1,
         "created_at": "2025-01-15T10:30:00",
-        "dpdk_commit": "abc123def456",
-        "test_suites": ["TestPmd"],
-        "test_cases": None,
-        "perf": True,
-        "metric_name": "throughput_mpps",
-        "metric_path": "test_runs.0.test_suites.0.test_cases.0.throughput_mpps",
+        "source_commit": "abc123def456",
         "description": "Increase burst size in testpmd",
+        "build_plugin": "local-server",
+        "deploy_plugin": "local",
+        "test_plugin": "testpmd-memif",
+        "metric_name": "throughput_mpps",
+        "metric_path": "throughput_mpps",
     }
     defaults.update(overrides)
     return TestRequest(**defaults)
@@ -42,31 +45,42 @@ class TestSerialization:
         raw = req.to_json()
         restored = TestRequest.from_json(raw)
         assert restored.sequence == req.sequence
-        assert restored.dpdk_commit == req.dpdk_commit
-        assert restored.test_suites == req.test_suites
+        assert restored.source_commit == req.source_commit
+        assert restored.build_plugin == "local-server"
+        assert restored.deploy_plugin == "local"
+        assert restored.test_plugin == "testpmd-memif"
         assert restored.status == STATUS_PENDING
 
     def test_round_trip_preserves_all_fields(self) -> None:
         req = make_request(
             status=STATUS_COMPLETED,
             claimed_at="2025-01-15T10:31:00",
+            built_at="2025-01-15T10:35:00",
+            deployed_at="2025-01-15T10:36:00",
             completed_at="2025-01-15T11:00:00",
             metric_value=14.5,
             results_json={"throughput": 14.5},
             results_summary="All tests passed",
+            build_runner_id="build-01",
+            deploy_runner_id="deploy-01",
+            test_runner_id="test-01",
         )
         restored = TestRequest.from_json(req.to_json())
         assert restored.claimed_at == "2025-01-15T10:31:00"
+        assert restored.built_at == "2025-01-15T10:35:00"
+        assert restored.deployed_at == "2025-01-15T10:36:00"
         assert restored.completed_at == "2025-01-15T11:00:00"
         assert restored.metric_value == 14.5
         assert restored.results_json == {"throughput": 14.5}
         assert restored.results_summary == "All tests passed"
+        assert restored.build_runner_id == "build-01"
 
     def test_to_json_is_valid_json(self) -> None:
         req = make_request()
         parsed = json.loads(req.to_json())
         assert parsed["sequence"] == 1
         assert parsed["status"] == "pending"
+        assert parsed["build_plugin"] == "local-server"
 
     def test_from_json_with_unknown_fields_raises(self) -> None:
         req = make_request()
@@ -82,6 +96,12 @@ class TestSerialization:
         restored = TestRequest.read(path)
         assert restored.sequence == req.sequence
         assert restored.status == STATUS_PENDING
+
+    def test_profile_plugin_optional(self) -> None:
+        req = make_request()
+        assert req.profile_plugin == ""
+        req2 = make_request(profile_plugin="perf-record")
+        assert req2.profile_plugin == "perf-record"
 
 
 class TestFilename:
@@ -104,6 +124,9 @@ class TestStatusValidation:
             STATUS_PENDING,
             STATUS_CLAIMED,
             STATUS_BUILDING,
+            STATUS_BUILT,
+            STATUS_DEPLOYING,
+            STATUS_DEPLOYED,
             STATUS_RUNNING,
             STATUS_COMPLETED,
             STATUS_FAILED,
@@ -124,22 +147,42 @@ class TestStateTransitions:
         transitions = [
             (STATUS_PENDING, STATUS_CLAIMED),
             (STATUS_CLAIMED, STATUS_BUILDING),
-            (STATUS_BUILDING, STATUS_RUNNING),
+            (STATUS_BUILDING, STATUS_BUILT),
+            (STATUS_BUILT, STATUS_DEPLOYING),
+            (STATUS_DEPLOYING, STATUS_DEPLOYED),
+            (STATUS_DEPLOYED, STATUS_RUNNING),
             (STATUS_RUNNING, STATUS_COMPLETED),
         ]
         for current, target in transitions:
             validate_transition(current, target)
 
-    def test_any_state_can_fail(self) -> None:
-        for status in [STATUS_PENDING, STATUS_CLAIMED, STATUS_BUILDING, STATUS_RUNNING]:
+    def test_any_non_terminal_state_can_fail(self) -> None:
+        for status in [
+            STATUS_PENDING,
+            STATUS_CLAIMED,
+            STATUS_BUILDING,
+            STATUS_BUILT,
+            STATUS_DEPLOYING,
+            STATUS_DEPLOYED,
+            STATUS_RUNNING,
+        ]:
             validate_transition(status, STATUS_FAILED)
 
     def test_cannot_transition_backwards(self) -> None:
         with pytest.raises(ValueError, match="Cannot transition"):
             validate_transition(STATUS_CLAIMED, STATUS_PENDING)
 
+    def test_cannot_skip_states(self) -> None:
+        with pytest.raises(ValueError, match="Cannot transition"):
+            validate_transition(STATUS_BUILDING, STATUS_DEPLOYED)
+
     def test_terminal_states_cannot_transition(self) -> None:
-        for target in [STATUS_PENDING, STATUS_CLAIMED, STATUS_BUILDING, STATUS_RUNNING]:
+        for target in [
+            STATUS_PENDING,
+            STATUS_CLAIMED,
+            STATUS_BUILDING,
+            STATUS_RUNNING,
+        ]:
             with pytest.raises(ValueError, match="Cannot transition"):
                 validate_transition(STATUS_COMPLETED, target)
             with pytest.raises(ValueError, match="Cannot transition"):
@@ -151,6 +194,8 @@ class TestStateTransitions:
         assert req.status == STATUS_CLAIMED
         req.transition_to(STATUS_BUILDING)
         assert req.status == STATUS_BUILDING
+        req.transition_to(STATUS_BUILT)
+        assert req.status == STATUS_BUILT
 
     def test_transition_to_invalid_raises(self) -> None:
         req = make_request()
@@ -174,3 +219,8 @@ class TestIsTerminal:
     def test_running_is_not_terminal(self) -> None:
         req = make_request(status=STATUS_RUNNING)
         assert req.is_terminal is False
+
+    def test_intermediate_states_not_terminal(self) -> None:
+        for status in [STATUS_BUILT, STATUS_DEPLOYING, STATUS_DEPLOYED]:
+            req = make_request(status=status)
+            assert req.is_terminal is False
