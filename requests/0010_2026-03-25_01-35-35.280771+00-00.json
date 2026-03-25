@@ -1,0 +1,22 @@
+{
+  "sequence": 10,
+  "created_at": "2026-03-25T01:35:35.280771+00:00",
+  "dpdk_commit": "33cec8b8d83c912377e2eea9697e27b8b7184efb",
+  "test_suites": [
+    "TestPmd"
+  ],
+  "test_cases": null,
+  "perf": true,
+  "metric_name": "throughput_mpps",
+  "metric_path": "throughput_mpps",
+  "description": "optimize tx mempool scan: check first+last mbuf instead of all",
+  "backend": "testpmd",
+  "status": "pending",
+  "claimed_at": null,
+  "completed_at": null,
+  "build_log_snippet": null,
+  "results_json": null,
+  "results_summary": null,
+  "metric_value": null,
+  "error": null
+}
