@@ -27,3 +27,5 @@ timestamp	dpdk_commit	metric_value	description	diff_summary
  1 file changed, 1 insertion(+), 1 deletion(-)"
 2026-03-25T11:52:08.240114+00:00	de7c2a4eff4490bf608192f461c9199f3afb3c02	118.5665	batch mq->last_tail write in memif_free_stored_mbufs	"drivers/net/memif/rte_eth_memif.c | 26 ++++++++++++++++----------
  1 file changed, 16 insertions(+), 10 deletions(-)"
+2026-03-25T12:07:09.137786+00:00	16b2932d7f40859ccb8d1c72f4829b2f556859ee	119.5131	remove zc rx prefetch (hurts on POWER9) and cache d0->length locally	"drivers/net/memif/rte_eth_memif.c | 15 +++++++--------
+ 1 file changed, 7 insertions(+), 8 deletions(-)"
