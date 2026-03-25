@@ -11,7 +11,7 @@
   "metric_path": "throughput_mpps",
   "description": "cache region base address to eliminate per-packet pointer chase in rx/tx",
   "backend": "testpmd",
-  "status": "claimed",
+  "status": "building",
   "claimed_at": "2026-03-25T02:33:25.751727+00:00",
   "completed_at": null,
   "build_log_snippet": null,
