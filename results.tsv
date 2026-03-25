@@ -14,3 +14,4 @@ sequence	timestamp	dpdk_commit	metric_value	status	description
 21	2026-03-25T02:57:59.503887+00:00	b8bfbfaf054373c894f6db1080fa1510c420800f	88.3454	completed	batch n_bytes in zc tx (build fix)
 22	2026-03-25T03:03:17.913214+00:00	bd6593138cc969e9908222afd4b648410c6a8a76	87.5935	completed	2x unroll non-ZC tx fast path for single-segment packets
 23	2026-03-25T03:06:16.578542+00:00	204d424732d666d738af8c4d5095d160a8811c2c	88.3545	completed	hoist desc_len and region addr out of zc rx refill loop
+24	2026-03-25T03:09:30.337416+00:00	841b07f392bc812284a49d5f39e4728f8cb599c4	88.3901	completed	4x unroll S2C descriptor refill loop with hoisted buf_size
