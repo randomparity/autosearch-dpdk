@@ -86,7 +86,10 @@ def run_interactive_iteration(
 
     try:
         result = poll_for_completion(
-            seq, timeout=timeout, interval=poll_interval, requests_dir=req,
+            seq,
+            timeout=timeout,
+            interval=poll_interval,
+            requests_dir=req,
         )
     except TimeoutError:
         print(f"Request {seq:04d} timed out.")
@@ -112,8 +115,16 @@ def run_interactive_iteration(
     append_result(seq, commit, metric, "completed", description, path=res)
 
     record_result_or_revert(
-        metric, best_val, direction, seq, commit, description, dpdk_path, dry_run,
-        results_path=res, failures_path=fail,
+        metric,
+        best_val,
+        direction,
+        seq,
+        commit,
+        description,
+        dpdk_path,
+        dry_run,
+        results_path=res,
+        failures_path=fail,
     )
 
     if below_threshold(metric, best_val, campaign):
@@ -152,7 +163,10 @@ def run_baseline(
 
     try:
         result = poll_for_completion(
-            seq, timeout=timeout, interval=poll_interval, requests_dir=req,
+            seq,
+            timeout=timeout,
+            interval=poll_interval,
+            requests_dir=req,
         )
     except TimeoutError:
         print(f"Baseline request {seq:04d} timed out.")
@@ -174,15 +188,20 @@ def main() -> None:
     """Entry point for the interactive autosearch agent."""
     parser = argparse.ArgumentParser(description="Autosearch DPDK interactive loop")
     parser.add_argument(
-        "--campaign", default="config/campaign.toml", help="Path to campaign TOML config",
+        "--campaign",
+        default="config/campaign.toml",
+        help="Path to campaign TOML config",
     )
     parser.add_argument("--dry-run", action="store_true", help="Skip git push (local testing)")
     parser.add_argument(
-        "--baseline", action="store_true",
+        "--baseline",
+        action="store_true",
         help="Submit a baseline request (no code changes) to test the pipeline",
     )
     parser.add_argument(
-        "--log-level", choices=["debug", "info", "warning", "error"], default=None,
+        "--log-level",
+        choices=["debug", "info", "warning", "error"],
+        default=None,
         help="Log level (default: info, or LOG_LEVEL env var)",
     )
     parser.add_argument("--log-file", default=None, help="Path to log file")

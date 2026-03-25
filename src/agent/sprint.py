@@ -11,11 +11,16 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from src.agent.campaign import CampaignConfig
 
-SPRINTS_ROOT = Path("sprints")
+SPRINTS_ROOT = Path(__file__).resolve().parent.parent.parent / "sprints"
 SPRINT_NAME_RE = re.compile(r"^\d{4}-\d{2}-\d{2}-[a-z0-9][a-z0-9-]*$")
 
 RESULTS_COLUMNS = [
-    "sequence", "timestamp", "dpdk_commit", "metric_value", "status", "description",
+    "sequence",
+    "timestamp",
+    "dpdk_commit",
+    "metric_value",
+    "status",
+    "description",
 ]
 
 
@@ -120,8 +125,9 @@ def list_sprints() -> list[dict]:
     """Return summary info for all sprints.
 
     Returns:
-        List of dicts with 'name', 'iterations', 'best_metric' keys,
-        sorted by name (chronological).
+        List of dicts with 'name', 'iterations', 'max_metric' keys,
+        sorted by name (chronological). max_metric is always the
+        maximum value regardless of campaign direction.
     """
     if not SPRINTS_ROOT.is_dir():
         return []
@@ -131,7 +137,7 @@ def list_sprints() -> list[dict]:
         if not d.is_dir() or not SPRINT_NAME_RE.match(d.name):
             continue
 
-        info: dict = {"name": d.name, "iterations": 0, "best_metric": None}
+        info: dict = {"name": d.name, "iterations": 0, "max_metric": None}
         tsv = d / "results.tsv"
         if tsv.exists():
             try:
@@ -148,7 +154,7 @@ def list_sprints() -> list[dict]:
                         except ValueError:
                             continue
                 if metrics:
-                    info["best_metric"] = max(metrics)
+                    info["max_metric"] = max(metrics)
             except OSError:
                 pass
 
@@ -158,19 +164,33 @@ def list_sprints() -> list[dict]:
 
 
 def _set_sprint_name(campaign_path: Path, name: str) -> None:
-    """Write or update [sprint] name in campaign.toml."""
-    content = campaign_path.read_text()
+    """Write or update [sprint] name in campaign.toml.
 
-    sprint_line = f'name = "{name}"'
-    if "[sprint]" in content:
-        # Replace existing [sprint] section
-        content = re.sub(
-            r"\[sprint\]\s*\nname\s*=\s*\"[^\"]*\"",
-            f"[sprint]\n{sprint_line}",
-            content,
-        )
+    Handles comments and blank lines between [sprint] and name =.
+    """
+    lines = campaign_path.read_text().splitlines(keepends=True)
+    sprint_line = f'name = "{name}"\n'
+
+    # Find [sprint] section and replace the next name = line
+    in_sprint = False
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        if stripped == "[sprint]":
+            in_sprint = True
+            continue
+        if in_sprint:
+            if stripped.startswith("[") and stripped.endswith("]"):
+                # Hit next section without finding name — insert before it
+                lines.insert(i, sprint_line)
+                break
+            if stripped.startswith("name") and "=" in stripped:
+                lines[i] = sprint_line
+                break
     else:
-        # Append [sprint] section at the top, after any leading comments
-        content = f"[sprint]\n{sprint_line}\n\n{content}"
+        if not in_sprint:
+            # No [sprint] section — prepend one
+            lines.insert(0, "[sprint]\n")
+            lines.insert(1, sprint_line)
+            lines.insert(2, "\n")
 
-    campaign_path.write_text(content)
+    campaign_path.write_text("".join(lines))

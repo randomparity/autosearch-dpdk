@@ -32,20 +32,24 @@ echo "Setting up sudoers for user: ${RUNNER_USER}"
 echo "  testpmd: ${TESTPMD_BIN}"
 echo "  perf:    ${PERF_BIN}"
 
-cat > "${SUDOERS_FILE}" <<EOF
+TMPFILE=$(mktemp /etc/sudoers.d/.autosearch-tmp-XXXXXX)
+trap 'rm -f "$TMPFILE"' EXIT
+
+cat > "${TMPFILE}" <<EOF
 # autosearch-dpdk runner: allow testpmd and perf without password
 ${RUNNER_USER} ALL=(ALL) NOPASSWD: ${TESTPMD_BIN}
 ${RUNNER_USER} ALL=(ALL) NOPASSWD: ${PERF_BIN}
 EOF
 
-chmod 0440 "${SUDOERS_FILE}"
+chmod 0440 "${TMPFILE}"
 
-# Validate the file is parseable
-if visudo -cf "${SUDOERS_FILE}"; then
+# Validate before installing
+if visudo -cf "${TMPFILE}"; then
+    mv "${TMPFILE}" "${SUDOERS_FILE}"
+    trap - EXIT
     echo "Sudoers file installed: ${SUDOERS_FILE}"
 else
-    echo "Error: sudoers validation failed, removing bad file"
-    rm -f "${SUDOERS_FILE}"
+    echo "Error: sudoers validation failed"
     exit 1
 fi
 

@@ -73,12 +73,11 @@ def _git_commit_push(path: Path, message: str, retries: int = 3) -> bool:
     return False
 
 
-def find_pending(requests_dir: Path | None = None) -> tuple[TestRequest, Path] | None:
+def find_pending(requests_dir: Path) -> tuple[TestRequest, Path] | None:
     """Scan the requests directory for the oldest pending request.
 
     Args:
-        requests_dir: Directory containing request JSON files.
-            Defaults to 'requests/'.
+        requests_dir: Directory to scan for pending JSON request files.
 
     Returns:
         A tuple of (TestRequest, file_path) for the oldest pending request,

@@ -21,7 +21,7 @@ uv run autosearch-loop --dry-run                       # interactive mode (manua
 
 ## Architecture
 
-Two-process system: an **agent** (workstation) proposes DPDK source changes and a **runner** (lab machine with NICs) builds and measures throughput. They communicate via git — JSON request files in `requests/`, results pushed back.
+Two-process system: an **agent** (workstation) proposes DPDK source changes and a **runner** (lab machine) builds and measures throughput. They communicate via git — JSON request files in `requests/`, results pushed back.
 
 ### Protocol flow
 
@@ -87,7 +87,7 @@ sprints/2026-03-23-memif-ppc64le/
   campaign.toml     # frozen snapshot of campaign config
   requests/         # request JSON files
   results.tsv       # iteration history
-  failures.tsv      # failed optimization attempts
+  failures.tsv      # failed optimization attempts (created on first failure)
   docs/             # summary, graphs
 ```
 

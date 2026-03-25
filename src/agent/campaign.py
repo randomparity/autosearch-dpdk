@@ -88,6 +88,6 @@ def load_campaign(path: Path | None = None) -> CampaignConfig:
         FileNotFoundError: If the config file does not exist.
         tomllib.TOMLDecodeError: If the file is not valid TOML.
     """
-    config_path = path or Path("config/campaign.toml")
+    config_path = path or Path(__file__).resolve().parent.parent.parent / "config" / "campaign.toml"
     with open(config_path, "rb") as f:
         return tomllib.load(f)

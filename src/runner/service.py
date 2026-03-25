@@ -208,7 +208,8 @@ def execute_request(request: TestRequest, request_path: Path, config: dict) -> N
 
 def _load_requests_dir() -> Path:
     """Derive the requests directory from campaign.toml sprint config."""
-    campaign_path = Path("config/campaign.toml")
+    repo_root = Path(__file__).resolve().parent.parent.parent
+    campaign_path = repo_root / "config" / "campaign.toml"
     if not campaign_path.exists():
         msg = f"Campaign config not found: {campaign_path}"
         raise FileNotFoundError(msg)
@@ -218,7 +219,7 @@ def _load_requests_dir() -> Path:
     if not sprint_name:
         msg = "No [sprint] name in campaign.toml. Run 'autosearch sprint init' first."
         raise ValueError(msg)
-    return Path("sprints") / sprint_name / "requests"
+    return repo_root / "sprints" / sprint_name / "requests"
 
 
 def main() -> None:

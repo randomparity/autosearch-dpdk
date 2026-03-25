@@ -41,7 +41,7 @@ from src.agent.strategy import (
     validate_change,
 )
 
-DEFAULT_CAMPAIGN = Path("config/campaign.toml")
+DEFAULT_CAMPAIGN = Path(__file__).resolve().parent.parent.parent / "config" / "campaign.toml"
 
 
 def _dpdk_path(campaign: CampaignConfig) -> Path:
@@ -124,7 +124,9 @@ def cmd_poll(campaign: CampaignConfig) -> None:
 
     try:
         result = poll_for_completion(
-            latest.sequence, timeout=timeout, interval=poll_interval,
+            latest.sequence,
+            timeout=timeout,
+            interval=poll_interval,
             requests_dir=req,
         )
     except TimeoutError:
@@ -179,9 +181,16 @@ def cmd_judge(campaign: CampaignConfig, dry_run: bool) -> None:
     append_result(latest.sequence, commit, metric, latest.status, description, path=res)
 
     record_result_or_revert(
-        metric, best_val, direction,
-        latest.sequence, commit, description, dpdk_path, dry_run,
-        results_path=res, failures_path=fail,
+        metric,
+        best_val,
+        direction,
+        latest.sequence,
+        commit,
+        description,
+        dpdk_path,
+        dry_run,
+        results_path=res,
+        failures_path=fail,
     )
 
 
@@ -210,7 +219,10 @@ def cmd_baseline(campaign: CampaignConfig, dry_run: bool) -> None:
 
     try:
         result = poll_for_completion(
-            seq, timeout=timeout, interval=poll_interval, requests_dir=req,
+            seq,
+            timeout=timeout,
+            interval=poll_interval,
+            requests_dir=req,
         )
     except TimeoutError:
         print(f"Baseline request {seq:04d} timed out.")
@@ -255,7 +267,7 @@ def cmd_sprint_list(campaign: CampaignConfig) -> None:
     print("Sprints:")
     for s in sprints:
         marker = " *" if s["name"] == active else "  "
-        best = f"{s['best_metric']:.2f} Mpps" if s["best_metric"] else "no data"
+        best = f"{s['max_metric']:.2f} Mpps" if s["max_metric"] else "no data"
         label = "(active)" if s["name"] == active else ""
         print(f"{marker} {s['name']:40s} {label:10s} {s['iterations']:3d} iterations, best: {best}")
 
@@ -273,10 +285,14 @@ def main() -> None:
     """CLI entry point for autosearch subcommands."""
     parser = argparse.ArgumentParser(prog="autosearch")
     parser.add_argument(
-        "--campaign", default=None, help="Path to campaign TOML config",
+        "--campaign",
+        default=None,
+        help="Path to campaign TOML config",
     )
     parser.add_argument(
-        "--dry-run", action="store_true", help="Skip git push",
+        "--dry-run",
+        action="store_true",
+        help="Skip git push",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -288,7 +304,10 @@ def main() -> None:
 
     submit_p = sub.add_parser("submit", help="Submit a code change for testing")
     submit_p.add_argument(
-        "--description", "-d", required=True, help="Description of the change",
+        "--description",
+        "-d",
+        required=True,
+        help="Description of the change",
     )
 
     # Sprint subcommands

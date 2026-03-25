@@ -51,6 +51,7 @@
     "POWER9/10 supports simultaneous counting of up to 6 PMU events per group. Plan event groups to avoid multiplexing.",
     "Cache lines are 128 bytes on POWER (vs 64B on x86). Alignment matters more.",
     "For DPDK: verify rte_memcpy uses the POWER-optimized (AltiVec) variant at compile time. Check RTE_ARCH_PPC_64 ifdefs.",
-    "Event names are lowercase on RHEL 8 / kernel 4.18 (e.g. pm_run_cyc not PM_RUN_CYC)."
+    "Event names are lowercase on RHEL 8 / kernel 4.18 (e.g. pm_run_cyc not PM_RUN_CYC).",
+    "frontend_bound metric is omitted: PM_NO_INST_AVAIL is not accessible under RHEL 8 / kernel 4.18 without CAP_SYS_ADMIN. Use backend_bound as the primary stall metric on POWER9."
   ]
 }

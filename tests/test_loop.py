@@ -48,26 +48,26 @@ SAMPLE_CAMPAIGN = {
 
 class TestRunBaseline:
     def test_dry_run_creates_request(self, tmp_path: Path) -> None:
-        requests_dir = tmp_path / "requests"
+        sprint_req_dir = tmp_path / "sprints" / "2026-01-01-test" / "requests"
+        sprint_req_dir.mkdir(parents=True)
         fake_commit = "abc123def456"
 
         with (
+            patch("src.agent.loop.requests_dir", return_value=sprint_req_dir),
             patch("src.agent.loop.git_submodule_head", return_value=fake_commit),
             patch("src.agent.loop.next_sequence", return_value=1),
             patch("src.agent.loop.create_request", wraps=None) as mock_create,
             patch("src.agent.loop.git_add_commit_push") as mock_git,
         ):
-            # Make create_request write a real file so we can inspect it
             from src.agent.protocol import create_request as real_create
 
             def fake_create(seq, commit, campaign, description, req_dir):
-                return real_create(seq, commit, campaign, description, requests_dir=requests_dir)
+                return real_create(seq, commit, campaign, description, requests_dir=req_dir)
 
             mock_create.side_effect = fake_create
 
             run_baseline(SAMPLE_CAMPAIGN, tmp_path / "dpdk", dry_run=True)
 
-        sprint_req_dir = Path("sprints/2026-01-01-test/requests")
         mock_create.assert_called_once_with(
             1, fake_commit, SAMPLE_CAMPAIGN, "Baseline: unmodified DPDK", sprint_req_dir
         )
@@ -76,7 +76,7 @@ class TestRunBaseline:
         assert kwargs["dry_run"] is True
 
         # Verify the request file contents
-        request_files = list(requests_dir.glob("0001_*.json"))
+        request_files = list(sprint_req_dir.glob("0001_*.json"))
         assert len(request_files) == 1
         data = json.loads(request_files[0].read_text())
         assert data["dpdk_commit"] == fake_commit
@@ -86,7 +86,10 @@ class TestRunBaseline:
         assert data["description"] == "Baseline: unmodified DPDK"
 
     def test_dry_run_does_not_poll(self, tmp_path: Path) -> None:
+        sprint_req_dir = tmp_path / "sprints" / "2026-01-01-test" / "requests"
+        sprint_req_dir.mkdir(parents=True)
         with (
+            patch("src.agent.loop.requests_dir", return_value=sprint_req_dir),
             patch("src.agent.loop.git_submodule_head", return_value="abc123"),
             patch("src.agent.loop.next_sequence", return_value=1),
             patch("src.agent.loop.create_request") as mock_create,
@@ -99,7 +102,10 @@ class TestRunBaseline:
         mock_poll.assert_not_called()
 
     def test_only_stages_request_file(self, tmp_path: Path) -> None:
+        sprint_req_dir = tmp_path / "sprints" / "2026-01-01-test" / "requests"
+        sprint_req_dir.mkdir(parents=True)
         with (
+            patch("src.agent.loop.requests_dir", return_value=sprint_req_dir),
             patch("src.agent.loop.git_submodule_head", return_value="abc123"),
             patch("src.agent.loop.next_sequence", return_value=1),
             patch("src.agent.loop.create_request") as mock_create,

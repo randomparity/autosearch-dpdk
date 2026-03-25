@@ -29,6 +29,8 @@
 | Forward mode | io |
 | Measurement | 5s warmup + 10s measure with perf profiling |
 
+Note: The server vdev string in `runner.toml` included `zero-copy=yes` but this flag is silently ignored by the memif PMD — the server always uses the copy path.
+
 ## Throughput Progression
 
 ![Throughput over experiments](throughput.jpg)

@@ -219,7 +219,10 @@ def _measure_throughput(
     profile_summary = None
     if profile_config and profile_config.get("enabled"):
         profile_summary = _run_profiling(
-            proc.pid, measure, profile_config, lcores=lcores,
+            proc.pid,
+            measure,
+            profile_config,
+            lcores=lcores,
         )
     else:
         time.sleep(measure)
@@ -287,7 +290,11 @@ def _resolve_testpmd_pid(proc_pid: int, use_sudo: bool) -> int:
 
 
 def _run_profiling(
-    pid: int, duration: int, config: dict, *, lcores: str = "0",
+    pid: int,
+    duration: int,
+    config: dict,
+    *,
+    lcores: str = "0",
 ) -> dict | None:
     """Run perf profiling during the measurement window.
 
