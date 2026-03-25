@@ -55,8 +55,10 @@ lcores = "4-7"
 # pci = ["01:00.0", "01:00.1"]
 
 # Virtual devices (e.g. memif pair). Each string is passed as --vdev to EAL.
+# Dual zero-copy: both server and client use ZC for maximum throughput.
+# This eliminates memcpy in both rx and tx paths.
 vdev = [
-    "net_memif0,role=server,id=0,bsize=2048,rsize=12",
+    "net_memif0,role=server,id=0,zero-copy=yes,bsize=2048,rsize=12",
     "net_memif1,role=client,id=0,zero-copy=yes,bsize=2048,rsize=12",
 ]
 
