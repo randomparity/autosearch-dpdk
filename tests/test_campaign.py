@@ -28,12 +28,20 @@ class TestLoadPointer:
         with pytest.raises(FileNotFoundError):
             load_pointer(tmp_path / "missing.toml")
 
-    def test_missing_fields_raises(self, tmp_path: Path) -> None:
+    def test_missing_project_raises(self, tmp_path: Path) -> None:
         f = tmp_path / ".autoforge.toml"
-        f.write_text('project = "dpdk"\n')
+        f.write_text('sprint = "2026-03-25-test"\n')
 
         with pytest.raises(KeyError, match="Missing"):
             load_pointer(f)
+
+    def test_empty_sprint_allowed(self, tmp_path: Path) -> None:
+        f = tmp_path / ".autoforge.toml"
+        f.write_text('project = "dpdk"\n')
+
+        result = load_pointer(f)
+        assert result["project"] == "dpdk"
+        assert result["sprint"] == ""
 
 
 class TestSavePointer:

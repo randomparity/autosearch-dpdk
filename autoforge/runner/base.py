@@ -262,7 +262,10 @@ class FullRunner(PhaseRunner):
     """Runs all phases sequentially (single-machine mode)."""
 
     watch_status: StatusLiteral = "pending"
-    stale_statuses = frozenset({STATUS_CLAIMED, STATUS_BUILDING, STATUS_DEPLOYING, STATUS_RUNNING})
+    stale_statuses = frozenset({
+        STATUS_CLAIMED, STATUS_BUILDING, STATUS_BUILT,
+        STATUS_DEPLOYING, STATUS_DEPLOYED, STATUS_RUNNING,
+    })
 
     def execute_phase(self, request: TestRequest, request_path: Path) -> None:
         from datetime import UTC, datetime

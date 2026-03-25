@@ -98,9 +98,9 @@ def load_pointer(path: Path | None = None) -> PointerConfig:
     with open(pointer_path, "rb") as f:
         data = tomllib.load(f)
     project = data.get("project")
-    sprint = data.get("sprint")
-    if not project or not sprint:
-        msg = f"Missing 'project' or 'sprint' in {pointer_path}"
+    sprint = data.get("sprint", "")
+    if not project:
+        msg = f"Missing 'project' in {pointer_path}"
         raise KeyError(msg)
     return PointerConfig(project=project, sprint=sprint)
 
@@ -137,6 +137,9 @@ def resolve_campaign_path(explicit: Path | None = None) -> Path:
         return p
 
     pointer = load_pointer()
+    if not pointer["sprint"]:
+        msg = "No active sprint. Run 'autoforge sprint init <name>' first."
+        raise KeyError(msg)
     campaign_path = (
         REPO_ROOT
         / "projects"

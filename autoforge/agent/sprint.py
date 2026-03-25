@@ -66,12 +66,18 @@ def active_sprint_name(campaign: CampaignConfig | None = None) -> str:
         FileNotFoundError: If pointer file doesn't exist.
     """
     pointer = load_pointer()
+    if not pointer["sprint"]:
+        msg = "No active sprint. Run 'autoforge sprint init <name>' first."
+        raise KeyError(msg)
     return pointer["sprint"]
 
 
 def sprint_dir(campaign: CampaignConfig) -> Path:
     """Return the sprint root directory."""
     pointer = load_pointer()
+    if not pointer["sprint"]:
+        msg = "No active sprint. Run 'autoforge sprint init <name>' first."
+        raise KeyError(msg)
     return _sprints_root(pointer["project"]) / pointer["sprint"]
 
 
