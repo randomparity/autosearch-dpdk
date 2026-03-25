@@ -11,7 +11,7 @@
   "metric_path": "throughput_mpps",
   "description": "4x unroll S2C descriptor refill loop with hoisted buf_size",
   "backend": "testpmd",
-  "status": "claimed",
+  "status": "building",
   "claimed_at": "2026-03-25T03:08:57.349024+00:00",
   "completed_at": null,
   "build_log_snippet": null,
