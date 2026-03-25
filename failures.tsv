@@ -3,3 +3,5 @@ timestamp	dpdk_commit	metric_value	description	diff_summary
  1 file changed, 10 insertions(+), 2 deletions(-)"
 2026-03-25T01:40:22.475920+00:00	70e4597753c0574ba693ce3c0204aa6d895ae5f7	81.605	optimize tx mempool check first+last (build fix)	"drivers/net/memif/rte_eth_memif.c | 21 ++++++++++-----------
  1 file changed, 10 insertions(+), 11 deletions(-)"
+2026-03-25T01:43:12.358341+00:00	afafdcea74439bb1ebd7402fcf8587451bc10bed	82.3887	fix RTE_MIN shadow warning and remove dead pkts==0 check	"drivers/net/memif/rte_eth_memif.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)"

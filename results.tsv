@@ -4,3 +4,4 @@ sequence	timestamp	dpdk_commit	metric_value	status	description
 8	2026-03-25T01:31:44.380427+00:00	4d0f374657a2376d81234a95f971d28b4dad66ec	85.3501	completed	batch n_bytes stats accumulation in rx/tx to reduce per-pkt memory writes
 9	2026-03-25T01:34:58.965451+00:00	99765c828088b34a3fb0b96ba39eeb9588b7e1d3	79.6108	completed	batch n_bytes accumulation in zc rx/tx paths
 11	2026-03-25T01:40:22.429400+00:00	70e4597753c0574ba693ce3c0204aa6d895ae5f7	81.605	completed	optimize tx mempool check first+last (build fix)
+12	2026-03-25T01:43:12.311636+00:00	afafdcea74439bb1ebd7402fcf8587451bc10bed	82.3887	completed	fix RTE_MIN shadow warning and remove dead pkts==0 check
