@@ -11,12 +11,12 @@
   "metric_path": "throughput_mpps",
   "description": "cache region 0 base addr in 4x rx loop, eliminate per-pkt pointer chase",
   "backend": "testpmd",
-  "status": "running",
+  "status": "failed",
   "claimed_at": "2026-03-25T12:13:10.896669+00:00",
-  "completed_at": null,
+  "completed_at": "2026-03-25T12:13:32.763171+00:00",
   "build_log_snippet": null,
   "results_json": null,
   "results_summary": null,
   "metric_value": null,
-  "error": null
+  "error": "testpmd exited during startup"
 }
