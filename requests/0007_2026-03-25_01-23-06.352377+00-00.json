@@ -11,7 +11,7 @@
   "metric_path": "throughput_mpps",
   "description": "allocate exact mbuf count in rx to eliminate wasted alloc/free",
   "backend": "testpmd",
-  "status": "claimed",
+  "status": "building",
   "claimed_at": "2026-03-25T01:26:11.535422+00:00",
   "completed_at": null,
   "build_log_snippet": null,
