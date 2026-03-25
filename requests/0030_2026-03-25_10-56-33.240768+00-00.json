@@ -1,0 +1,22 @@
+{
+  "sequence": 30,
+  "created_at": "2026-03-25T10:56:33.240768+00:00",
+  "dpdk_commit": "e16d52b6e420df08a861b826fb9cd9b6117ebbc0",
+  "test_suites": [
+    "TestPmd"
+  ],
+  "test_cases": null,
+  "perf": true,
+  "metric_name": "throughput_mpps",
+  "metric_path": "throughput_mpps",
+  "description": "bypass rte_pktmbuf_free_bulk in non-ZC tx, use direct mempool put",
+  "backend": "testpmd",
+  "status": "pending",
+  "claimed_at": null,
+  "completed_at": null,
+  "build_log_snippet": null,
+  "results_json": null,
+  "results_summary": null,
+  "metric_value": null,
+  "error": null
+}
