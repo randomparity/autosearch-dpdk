@@ -11,7 +11,7 @@
   "metric_path": "throughput_mpps",
   "description": "4x unroll non-ZC tx with interleaved copy+desc writes",
   "backend": "testpmd",
-  "status": "claimed",
+  "status": "building",
   "claimed_at": "2026-03-25T11:42:21.985906+00:00",
   "completed_at": null,
   "build_log_snippet": null,
