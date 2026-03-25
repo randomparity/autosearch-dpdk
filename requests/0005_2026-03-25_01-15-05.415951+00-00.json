@@ -11,7 +11,7 @@
   "metric_path": "throughput_mpps",
   "description": "increase MAX_PKT_BURST from 32 to 64 to reduce alloc/free cycles",
   "backend": "testpmd",
-  "status": "claimed",
+  "status": "building",
   "claimed_at": "2026-03-25T01:17:47.909156+00:00",
   "completed_at": null,
   "build_log_snippet": null,
