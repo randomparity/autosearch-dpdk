@@ -25,3 +25,4 @@ sequence	timestamp	dpdk_commit	metric_value	status	description
 33	2026-03-25T11:42:39.105689+00:00	d1e55591c37ee8813398df086fe4746f3797d866	115.9509	completed	4x unroll non-ZC tx with interleaved copy+desc writes
 34	2026-03-25T11:46:02.139882+00:00	2f590e9ec443ba70f17ed10ebb8671b86c518578	118.6338	completed	increase memif_free_stored_mbufs batch from 32 to 64
 35	2026-03-25T11:49:04.321650+00:00	8df50003a312c11d11bc8f40751368235cc6ecee	118.472	completed	increase zc rx refill threshold 32->128 for larger batches
+36	2026-03-25T11:52:08.194229+00:00	de7c2a4eff4490bf608192f461c9199f3afb3c02	118.5665	completed	batch mq->last_tail write in memif_free_stored_mbufs
