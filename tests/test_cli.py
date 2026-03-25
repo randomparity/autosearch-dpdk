@@ -10,6 +10,7 @@ import pytest
 from src.agent.cli import (
     _format_build_log,
     cmd_build_log,
+    cmd_hints,
     cmd_revert,
     cmd_sprint_active,
     cmd_sprint_init,
@@ -164,3 +165,43 @@ class TestCmdBuildLog:
         captured = capsys.readouterr()
         assert ">>> error: bad thing" in captured.out
         assert "    ok line" in captured.out
+
+
+class TestCmdHints:
+    def test_no_arch(self, capsys: pytest.CaptureFixture) -> None:
+        campaign: dict = {"campaign": {"name": "test"}}
+        with pytest.raises(SystemExit):
+            cmd_hints(campaign, arch_override=None)
+        assert "No arch specified" in capsys.readouterr().out
+
+    def test_unknown_arch(self, capsys: pytest.CaptureFixture) -> None:
+        campaign: dict = {"platform": {"arch": "mips64"}}
+        with pytest.raises(SystemExit):
+            cmd_hints(campaign, arch_override=None)
+        assert "Unknown arch" in capsys.readouterr().out
+
+    def test_summary(self, capsys: pytest.CaptureFixture) -> None:
+        campaign: dict = {"platform": {"arch": "ppc64le"}}
+        cmd_hints(campaign, arch_override=None)
+        out = capsys.readouterr().out
+        assert "ppc64le" in out
+        assert "optimization" in out
+
+    def test_arch_override(self, capsys: pytest.CaptureFixture) -> None:
+        campaign: dict = {"platform": {"arch": "ppc64le"}}
+        cmd_hints(campaign, arch_override="x86_64")
+        assert "x86_64" in capsys.readouterr().out
+
+    def test_list_topics(self, capsys: pytest.CaptureFixture) -> None:
+        campaign: dict = {"platform": {"arch": "ppc64le"}}
+        cmd_hints(campaign, arch_override=None, list_topics_flag=True)
+        out = capsys.readouterr().out
+        assert "optimization" in out
+        assert "perf-counters" in out
+
+    def test_perf_counters_topic(self, capsys: pytest.CaptureFixture) -> None:
+        campaign: dict = {"platform": {"arch": "ppc64le"}}
+        cmd_hints(campaign, arch_override=None, topic="perf-counters")
+        out = capsys.readouterr().out
+        assert "perf-counters" in out
+        assert "ppc64le-perf-counters.md" in out

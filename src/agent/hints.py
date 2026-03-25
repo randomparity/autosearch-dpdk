@@ -66,7 +66,8 @@ def hints_summary(arch: str, topic: str = DEFAULT_TOPIC) -> str:
         Multi-line string with the file path and reading instructions.
     """
     path = hints_path(arch, topic)
-    line_count = sum(1 for _ in path.open())
+    with path.open() as fh:
+        line_count = sum(1 for _ in fh)
     return (
         f"Architecture {topic} hints for {arch}: {path}\n"
         f"({line_count} lines — read this file for"

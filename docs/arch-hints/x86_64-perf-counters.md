@@ -43,7 +43,7 @@ perf stat -e cycles,instructions,cache-misses,branch-misses,dTLB-load-misses \
 
 ---
 
-## Generic Events -> x86 PMU Mapping
+## Generic Events → x86 PMU Mapping
 
 Linux `perf` maps generic event names to architecture-specific PMU event codes. The mapping differs between Intel and AMD.
 
@@ -63,7 +63,7 @@ Linux `perf` maps generic event names to architecture-specific PMU event codes. 
 
 ## Detailed Event Reference by Category
 
-### Critical -- Pipeline & Instruction Flow
+### ★ Critical — Pipeline & Instruction Flow
 
 These events form the backbone of all performance analysis. Start here.
 
@@ -85,7 +85,7 @@ perf stat -e cpu-cycles,instructions,uops_issued.any,uops_retired.slots -- ./app
 
 ---
 
-### Critical -- Stall Cycle Analysis (Intel Top-Down Microarchitecture Analysis)
+### ★ Critical — Stall Cycle Analysis (Intel Top-Down Microarchitecture Analysis)
 
 Intel's TMA method classifies every pipeline slot into one of four categories at Level 1, then drills down at Level 2+. This is the most structured approach to identifying bottlenecks on x86.
 
@@ -139,7 +139,7 @@ stalled-cycles-frontend,stalled-cycles-backend -- ./app
 
 ---
 
-### Critical -- Cache Hierarchy
+### ★ Critical — Cache Hierarchy
 
 For NIC-driven workloads (DPDK), cache behavior dominates performance. x86 uses 64-byte cache lines (half the size of POWER's 128-byte lines).
 
@@ -194,7 +194,7 @@ perf stat -a -e 'uncore_cha/event=0x35,umask=0x04,config1=0x00C8F3FF94/' \
 
 ---
 
-### Critical -- TLB & Address Translation
+### ★ Critical — TLB & Address Translation
 
 | Event Name | Intel (SPR/EMR) | AMD (Zen 4/5) | What it measures |
 |---|---|---|---|
@@ -223,7 +223,7 @@ cycles,instructions -- ./app
 
 ---
 
-### Important -- Branch Prediction
+### Important — Branch Prediction
 
 | Event Name | Intel (SPR/EMR) | AMD (Zen 4/5) | What it measures |
 |---|---|---|---|
@@ -245,7 +245,7 @@ br_inst_retired.cond,br_misp_retired.cond -- ./app
 
 ---
 
-### Important -- Memory Subsystem (OFFCORE_RESPONSE & NUMA)
+### Important — Memory Subsystem (OFFCORE_RESPONSE & NUMA)
 
 Intel's `OFFCORE_RESPONSE` events provide the most detailed memory hierarchy attribution. They use two programmable MSRs (0x1A6 and 0x1A7) to specify both the request type and the response source.
 
@@ -276,7 +276,7 @@ ls_dmnd_fills_from_sys.dram_io_far -- ./app
 
 ---
 
-### Important -- Floating Point & SIMD/AVX
+### Important — Floating Point & SIMD/AVX
 
 | Event Name | Intel (SPR/EMR) | AMD (Zen 4/5) | What it measures |
 |---|---|---|---|

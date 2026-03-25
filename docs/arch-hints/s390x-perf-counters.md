@@ -94,7 +94,7 @@ Linux `perf` maps some generic event names to s390x CPUMF counters. This mapping
 
 ## Detailed Event Reference by Category
 
-### Critical -- Pipeline & Instruction Flow
+### ★ Critical — Pipeline & Instruction Flow
 
 These events form the backbone of all performance analysis. Start here.
 
@@ -114,7 +114,7 @@ cpum_cf/PROBLEM_STATE_CPU_CYCLES/,cpum_cf/PROBLEM_STATE_INSTRUCTIONS/ -- ./app
 
 ---
 
-### Critical -- Stall Cycle Analysis
+### ★ Critical — Stall Cycle Analysis
 
 Unlike x86 (which has TopDown methodology counters) or POWER (which has `PM_CMPLU_STALL` sub-events), s390x provides stall information through **penalty cycle counters** in the basic set. These directly measure cycles lost to cache misses.
 
@@ -133,7 +133,7 @@ cpum_cf/L1I_PENALTY_CYCLES/,cpum_cf/L1D_PENALTY_CYCLES/ -- ./app
 
 ---
 
-### Critical -- Cache Hierarchy
+### ★ Critical — Cache Hierarchy
 
 z/Architecture uses **256-byte cache lines** -- 4x the size of x86 (64 bytes) and 2x POWER (128 bytes). This has profound implications for data structure layout, false sharing, and prefetch behavior.
 
@@ -183,7 +183,7 @@ cpum_cf/DCW_OFF_DRAWER_MEMORY/ -- ./app
 
 ---
 
-### Critical -- TLB & Address Translation
+### ★ Critical — TLB & Address Translation
 
 s390x uses Dynamic Address Translation (DAT), a multi-level page table walk. The TLB hierarchy has two levels: a first-level TLB (integrated into L1) and a second-level TLB2. The extended counter set exposes TLB2 activity.
 
@@ -209,7 +209,7 @@ cpum_cf/ITLB2_MISSES/,cpum_cf/TLB2_ENGINES_BUSY/,cpum_cf/CPU_CYCLES/ -- ./app
 
 ---
 
-### Important -- Branch Prediction
+### Important — Branch Prediction
 
 z/Architecture branch prediction counters are limited compared to x86 or POWER. The basic and problem-state counter sets do not include branch events. The z17 extended counter set adds the first branch prediction counter.
 
@@ -229,7 +229,7 @@ perf stat -e cpum_cf/L1I_DIR_WRITES/,cpum_cf/L1I_PENALTY_CYCLES/ -- ./app
 
 ---
 
-### Important -- Memory Subsystem & NUMA
+### Important — Memory Subsystem & NUMA
 
 z/Architecture systems have a deep NUMA hierarchy: **core -> chip -> module/cluster -> drawer -> book interconnect**. The extended counter set's L1D/L1I sourcing events (described in the Cache Hierarchy section) are the primary tool for identifying NUMA locality problems.
 
@@ -247,7 +247,7 @@ cpum_cf/DCW_OFF_DRAWER/,cpum_cf/DCW_OFF_DRAWER_MEMORY/ \
 
 ---
 
-### Important -- Vector Extension (VXE) & SIMD
+### Important — Vector Extension (VXE) & SIMD
 
 z/Architecture supports SIMD via the Vector Extension Facility (VXE), with 128-bit vector registers. The extended counter set does not have dedicated vector instruction counters, but related events exist:
 
@@ -260,7 +260,7 @@ Verify VXE usage by inspecting `perf annotate` output for `V` prefix instruction
 
 ---
 
-### Unique to s390x -- Crypto Acceleration
+### Unique to s390x — Crypto Acceleration
 
 The Crypto-Activity counter set (counters 64--83) is unique to z/Architecture. It measures utilization of the CP Assist for Cryptographic Functions (CPACF), a hardware crypto accelerator integrated into every z/Architecture core.
 
@@ -291,7 +291,7 @@ cpum_cf/AES_BLOCKED_CYCLES/,cpum_cf/SHA_FUNCTIONS/,cpum_cf/SHA_CYCLES/ -- ./app
 
 ---
 
-### Specialized -- Deflate & Accelerators (z15+)
+### Specialized — Deflate & Accelerators (z15+)
 
 | Event Name | Counter # | Generation | What it measures |
 |---|---|---|---|
@@ -303,7 +303,7 @@ cpum_cf/AES_BLOCKED_CYCLES/,cpum_cf/SHA_FUNCTIONS/,cpum_cf/SHA_CYCLES/ -- ./app
 
 ---
 
-### Specialized -- SMT & Thread Contention
+### Specialized — SMT & Thread Contention
 
 All generations support 2-way SMT. The MT-Diagnostic set has `MT_DIAG_CYCLES_ONE_THR_ACTIVE` (448) and `MT_DIAG_CYCLES_TWO_THR_ACTIVE` (449). z17 adds `CYCLES_SAMETHRD` (202), `CYCLES_DIFFTHRD` (203), `INST_SAMETHRD` (204), `INST_DIFFTHRD` (205) for solo-vs-shared IPC comparison.
 

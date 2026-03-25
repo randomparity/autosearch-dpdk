@@ -78,6 +78,9 @@ to interact with the remote runner. See `program.md` for the full workflow.
 | `autosearch sprint switch <name>` | Switch active sprint in `campaign.toml` |
 | `autosearch revert` | Revert last DPDK submodule commit and force-push fork |
 | `autosearch build-log --seq N` | Print formatted build log for request N (`-s N` short form) |
+| `autosearch hints` | Show arch optimization checklist for the campaign's target architecture |
+| `autosearch hints --list` | List available hint topics (e.g., `optimization`, `perf-counters`) |
+| `autosearch hints --topic perf-counters` | Show PMU performance counter reference for the architecture |
 
 Global flags (before the subcommand):
 

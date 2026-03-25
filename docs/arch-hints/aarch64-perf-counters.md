@@ -10,7 +10,7 @@ Companion document to the aarch64 optimization checklist. This reference explain
 
 Arm server cores implement a Performance Monitoring Unit based on the PMUv3 architecture (ARMv8-A). The key hardware resources are:
 
-| Resource | Neoverse N1 (Graviton 2) | Neoverse N2 (Altra, Graviton 3) | Neoverse V2 (Grace, Graviton 4) |
+| Resource | Neoverse N1 (Graviton 2) | Neoverse N2 (Graviton 3E, Yitian 710) | Neoverse V2 (Grace, Graviton 4) |
 |---|---|---|---|
 | Programmable counters | 6 | 6 | 6 |
 | Fixed cycle counter (PMCCNTR_EL0) | 1 (CPU_CYCLES) | 1 (CPU_CYCLES) | 1 (CPU_CYCLES) |
@@ -44,7 +44,7 @@ perf stat -e cycles,instructions,cache-misses,branch-misses,dTLB-load-misses \
 
 ---
 
-## Generic Events -> ARM PMU Mapping
+## Generic Events → ARM PMU Mapping
 
 Linux `perf` maps generic event names to architecture-specific PMU event codes. Here is the mapping for Neoverse cores:
 
@@ -398,7 +398,7 @@ perf report --sort=symbol --stdio
 
 ## Cross-Generation Differences
 
-| Topic | Neoverse N1 (Graviton 2) | Neoverse N2 (Altra, Graviton 3) | Neoverse V2 (Grace, Graviton 4) |
+| Topic | Neoverse N1 (Graviton 2) | Neoverse N2 (Graviton 3E, Yitian 710) | Neoverse V2 (Grace, Graviton 4) |
 |---|---|---|---|
 | Pipeline width | 4-wide decode/dispatch | 5-wide decode/dispatch | 5-wide decode, 8-wide dispatch |
 | Top-down method | Cycle-based (`STALL_FRONTEND`/`STALL_BACKEND`) | Slot-based (`STALL_SLOT_*`) via `perf stat --topdown` | Slot-based (`STALL_SLOT_*`) via `perf stat --topdown` |

@@ -66,6 +66,9 @@ All commands: `uv run autosearch <subcommand>`
 | `uv run autosearch sprint switch <name>` | Switch active sprint in `campaign.toml` |
 | `uv run autosearch revert` | Revert last DPDK submodule commit and force-push fork |
 | `uv run autosearch build-log --seq N` | Print formatted build log for request sequence N |
+| `uv run autosearch hints` | Show arch optimization checklist for the campaign's target architecture |
+| `uv run autosearch hints --list` | List available hint topics (e.g., `optimization`, `perf-counters`) |
+| `uv run autosearch hints --topic perf-counters` | Show PMU performance counter reference for the architecture |
 
 ## Output format
 
@@ -122,7 +125,7 @@ LOOP FOREVER:
 - **Avoid UB.** DPDK runs with `-O3`; undefined behavior will be exploited by the optimizer.
 - **Guard arch-specific changes.** Use `#ifdef RTE_ARCH_PPC_64` for POWER-only optimizations in library code.
 - **Read past failures.** The `context` command shows what was tried and failed. Don't repeat failed approaches.
-- **Read arch-specific hints.** Run `uv run autosearch hints` for the target architecture's optimization checklist (cache lines, SIMD, memory ordering, compiler flags). Run `uv run autosearch hints --list` to see all available topics (e.g., `perf-counters` for PMU event references).
+- **Read arch-specific hints.** Run `uv run autosearch hints` for the target architecture's optimization checklist (cache lines, SIMD, memory ordering, compiler flags). Run `uv run autosearch hints --list` to see available topics. Run `uv run autosearch hints --topic perf-counters` for the PMU event reference.
 
 ### Sprint 001 observations (POWER9 memif)
 
