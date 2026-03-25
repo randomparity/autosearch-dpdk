@@ -11,7 +11,7 @@
   "metric_path": "throughput_mpps",
   "description": "optimize tx mempool check first+last (build fix)",
   "backend": "testpmd",
-  "status": "claimed",
+  "status": "building",
   "claimed_at": "2026-03-25T01:39:49.056715+00:00",
   "completed_at": null,
   "build_log_snippet": null,
