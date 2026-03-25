@@ -7,7 +7,7 @@ import tomllib
 from pathlib import Path
 from typing import TypedDict
 
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+REPO_ROOT = Path(__file__).resolve().parent.parent
 POINTER_PATH = REPO_ROOT / ".autoforge.toml"
 
 

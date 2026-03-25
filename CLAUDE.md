@@ -52,6 +52,7 @@ pending → claimed → building → running → completed
 ### Package boundaries
 
 ```
+autoforge/campaign.py  Shared: CampaignConfig, pointer load/save, campaign resolution
 autoforge/protocol/    Shared: TestRequest, status constants, StatusLiteral, extract_metric
 autoforge/plugins/     Plugin protocols (Builder, Deployer, Tester, Plugin) and loader
 autoforge/agent/       Workstation: CLI subcommands, git ops, history tracking
@@ -60,7 +61,7 @@ autoforge/perf/        Profiling: perf record orchestration, stack analysis, arc
 autoforge_dpdk/        DPDK plugin: meson+ninja build, testpmd/DTS testing
 ```
 
-**Import rules:** `agent/` and `runner/` both import from `protocol/` and `plugins/`, never from each other. `autoforge_dpdk/` imports from `autoforge.plugins.protocols` for result types and from `autoforge.perf` for profiling. Always import from `autoforge.protocol` (the facade), not `autoforge.protocol.schema` directly.
+**Import rules:** `agent/` and `runner/` both import from `protocol/`, `plugins/`, and `autoforge.campaign`, never from each other. `autoforge_dpdk/` imports from `autoforge.plugins.protocols` for result types and from `autoforge.perf` for profiling. Always import from `autoforge.protocol` (the facade), not `autoforge.protocol.schema` directly.
 
 ### Agent modules
 
@@ -68,7 +69,6 @@ autoforge_dpdk/        DPDK plugin: meson+ninja build, testpmd/DTS testing
 - `hints.py` — architecture-specific optimization hints lookup (supports topics: optimization, perf-counters)
 - `loop.py` — interactive iteration loop (manual fallback)
 - `git_ops.py` — git subprocess wrappers (`GIT_TIMEOUT=60`), `record_result_or_revert()`, `full_revert()`, `force_push_source()`
-- `campaign.py` — `CampaignConfig` TypedDict, `load_campaign()`, `resolve_campaign_path()`, pointer load/save
 - `project.py` — `init_project()` for scaffolding new projects
 - `strategy.py` — `format_context()`, `validate_change()`, `extract_profile_summary()`
 - `history.py` — TSV-based results/failures tracking

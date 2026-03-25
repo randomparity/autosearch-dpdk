@@ -6,7 +6,7 @@ import json
 
 import pytest
 
-from autoforge.protocol.schema import (
+from autoforge.protocol import (
     STATUS_BUILDING,
     STATUS_BUILT,
     STATUS_CLAIMED,

@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from autoforge.agent.campaign import POINTER_PATH, REPO_ROOT, save_pointer
+from autoforge.campaign import REPO_ROOT, save_pointer
 
 PROJECT_NAME_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 PROJECT_SUBDIRS = ("builds", "deploys", "tests", "perfs", "sprints")
@@ -41,9 +41,6 @@ def init_project(name: str) -> Path:
         (project_dir / subdir).mkdir(parents=True)
 
     # Set project in pointer (sprint empty until first sprint init)
-    if POINTER_PATH.exists():
-        save_pointer(name, "")
-    else:
-        save_pointer(name, "")
+    save_pointer(name, "")
 
     return project_dir

@@ -6,7 +6,6 @@ import argparse
 import sys
 from pathlib import Path
 
-from autoforge.agent.campaign import CampaignConfig, load_campaign, resolve_campaign_path
 from autoforge.agent.git_ops import (
     full_revert,
     git_add_commit_push,
@@ -44,6 +43,7 @@ from autoforge.agent.strategy import (
     format_profile_lines,
     validate_change,
 )
+from autoforge.campaign import CampaignConfig, load_campaign, resolve_campaign_path
 
 
 def _source_path(campaign: CampaignConfig) -> Path:

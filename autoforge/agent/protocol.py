@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import subprocess
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from autoforge.protocol import TestRequest
@@ -56,7 +56,7 @@ def create_request(
 
     request = TestRequest(
         sequence=seq,
-        created_at=datetime.now(timezone.utc).isoformat(),  # noqa: UP017
+        created_at=datetime.now(UTC).isoformat(),
         source_commit=commit,
         description=description,
         build_plugin=project.get("build", ""),
@@ -120,7 +120,7 @@ def poll_for_completion(
     seq: int,
     timeout: int = 3600,
     interval: int = 30,
-    requests_dir: Path = Path("requests"),
+    requests_dir: Path | None = None,
 ) -> TestRequest:
     """Poll git until the given request reaches a terminal state.
 
@@ -137,6 +137,10 @@ def poll_for_completion(
         TimeoutError: If the request does not complete within the timeout.
         FileNotFoundError: If the request file cannot be found.
     """
+    if requests_dir is None:
+        msg = "requests_dir is required"
+        raise ValueError(msg)
+
     deadline = time.monotonic() + timeout
 
     while time.monotonic() < deadline:
@@ -154,7 +158,12 @@ def poll_for_completion(
             msg = f"Request file for sequence {seq} not found in {requests_dir}"
             raise FileNotFoundError(msg)
 
-        request = TestRequest.read(matches[0])
+        try:
+            request = TestRequest.read(matches[0])
+        except (ValueError, KeyError, TypeError, OSError) as exc:
+            logger.warning("Error reading request %04d, retrying: %s", seq, exc)
+            time.sleep(interval)
+            continue
         if request.is_terminal:
             return request
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
-    from autoforge.agent.campaign import CampaignConfig
+    from autoforge.campaign import CampaignConfig
 
 Direction = Literal["maximize", "minimize"]
 

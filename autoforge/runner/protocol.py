@@ -91,7 +91,7 @@ def find_by_status(requests_dir: Path, status: StatusLiteral) -> tuple[TestReque
     for path in json_files:
         try:
             request = TestRequest.read(path)
-        except (ValueError, KeyError, TypeError) as exc:
+        except (ValueError, KeyError, TypeError, OSError) as exc:
             logger.warning("Skipping malformed request %s: %s", path.name, exc)
             continue
         if request.status == status:

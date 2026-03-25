@@ -3,15 +3,18 @@
 from __future__ import annotations
 
 import csv
+import logging
 import re
 import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from autoforge.agent.campaign import REPO_ROOT, load_pointer, save_pointer
+from autoforge.campaign import REPO_ROOT, load_pointer, save_pointer
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from autoforge.agent.campaign import CampaignConfig
+    from autoforge.campaign import CampaignConfig
 
 SPRINT_NAME_RE = re.compile(r"^\d{4}-\d{2}-\d{2}-[a-z0-9][a-z0-9-]*$")
 
@@ -210,8 +213,8 @@ def list_sprints(campaign: CampaignConfig | None = None) -> list[dict]:
                             continue
                 if metrics:
                     info["max_metric"] = max(metrics)
-            except OSError:
-                pass
+            except OSError as exc:
+                logger.warning("Failed to read TSV for sprint %s: %s", d.name, exc)
 
         sprints.append(info)
 

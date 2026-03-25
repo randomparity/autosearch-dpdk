@@ -6,8 +6,7 @@ import logging
 import os
 import tomllib
 
-from autoforge.agent.campaign import load_campaign, resolve_campaign_path
-from autoforge.agent.sprint import requests_dir
+from autoforge.campaign import REPO_ROOT, load_campaign, load_pointer, resolve_campaign_path
 from autoforge.logging_config import setup_logging
 from autoforge.runner.base import (
     BuildRunner,
@@ -28,7 +27,8 @@ PHASE_RUNNERS = {
 
 def load_config(path: str | None = None) -> dict:
     """Load runner configuration from a TOML file."""
-    config_path = path or os.environ.get("AUTOFORGE_CONFIG", "config/runner.toml")
+    default = str(REPO_ROOT / "config" / "runner.toml")
+    config_path = path or os.environ.get("AUTOFORGE_CONFIG", default)
     with open(config_path, "rb") as f:
         return tomllib.load(f)
 
@@ -45,7 +45,10 @@ def main() -> None:
 
     campaign_path = resolve_campaign_path()
     campaign = load_campaign(campaign_path)
-    req_dir = requests_dir(campaign)
+    pointer = load_pointer()
+    req_dir = (
+        REPO_ROOT / "projects" / pointer["project"] / "sprints" / pointer["sprint"] / "requests"
+    )
 
     phase = runner_cfg.get("phase", "all")
     runner_cls = PHASE_RUNNERS.get(phase)

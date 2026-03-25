@@ -12,7 +12,7 @@ from autoforge.agent.hints import resolve_arch
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from autoforge.agent.campaign import CampaignConfig
+    from autoforge.campaign import CampaignConfig
 
 logger = logging.getLogger(__name__)
 

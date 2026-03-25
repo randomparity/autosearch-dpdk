@@ -1,5 +1,7 @@
 """Shared protocol definitions for agent-runner communication."""
 
+from __future__ import annotations
+
 from autoforge.protocol.schema import (
     STATUS_BUILDING,
     STATUS_BUILT,

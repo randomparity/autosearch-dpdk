@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import pytest
 
-from autoforge.agent.campaign import (
+from autoforge.campaign import (
     load_campaign,
     load_pointer,
     resolve_campaign_path,
@@ -92,8 +92,8 @@ class TestResolveCampaignPath:
 
         pointer = {"project": "dpdk", "sprint": "2026-03-25-test"}
         with (
-            patch("autoforge.agent.campaign.load_pointer", return_value=pointer),
-            patch("autoforge.agent.campaign.REPO_ROOT", tmp_path),
+            patch("autoforge.campaign.load_pointer", return_value=pointer),
+            patch("autoforge.campaign.REPO_ROOT", tmp_path),
         ):
             result = resolve_campaign_path()
 

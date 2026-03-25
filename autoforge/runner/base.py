@@ -53,7 +53,7 @@ def recover_stale_requests(requests_dir: Path, stale_statuses: frozenset[str]) -
     for path in sorted(requests_dir.glob("*.json")):
         try:
             request = TestRequest.read(path)
-        except (ValueError, KeyError, TypeError) as exc:
+        except (ValueError, KeyError, TypeError, OSError) as exc:
             logger.warning("Skipping malformed request %s: %s", path.name, exc)
             continue
 
@@ -131,7 +131,14 @@ class PhaseRunner(ABC):
                     )
                     continue
 
-                self.execute_phase(request, request_path)
+                try:
+                    self.execute_phase(request, request_path)
+                except Exception:
+                    logger.exception(
+                        "Unhandled error in execute_phase for request %04d",
+                        request.sequence,
+                    )
+                    fail(request, request_path, error="runner: unhandled exception")
 
         except KeyboardInterrupt:
             logger.info("Runner stopped by user")
@@ -141,7 +148,7 @@ class BuildRunner(PhaseRunner):
     """Watches for pending requests, builds, transitions to built."""
 
     watch_status: StatusLiteral = "pending"
-    stale_statuses = frozenset({STATUS_CLAIMED, STATUS_BUILDING})
+    stale_statuses = frozenset({STATUS_CLAIMED, STATUS_BUILDING, STATUS_BUILT})
 
     def execute_phase(self, request: TestRequest, request_path: Path) -> None:
         from autoforge.plugins.loader import load_component
@@ -171,7 +178,7 @@ class DeployRunner(PhaseRunner):
     """Watches for built requests, deploys, transitions to deployed."""
 
     watch_status: StatusLiteral = "built"
-    stale_statuses = frozenset({STATUS_DEPLOYING})
+    stale_statuses = frozenset({STATUS_DEPLOYING, STATUS_DEPLOYED})
 
     def execute_phase(self, request: TestRequest, request_path: Path) -> None:
         from autoforge.plugins.loader import load_component

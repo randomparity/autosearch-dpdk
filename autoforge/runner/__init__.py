@@ -1,5 +1,7 @@
 """Runner-side modules for the autoforge service loop."""
 
+from __future__ import annotations
+
 from autoforge.runner.base import (
     BuildRunner,
     DeployRunner,

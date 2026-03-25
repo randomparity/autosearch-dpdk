@@ -103,7 +103,12 @@ def _load_python_class(path: Path, protocol: type) -> type | None:
 
     module = importlib.util.module_from_spec(spec)
     sys.modules[module_name] = module
-    spec.loader.exec_module(module)
+    try:
+        spec.loader.exec_module(module)
+    except Exception as exc:
+        del sys.modules[module_name]
+        msg = f"Failed to load plugin from {path}: {exc}"
+        raise ValueError(msg) from exc
 
     for _name, obj in inspect.getmembers(module, inspect.isclass):
         if obj.__module__ != module_name:

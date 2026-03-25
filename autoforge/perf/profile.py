@@ -117,16 +117,32 @@ def profile_pid(
     )
 
     logger.info("Starting perf record (pid=%d, %ds, %dHz)", pid, duration, frequency)
-    record_proc = subprocess.Popen(
-        record_cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    stat_proc = subprocess.Popen(
-        stat_cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
+    try:
+        record_proc = subprocess.Popen(
+            record_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+    except OSError as exc:
+        return ProfileResult(
+            success=False,
+            error=f"Failed to start perf record: {exc}",
+            duration_seconds=time.monotonic() - start,
+        )
+    try:
+        stat_proc = subprocess.Popen(
+            stat_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+    except OSError as exc:
+        record_proc.kill()
+        record_proc.wait(timeout=10)
+        return ProfileResult(
+            success=False,
+            error=f"Failed to start perf stat: {exc}",
+            duration_seconds=time.monotonic() - start,
+        )
 
     try:
         deadline = time.monotonic() + timeout

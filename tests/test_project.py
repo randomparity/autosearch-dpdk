@@ -33,7 +33,6 @@ class TestInitProject:
     def test_creates_skeleton(self, tmp_path: Path) -> None:
         with (
             patch("autoforge.agent.project.REPO_ROOT", tmp_path),
-            patch("autoforge.agent.project.POINTER_PATH", tmp_path / ".autoforge.toml"),
             patch("autoforge.agent.project.save_pointer"),
         ):
             pdir = init_project("vllm")
@@ -50,7 +49,6 @@ class TestInitProject:
 
         with (
             patch("autoforge.agent.project.REPO_ROOT", tmp_path),
-            patch("autoforge.agent.project.POINTER_PATH", tmp_path / ".autoforge.toml"),
             pytest.raises(FileExistsError, match="already exists"),
         ):
             init_project("dpdk")

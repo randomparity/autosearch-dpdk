@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from autoforge.agent.campaign import CampaignConfig
+    from autoforge.campaign import CampaignConfig
 
 KNOWN_ARCHES: frozenset[str] = frozenset(
     {

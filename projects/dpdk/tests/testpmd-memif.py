@@ -276,7 +276,12 @@ def _measure_throughput(
     os.write(fd, b"\n")
 
     shutdown_output = _read_until(fd, "Bye...", timeout=30)
-    proc.wait(timeout=10)
+    try:
+        proc.wait(timeout=10)
+    except (subprocess.TimeoutExpired, OSError):
+        logger.warning("testpmd did not exit after shutdown, killing")
+        proc.kill()
+        proc.wait(timeout=5)
 
     all_output = boot_output + shutdown_output
 

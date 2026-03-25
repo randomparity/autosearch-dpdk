@@ -6,7 +6,6 @@ import argparse
 import logging
 from pathlib import Path
 
-from autoforge.agent.campaign import CampaignConfig, load_campaign, resolve_campaign_path
 from autoforge.agent.git_ops import (
     ensure_optimization_branch,
     git_add_commit_push,
@@ -23,6 +22,7 @@ from autoforge.agent.strategy import (
     format_profile_lines,
     validate_change,
 )
+from autoforge.campaign import CampaignConfig, load_campaign, resolve_campaign_path
 from autoforge.logging_config import setup_logging
 
 logger = logging.getLogger(__name__)

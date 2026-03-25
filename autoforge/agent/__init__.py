@@ -1,5 +1,7 @@
 """Agent-side modules for the autoforge optimization loop."""
 
+from __future__ import annotations
+
 from autoforge.agent.git_ops import (
     force_push_source,
     full_revert,
