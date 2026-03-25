@@ -11,7 +11,7 @@
   "metric_path": "throughput_mpps",
   "description": "ZC tx fast free: use mbuf->pool directly, not mq->mempool (fix)",
   "backend": "testpmd",
-  "status": "claimed",
+  "status": "building",
   "claimed_at": "2026-03-25T11:04:57.188159+00:00",
   "completed_at": null,
   "build_log_snippet": null,
