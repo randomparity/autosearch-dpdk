@@ -28,3 +28,4 @@ sequence	timestamp	dpdk_commit	metric_value	status	description
 36	2026-03-25T11:52:08.194229+00:00	de7c2a4eff4490bf608192f461c9199f3afb3c02	118.5665	completed	batch mq->last_tail write in memif_free_stored_mbufs
 37	2026-03-25T11:56:13.390587+00:00	672ac06aacc46d8956f340aa06ceb793ff16c4ae	119.8066	completed	eal/ppc: add fast path for n==64 in rte_memcpy_func, skip branch chain
 38	2026-03-25T12:07:09.089287+00:00	16b2932d7f40859ccb8d1c72f4829b2f556859ee	119.5131	completed	remove zc rx prefetch (hurts on POWER9) and cache d0->length locally
+39	2026-03-25T12:10:17.803573+00:00	a3b31b6916887b288a697020585cd3cd2028dadd	121.364	completed	remove useless pointer-array prefetch in zc rx refill loop
