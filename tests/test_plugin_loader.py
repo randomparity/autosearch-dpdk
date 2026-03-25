@@ -26,7 +26,7 @@ BUILDER_SOURCE = """\
 from autoforge.plugins.protocols import BuildResult
 
 class LocalServerBuilder:
-    name = "local-server"
+    name = "local"
 
     def configure(self, project_config, runner_config):
         pass
@@ -87,7 +87,7 @@ def _setup_project(tmp_path, project="testproj"):
     (base / "tests").mkdir(parents=True)
     (base / "perfs").mkdir(parents=True)
 
-    (base / "builds" / "local-server.py").write_text(BUILDER_SOURCE)
+    (base / "builds" / "local.py").write_text(BUILDER_SOURCE)
     (base / "deploys" / "local.py").write_text(DEPLOYER_SOURCE)
     (base / "tests" / "testpmd-memif.py").write_text(TESTER_SOURCE)
     (base / "perfs" / "perf-record.py").write_text(PROFILER_SOURCE)
@@ -98,9 +98,9 @@ def _setup_project(tmp_path, project="testproj"):
 class TestLoadComponent:
     def test_loads_builder(self, tmp_path) -> None:
         _setup_project(tmp_path)
-        comp = load_component("testproj", "build", "local-server", root=tmp_path)
+        comp = load_component("testproj", "build", "local", root=tmp_path)
         assert isinstance(comp, Builder)
-        assert comp.name == "local-server"
+        assert comp.name == "local"
 
     def test_loads_deployer(self, tmp_path) -> None:
         _setup_project(tmp_path)
@@ -141,7 +141,7 @@ class TestListComponents:
     def test_lists_available(self, tmp_path) -> None:
         _setup_project(tmp_path)
         names = list_components("testproj", "build", root=tmp_path)
-        assert names == ["local-server"]
+        assert names == ["local"]
 
     def test_empty_category(self, tmp_path) -> None:
         base = tmp_path / "testproj" / "builds"
@@ -155,12 +155,12 @@ class TestListComponents:
         _setup_project(tmp_path)
         base = tmp_path / "testproj" / "builds"
         (base / "remote-server.py").write_text(
-            BUILDER_SOURCE.replace("local-server", "remote-server").replace(
+            BUILDER_SOURCE.replace("local", "remote-server").replace(
                 "LocalServerBuilder", "RemoteServerBuilder"
             )
         )
         names = list_components("testproj", "build", root=tmp_path)
-        assert names == ["local-server", "remote-server"]
+        assert names == ["local", "remote-server"]
 
 
 class TestLoadPipeline:
@@ -168,7 +168,7 @@ class TestLoadPipeline:
         _setup_project(tmp_path)
         campaign = {
             "project": {
-                "build": "local-server",
+                "build": "local",
                 "deploy": "local",
                 "test": "testpmd-memif",
                 "profiler": "perf-record",
@@ -185,7 +185,7 @@ class TestLoadPipeline:
         _setup_project(tmp_path)
         campaign = {
             "project": {
-                "build": "local-server",
+                "build": "local",
                 "deploy": "local",
                 "test": "testpmd-memif",
             }
@@ -199,12 +199,12 @@ class TestLoadPipeline:
             load_pipeline("testproj", campaign, root=tmp_path)
 
     def test_missing_deploy_raises(self, tmp_path) -> None:
-        campaign = {"project": {"build": "local-server", "test": "testpmd-memif"}}
+        campaign = {"project": {"build": "local", "test": "testpmd-memif"}}
         with pytest.raises(ValueError, match="deploy"):
             load_pipeline("testproj", campaign, root=tmp_path)
 
     def test_missing_test_raises(self, tmp_path) -> None:
-        campaign = {"project": {"build": "local-server", "deploy": "local"}}
+        campaign = {"project": {"build": "local", "deploy": "local"}}
         with pytest.raises(ValueError, match="test"):
             load_pipeline("testproj", campaign, root=tmp_path)
 
@@ -226,13 +226,13 @@ class TestLoadPluginConfig:
 class TestAutoConfigureOnLoad:
     def test_sibling_config_merged_into_runner_config(self, tmp_path) -> None:
         _setup_project(tmp_path)
-        sibling = tmp_path / "testproj" / "builds" / "local-server.toml"
+        sibling = tmp_path / "testproj" / "builds" / "local.toml"
         sibling.write_text("[build]\njobs = 8\n")
         runner_cfg = {"paths": {"dpdk_src": "/opt/dpdk"}}
         comp = load_component(
             "testproj",
             "build",
-            "local-server",
+            "local",
             root=tmp_path,
             project_config={"name": "test"},
             runner_config=runner_cfg,
@@ -241,13 +241,13 @@ class TestAutoConfigureOnLoad:
 
     def test_plugin_config_overrides_framework(self, tmp_path) -> None:
         _setup_project(tmp_path)
-        sibling = tmp_path / "testproj" / "builds" / "local-server.toml"
+        sibling = tmp_path / "testproj" / "builds" / "local.toml"
         sibling.write_text("[build]\njobs = 16\n")
         runner_cfg = {"build": {"jobs": 0}}
         comp = load_component(
             "testproj",
             "build",
-            "local-server",
+            "local",
             root=tmp_path,
             project_config={},
             runner_config=runner_cfg,
@@ -260,7 +260,7 @@ class TestAutoConfigureOnLoad:
         comp = load_component(
             "testproj",
             "build",
-            "local-server",
+            "local",
             root=tmp_path,
             project_config={},
             runner_config=runner_cfg,
@@ -269,7 +269,7 @@ class TestAutoConfigureOnLoad:
 
     def test_no_runner_config_skips_configure(self, tmp_path) -> None:
         _setup_project(tmp_path)
-        comp = load_component("testproj", "build", "local-server", root=tmp_path)
+        comp = load_component("testproj", "build", "local", root=tmp_path)
         assert isinstance(comp, Builder)
 
 

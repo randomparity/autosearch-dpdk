@@ -41,7 +41,7 @@ SAMPLE_CAMPAIGN = {
     "metric": {"name": "throughput_mpps", "path": "throughput_mpps", "direction": "maximize"},
     "agent": {"poll_interval": 5, "timeout_minutes": 1},
     "project": {
-        "build": "local-server",
+        "build": "local",
         "deploy": "local",
         "test": "testpmd-memif",
         "submodule_path": "dpdk",
@@ -86,7 +86,7 @@ class TestRunBaseline:
         data = json.loads(request_files[0].read_text())
         assert data["source_commit"] == fake_commit
         assert data["status"] == "pending"
-        assert data["build_plugin"] == "local-server"
+        assert data["build_plugin"] == "local"
         assert data["test_plugin"] == "testpmd-memif"
         assert data["description"] == "Baseline: unmodified DPDK"
 

@@ -60,7 +60,7 @@ def _find_plugin_file(project: str, category: str, name: str, root: Path | None 
     Args:
         project: Project name (directory under projects/).
         category: One of 'build', 'deploy', 'test', 'profiler'.
-        name: Plugin name (filename stem, e.g. 'local-server').
+        name: Plugin name (filename stem, e.g. 'local').
         root: Override projects root (for testing).
 
     Returns:
@@ -133,7 +133,7 @@ def load_plugin_config(plugin_path: Path) -> dict[str, Any]:
     """Load the sibling .toml config file for a plugin.
 
     Looks for a .toml file with the same stem as the plugin .py file
-    (e.g. ``local-server.toml`` next to ``local-server.py``).
+    (e.g. ``local.toml`` next to ``local.py``).
 
     Returns:
         Config dict, or empty dict if the sibling file does not exist.

@@ -33,7 +33,7 @@ Configuration is split into framework config and per-plugin config:
 cp projects/dpdk/runner.toml.example projects/dpdk/runner.toml
 
 # Plugin configs (each plugin has its own sibling .toml)
-cp projects/dpdk/builds/local-server.toml.example projects/dpdk/builds/local-server.toml
+cp projects/dpdk/builds/local.toml.example projects/dpdk/builds/local.toml
 cp projects/dpdk/tests/testpmd-memif.toml.example projects/dpdk/tests/testpmd-memif.toml
 cp projects/dpdk/perfs/perf-record.toml.example projects/dpdk/perfs/perf-record.toml
 ```

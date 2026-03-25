@@ -13,7 +13,7 @@ SAMPLE_CAMPAIGN = {
         "path": "throughput_mpps",
     },
     "project": {
-        "build": "local-server",
+        "build": "local",
         "deploy": "local",
         "test": "testpmd-memif",
     },
@@ -59,7 +59,7 @@ class TestCreateRequest:
         assert data["sequence"] == 1
         assert data["source_commit"] == "abc123"
         assert data["status"] == STATUS_PENDING
-        assert data["build_plugin"] == "local-server"
+        assert data["build_plugin"] == "local"
         assert data["deploy_plugin"] == "local"
         assert data["test_plugin"] == "testpmd-memif"
 

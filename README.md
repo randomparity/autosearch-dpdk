@@ -52,7 +52,7 @@ autoforge/
   campaign.py  Pointer load/save, campaign resolution
 projects/
   dpdk/
-    builds/          Build plugins (e.g. local-server.py)
+    builds/          Build plugins (e.g. local.py)
     deploys/         Deploy plugins (e.g. local.py)
     tests/           Test plugins (e.g. testpmd-memif.py, dts-mlx5.py)
     perfs/           Profiler plugins (e.g. perf-record.py)

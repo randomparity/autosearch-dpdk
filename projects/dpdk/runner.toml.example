@@ -3,7 +3,7 @@
 # runner.toml is gitignored; never commit host-specific paths.
 #
 # Plugin-specific settings live in sibling .toml files next to each plugin:
-#   builds/local-server.toml    — [build] section
+#   builds/local.toml    — [build] section
 #   tests/testpmd-memif.toml    — [testpmd] + [profiling] sections
 #   tests/dts-mlx5.toml         — [test] + [paths] sections
 #   perfs/perf-record.toml      — [profiling] section

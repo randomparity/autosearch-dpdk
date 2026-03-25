@@ -22,7 +22,7 @@ SAMPLE_CAMPAIGN = {
     "metric": {"name": "throughput_mpps", "path": "throughput_mpps", "direction": "maximize"},
     "agent": {"poll_interval": 5, "timeout_minutes": 1},
     "project": {
-        "build": "local-server",
+        "build": "local",
         "deploy": "local",
         "test": "testpmd-memif",
         "submodule_path": "dpdk",

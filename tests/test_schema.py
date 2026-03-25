@@ -29,7 +29,7 @@ def make_request(**overrides: object) -> TestRequest:
         "created_at": "2025-01-15T10:30:00",
         "source_commit": "abc123def456",
         "description": "Increase burst size in testpmd",
-        "build_plugin": "local-server",
+        "build_plugin": "local",
         "deploy_plugin": "local",
         "test_plugin": "testpmd-memif",
         "metric_name": "throughput_mpps",
@@ -46,7 +46,7 @@ class TestSerialization:
         restored = TestRequest.from_json(raw)
         assert restored.sequence == req.sequence
         assert restored.source_commit == req.source_commit
-        assert restored.build_plugin == "local-server"
+        assert restored.build_plugin == "local"
         assert restored.deploy_plugin == "local"
         assert restored.test_plugin == "testpmd-memif"
         assert restored.status == STATUS_PENDING
@@ -80,7 +80,7 @@ class TestSerialization:
         parsed = json.loads(req.to_json())
         assert parsed["sequence"] == 1
         assert parsed["status"] == "pending"
-        assert parsed["build_plugin"] == "local-server"
+        assert parsed["build_plugin"] == "local"
 
     def test_from_json_with_unknown_fields_raises(self) -> None:
         req = make_request()

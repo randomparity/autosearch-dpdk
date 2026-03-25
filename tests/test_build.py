@@ -6,8 +6,8 @@ import importlib.util
 import sys
 from pathlib import Path
 
-PLUGIN_PATH = Path(__file__).parent.parent / "projects" / "dpdk" / "builds" / "local-server.py"
-MODULE_NAME = "autoforge_plugin_local_server"
+PLUGIN_PATH = Path(__file__).parent.parent / "projects" / "dpdk" / "builds" / "local.py"
+MODULE_NAME = "autoforge_plugin_local_build"
 
 
 def _load_builder_module():
