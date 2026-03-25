@@ -1,0 +1,69 @@
+# testpmd-memif test plugin configuration
+# Copy to testpmd-memif.toml and adjust for your environment.
+#
+# Sudo setup (required when sudo = true):
+#   sudo visudo -f /etc/sudoers.d/dpdk-testpmd
+#   <user> ALL=(root) NOPASSWD: <build_dir>/app/dpdk-testpmd
+
+[testpmd]
+# EAL lcore mask — main lcore + forwarding cores
+lcores = "4-7"
+
+# --- Port configuration (choose PCI or vdev, not both) ---
+
+# PCI addresses of the NIC ports (back-to-back connected)
+# pci = ["01:00.0", "01:00.1"]
+
+# Virtual devices (e.g. memif pair). Each string is passed as --vdev to EAL.
+# WARNING: The memif PMD silently ignores zero-copy=yes on the server role.
+# Only the client supports zero-copy.
+vdev = [
+    "net_memif0,role=server,id=0,zero-copy=yes,bsize=2048,rsize=12",
+    "net_memif1,role=client,id=0,zero-copy=yes,bsize=2048,rsize=12",
+]
+
+# When using vdevs, disable PCI bus scanning
+no_pci = true
+
+# Additional EAL arguments passed verbatim (list of strings)
+# extra_eal_args = ["--single-file-segments"]
+
+# --- Testpmd application arguments ---
+
+# Number of forwarding cores (excluding main lcore)
+nb_cores = 2
+
+# Queues and descriptors per port
+rxq = 4
+txq = 4
+rxd = 4096
+txd = 4096
+
+# Burst size for rx/tx
+burst = 128
+
+# Forward mode: "io", "macswap", "mac", etc.
+forward_mode = "io"
+
+# Seconds to wait after tx_first before resetting stats
+warmup_seconds = 5
+
+# Seconds to collect throughput measurement
+measure_seconds = 10
+
+# Number of measurement runs; median throughput is reported.
+# Use 3-5 for sub-1% gain detection.
+repeat_count = 1
+
+# Run testpmd with sudo (requires passwordless sudo for the testpmd binary)
+sudo = true
+
+[profiling]
+# Capture perf profiles during testpmd measurement window
+enabled = false
+
+# Sampling frequency in Hz (99 avoids aliasing with timer interrupts)
+frequency = 99
+
+# Run perf commands with sudo (must match testpmd sudo setting)
+sudo = true

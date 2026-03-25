@@ -26,19 +26,24 @@ checks for runner prerequisites (meson, ninja, compiler, pkg-config).
 
 ## Runner configuration
 
-Each project has its own `runner.toml` under `projects/<project>/`. Copy the
-example and fill in your environment:
+Configuration is split into framework config and per-plugin config:
 
 ```bash
+# Framework config (paths, timeouts, runner settings)
 cp projects/dpdk/runner.toml.example projects/dpdk/runner.toml
+
+# Plugin configs (each plugin has its own sibling .toml)
+cp projects/dpdk/builds/local-server.toml.example projects/dpdk/builds/local-server.toml
+cp projects/dpdk/tests/testpmd-memif.toml.example projects/dpdk/tests/testpmd-memif.toml
+cp projects/dpdk/perfs/perf-record.toml.example projects/dpdk/perfs/perf-record.toml
 ```
 
-Edit `projects/dpdk/runner.toml` to match your hardware (lcores, PCI
-addresses, paths, etc.). Runner config files are gitignored — never commit
-host-specific paths or credentials.
+Edit each file for your hardware. All config files are gitignored — never
+commit host-specific paths or credentials.
 
-The runner resolves config via: explicit path > `AUTOFORGE_CONFIG` env var >
-`.autoforge.toml` pointer (loads `projects/<project>/runner.toml`).
+The runner resolves framework config via: explicit path > `AUTOFORGE_CONFIG`
+env var > `.autoforge.toml` pointer. Plugin configs are loaded automatically
+from sibling `.toml` files next to each plugin `.py` file.
 
 | Section | Key | Description |
 |---------|-----|-------------|

@@ -19,6 +19,7 @@ from autoforge.plugins.loader import (
     list_components,
     load_component,
     load_pipeline,
+    load_plugin_config,
 )
 
 BUILDER_SOURCE = """\
@@ -206,6 +207,70 @@ class TestLoadPipeline:
         campaign = {"project": {"build": "local-server", "deploy": "local"}}
         with pytest.raises(ValueError, match="test"):
             load_pipeline("testproj", campaign, root=tmp_path)
+
+
+class TestLoadPluginConfig:
+    def test_returns_empty_when_no_sibling(self, tmp_path) -> None:
+        plugin_path = tmp_path / "missing.py"
+        plugin_path.touch()
+        assert load_plugin_config(plugin_path) == {}
+
+    def test_loads_sibling_toml(self, tmp_path) -> None:
+        plugin_path = tmp_path / "myplugin.py"
+        plugin_path.touch()
+        (tmp_path / "myplugin.toml").write_text("[build]\njobs = 4\n")
+        cfg = load_plugin_config(plugin_path)
+        assert cfg == {"build": {"jobs": 4}}
+
+
+class TestAutoConfigureOnLoad:
+    def test_sibling_config_merged_into_runner_config(self, tmp_path) -> None:
+        _setup_project(tmp_path)
+        sibling = tmp_path / "testproj" / "builds" / "local-server.toml"
+        sibling.write_text("[build]\njobs = 8\n")
+        runner_cfg = {"paths": {"dpdk_src": "/opt/dpdk"}}
+        comp = load_component(
+            "testproj",
+            "build",
+            "local-server",
+            root=tmp_path,
+            project_config={"name": "test"},
+            runner_config=runner_cfg,
+        )
+        assert isinstance(comp, Builder)
+
+    def test_plugin_config_overrides_framework(self, tmp_path) -> None:
+        _setup_project(tmp_path)
+        sibling = tmp_path / "testproj" / "builds" / "local-server.toml"
+        sibling.write_text("[build]\njobs = 16\n")
+        runner_cfg = {"build": {"jobs": 0}}
+        comp = load_component(
+            "testproj",
+            "build",
+            "local-server",
+            root=tmp_path,
+            project_config={},
+            runner_config=runner_cfg,
+        )
+        assert isinstance(comp, Builder)
+
+    def test_no_sibling_still_loads(self, tmp_path) -> None:
+        _setup_project(tmp_path)
+        runner_cfg = {"build": {"jobs": 4}}
+        comp = load_component(
+            "testproj",
+            "build",
+            "local-server",
+            root=tmp_path,
+            project_config={},
+            runner_config=runner_cfg,
+        )
+        assert isinstance(comp, Builder)
+
+    def test_no_runner_config_skips_configure(self, tmp_path) -> None:
+        _setup_project(tmp_path)
+        comp = load_component("testproj", "build", "local-server", root=tmp_path)
+        assert isinstance(comp, Builder)
 
 
 class TestResultDataclasses:

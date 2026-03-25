@@ -161,8 +161,13 @@ class BuildRunner(PhaseRunner):
         build_dir = Path(paths.get("build_dir", "/tmp/dpdk-build"))
         build_timeout = int(timeouts.get("build_minutes", 30)) * 60
 
-        builder = load_component(project_name, "build", request.build_plugin)
-        builder.configure(project_config, self.config)
+        builder = load_component(
+            project_name,
+            "build",
+            request.build_plugin,
+            project_config=project_config,
+            runner_config=self.config,
+        )
 
         update_status(request, STATUS_BUILDING, request_path)
         build_result = builder.build(source_path, request.source_commit, build_dir, build_timeout)
@@ -186,8 +191,13 @@ class DeployRunner(PhaseRunner):
         project_config = self.campaign.get("project", {})
         project_name = project_config.get("name", "dpdk")
 
-        deployer = load_component(project_name, "deploy", request.deploy_plugin)
-        deployer.configure(project_config, self.config)
+        deployer = load_component(
+            project_name,
+            "deploy",
+            request.deploy_plugin,
+            project_config=project_config,
+            runner_config=self.config,
+        )
 
         update_status(request, STATUS_DEPLOYING, request_path)
 
@@ -228,8 +238,13 @@ class TestRunner(PhaseRunner):
         timeouts = self.config.get("timeouts", {})
         test_timeout = int(timeouts.get("test_minutes", 10)) * 60
 
-        tester = load_component(project_name, "test", request.test_plugin)
-        tester.configure(project_config, self.config)
+        tester = load_component(
+            project_name,
+            "test",
+            request.test_plugin,
+            project_config=project_config,
+            runner_config=self.config,
+        )
 
         update_status(request, STATUS_RUNNING, request_path)
 
@@ -288,8 +303,13 @@ class FullRunner(PhaseRunner):
         test_timeout = int(timeouts.get("test_minutes", 10)) * 60
 
         # Build
-        builder = load_component(project_name, "build", request.build_plugin)
-        builder.configure(project_config, self.config)
+        builder = load_component(
+            project_name,
+            "build",
+            request.build_plugin,
+            project_config=project_config,
+            runner_config=self.config,
+        )
         update_status(request, STATUS_BUILDING, request_path)
         build_result = builder.build(source_path, request.source_commit, build_dir, build_timeout)
 
@@ -298,8 +318,13 @@ class FullRunner(PhaseRunner):
             return
 
         # Deploy
-        deployer = load_component(project_name, "deploy", request.deploy_plugin)
-        deployer.configure(project_config, self.config)
+        deployer = load_component(
+            project_name,
+            "deploy",
+            request.deploy_plugin,
+            project_config=project_config,
+            runner_config=self.config,
+        )
         update_status(request, STATUS_BUILT, request_path)
         update_status(request, STATUS_DEPLOYING, request_path)
         deploy_result = deployer.deploy(build_result)
@@ -309,8 +334,13 @@ class FullRunner(PhaseRunner):
             return
 
         # Test
-        tester = load_component(project_name, "test", request.test_plugin)
-        tester.configure(project_config, self.config)
+        tester = load_component(
+            project_name,
+            "test",
+            request.test_plugin,
+            project_config=project_config,
+            runner_config=self.config,
+        )
         update_status(request, STATUS_DEPLOYED, request_path)
         update_status(request, STATUS_RUNNING, request_path)
         test_result = tester.test(deploy_result, timeout=test_timeout)
