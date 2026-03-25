@@ -19,3 +19,4 @@ sequence	timestamp	dpdk_commit	metric_value	status	description
 26	2026-03-25T03:15:16.685965+00:00	65b546f9ac6f4392a9d471da488d524c9d7b0ffa	88.1636	completed	bulk free stored mbufs instead of per-mbuf free_seg (FIXME tag)
 27	2026-03-25T03:18:49.654233+00:00	7f0ab94c57ef0d42531537cf9602c6ce70d5a050	92.6826	completed	batch free stored mbufs in groups of 32 with ring-order locality
 28	2026-03-25T04:12:08.423692+00:00	a08e840df54cafbb723f6b3bdc2a4d2fecd711f5	87.4834	completed	use rte_mov64 for <=64B packets in 4x unrolled rx, skip rte_memcpy branches
+29	2026-03-25T04:17:16.350306+00:00	494731e2e9835f676e7e8264e0909be5c12d134e	106.1945	completed	increase testpmd mempool cache from 250 to 512 to reduce ring contention
