@@ -9,3 +9,4 @@ sequence	timestamp	dpdk_commit	metric_value	status	description
 15	2026-03-25T02:36:03.311725+00:00	9946d7a657538c5a75d8cf284e224e1f3a08f8a7	82.707	completed	force-inline memif_get_buffer and memif_get_ring_from_queue
 16	2026-03-25T02:41:19.355841+00:00	2e60c0238cd28ab3240328fd7d1031f38c823965	87.3715	completed	4-at-a-time unrolled rx fast path for single-segment packets
 17	2026-03-25T02:46:16.166974+00:00	82796c2debcf4da696ab3c32f5bbebe5a4a95097	85.2225	completed	4-at-a-time unrolled tx fast path for single-segment packets
+18	2026-03-25T02:49:36.211831+00:00	c2153d5e738d31b07b8d31aa13b510fd5d377c78	85.3383	completed	4x unroll + batched n_bytes in zc rx path

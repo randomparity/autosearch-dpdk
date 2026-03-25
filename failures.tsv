@@ -11,3 +11,5 @@ timestamp	dpdk_commit	metric_value	description	diff_summary
  1 file changed, 2 insertions(+), 2 deletions(-)"
 2026-03-25T02:46:16.211943+00:00	82796c2debcf4da696ab3c32f5bbebe5a4a95097	85.2225	4-at-a-time unrolled tx fast path for single-segment packets	"drivers/net/memif/rte_eth_memif.c | 54 +++++++++++++++++++++++++++++++++++++++
  1 file changed, 54 insertions(+)"
+2026-03-25T02:49:36.258066+00:00	c2153d5e738d31b07b8d31aa13b510fd5d377c78	85.3383	4x unroll + batched n_bytes in zc rx path	"drivers/net/memif/rte_eth_memif.c | 66 ++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 61 insertions(+), 5 deletions(-)"
