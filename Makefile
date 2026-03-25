@@ -8,17 +8,20 @@ VENV := .venv
 
 # ── Setup targets ──────────────────────────────────────────────────
 
-setup: check-common venv  ## Full setup (common deps + venv + hooks)
+setup: check-common venv  ## Dev setup (deps + hooks)
 	$(UV) run pre-commit install
 	@echo "Setup complete. Run 'uv run autoforge context' to verify."
 
-setup-agent: check-common check-agent venv  ## Setup for agent workstation
+setup-agent: check-common venv  ## Setup for agent workstation
 	$(UV) sync --group dev --group agent
 	$(UV) run pre-commit install
 	@echo "Agent setup complete."
 
 setup-runner: check-common check-runner venv  ## Setup for runner lab machine
+	$(UV) run pre-commit install
 	@echo "Runner setup complete."
+	@test -f config/runner.toml || \
+		echo "NOTE: Copy config/runner.toml.example to config/runner.toml and configure."
 
 venv: pyproject.toml  ## Create venv and install deps
 	$(UV) sync --group dev
@@ -32,21 +35,9 @@ check-common:
 		{ echo "ERROR: uv not found. Install: curl -LsSf https://astral.sh/uv/install.sh | sh"; exit 1; }
 	@command -v git >/dev/null 2>&1 || \
 		{ echo "ERROR: git not found."; exit 1; }
-	@command -v ruff >/dev/null 2>&1 || uv tool install ruff >/dev/null 2>&1 || \
-		echo "WARN: ruff not found globally (will use 'uv run ruff' from venv)"
-	@git submodule status dpdk >/dev/null 2>&1 || \
-		{ echo "WARN: dpdk submodule not initialized. Run: git submodule update --init"; }
+	@git submodule status projects/dpdk/repo >/dev/null 2>&1 || \
+		echo "WARN: dpdk submodule not initialized. Run: git submodule update --init"
 	@echo "Common dependencies OK."
-
-check-agent:
-	@echo "Checking agent dependencies..."
-	@$(UV) run python -c "import anthropic" 2>/dev/null || \
-		echo "WARN: anthropic not importable yet (will be installed by 'make venv')"
-	@test -n "$${ANTHROPIC_API_KEY:-}" || test -f .env || \
-		echo "WARN: ANTHROPIC_API_KEY not set and no .env file found."
-	@test -f config/campaign.toml || \
-		{ echo "ERROR: config/campaign.toml not found."; exit 1; }
-	@echo "Agent dependencies OK."
 
 check-runner:
 	@echo "Checking runner dependencies..."
@@ -58,8 +49,6 @@ check-runner:
 		{ echo "ERROR: C compiler not found. Install gcc or clang."; exit 1; }
 	@command -v pkg-config >/dev/null 2>&1 || command -v pkgconf >/dev/null 2>&1 || \
 		{ echo "ERROR: pkg-config not found."; exit 1; }
-	@test -f config/runner.toml || \
-		{ echo "ERROR: config/runner.toml not found. Copy from runner.toml.example and configure."; exit 1; }
 	@command -v perf >/dev/null 2>&1 || \
 		echo "WARN: perf not found (optional, needed for profiling)."
 	@echo "Runner dependencies OK."
@@ -77,7 +66,7 @@ test:  ## Run tests
 
 clean:  ## Remove build artifacts and caches
 	rm -rf $(VENV) .ruff_cache .pytest_cache autoforge/__pycache__
-	find . -path ./dpdk -prune -o -name '__pycache__' -print | xargs rm -rf
+	find . -path ./projects/dpdk/repo -prune -o -name '__pycache__' -print | xargs rm -rf
 
 # ── Help ───────────────────────────────────────────────────────────
 
