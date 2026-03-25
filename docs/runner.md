@@ -26,21 +26,19 @@ checks for runner prerequisites (meson, ninja, compiler, pkg-config).
 
 ## Runner configuration
 
-Copy the framework example and fill in your environment paths:
+Each project has its own `runner.toml` under `projects/<project>/`. Copy the
+example and fill in your environment:
 
 ```bash
-cp config/runner.toml.example config/runner.toml
+cp projects/dpdk/runner.toml.example projects/dpdk/runner.toml
 ```
 
-Then append the project-specific sections for your plugins:
+Edit `projects/dpdk/runner.toml` to match your hardware (lcores, PCI
+addresses, paths, etc.). Runner config files are gitignored — never commit
+host-specific paths or credentials.
 
-```bash
-cat projects/dpdk/runner.toml.example >> config/runner.toml
-```
-
-Edit `config/runner.toml` to match your hardware (lcores, PCI addresses, etc.).
-
-`config/runner.toml` is gitignored — never commit host-specific paths.
+The runner resolves config via: explicit path > `AUTOFORGE_CONFIG` env var >
+`.autoforge.toml` pointer (loads `projects/<project>/runner.toml`).
 
 | Section | Key | Description |
 |---------|-----|-------------|
@@ -82,7 +80,7 @@ The test plugin is selected in the sprint's `campaign.toml` via `[project].test`
 then stops testpmd and computes bi-directional Mpps from accumulated forward
 statistics.
 
-Configure in `config/runner.toml`:
+Configure in `projects/dpdk/runner.toml`:
 
 | Key | Description |
 |-----|-------------|
@@ -105,7 +103,7 @@ When using memif vdevs, the runner logs a warning at startup if a server-role
 vdev has `zero-copy=yes` set — the memif PMD silently ignores zero-copy on
 the server side; only the client role supports it.
 
-See `config/runner.toml.example` for the full annotated list of options.
+See `projects/dpdk/runner.toml.example` for the full annotated list of options.
 
 testpmd requires root for hugepages and device access. The runner uses `sudo`
 by default. Configure passwordless sudo for the testpmd binary:
@@ -123,7 +121,7 @@ dave ALL=(root) NOPASSWD: /tmp/dpdk-build/app/dpdk-testpmd
 Set `sudo = false` in `[testpmd]` if the runner service already runs as root.
 
 **dts-mlx5** — Runs the DPDK Test Suite via `poetry run ./main.py` in the DTS
-directory. Requires `[paths].dts_dir` in `runner.toml` and DTS topology files.
+directory. Requires `[paths].dts_dir` in the project's `runner.toml` and DTS topology files.
 Copy `config/nodes.yaml.example` → `config/nodes.yaml` and
 `config/test_run.yaml.example` → `config/test_run.yaml` and fill in your
 topology.
@@ -144,7 +142,7 @@ into where CPU cycles are spent.
 - Kernel support for hardware performance counters
 - If `profiling.sudo = true`: passwordless sudo for `perf` (same pattern as testpmd above)
 
-**Enable in `config/runner.toml`:**
+**Enable in `projects/dpdk/runner.toml`:**
 
 ```toml
 [profiling]
@@ -191,8 +189,9 @@ The runner supports four phase modes (configured via `[runner].phase`):
 6. Run test plugin (`deployed` → `running` → `completed` or `failed`)
 7. Push results and sleep
 
-The runner takes no CLI arguments. All configuration is via `config/runner.toml`
-and `.autoforge.toml` (for project/sprint selection).
+The runner takes no CLI arguments. All configuration is via
+`projects/<project>/runner.toml` and `.autoforge.toml` (for project/sprint
+selection).
 
 ## Systemd deployment
 
@@ -216,7 +215,7 @@ Type=simple
 User=dpdk
 WorkingDirectory=/path/to/checkout
 ExecStart=/usr/local/bin/autoforge-runner
-Environment=AUTOFORGE_CONFIG=/etc/autoforge/runner.toml
+Environment=AUTOFORGE_CONFIG=/etc/autoforge/dpdk-runner.toml
 Restart=on-failure
 RestartSec=30
 ReadWritePaths=/var/lib/autoforge /tmp
@@ -244,7 +243,7 @@ For each request, the runner:
 3. Runs `ninja` with the configured job count
 4. Build artifacts are written to the configured `build_dir`
 
-Build timeout is controlled by `timeouts.build_minutes` in `runner.toml`.
+Build timeout is controlled by `timeouts.build_minutes` in the project's `runner.toml`.
 
 ## Troubleshooting
 
@@ -254,7 +253,7 @@ last lines of build output. Common causes: missing dependencies, incompatible
 compiler version, or meson configuration errors.
 
 **Test failures**
-For testpmd: check that PCI addresses and lcores are correct in `runner.toml`.
+For testpmd: check that PCI addresses and lcores are correct in `projects/dpdk/runner.toml`.
 For DTS: check the DTS output directory for full test logs. The request JSON
 `error` field contains the failure reason.
 

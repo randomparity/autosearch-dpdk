@@ -90,7 +90,7 @@ autoforge_dpdk/        DPDK plugin: meson+ninja build, testpmd/DTS testing
 
 - `.autoforge.toml` — pointer file at repo root, sets active project + sprint (tracked in git)
 - `config/campaign.toml.example` — template for new sprint campaign configs
-- `config/runner.toml` — where to build/test (paths, PCI addresses, lcores, timeouts). Gitignored; copy from `runner.toml.example`
+- `projects/<project>/runner.toml` — where to build/test (paths, PCI addresses, lcores, timeouts). Gitignored; copy from `runner.toml.example`
 - `projects/<project>/sprints/<sprint>/campaign.toml` — authoritative campaign config per sprint
 - `pyelftools` in dependencies is required by DPDK's meson build, not by this project's Python code
 

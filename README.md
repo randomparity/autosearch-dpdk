@@ -43,24 +43,28 @@ For full setup, see the [agent guide](docs/agent.md) and
 ## Project layout
 
 ```
-src/
+autoforge/
   agent/       CLI subcommands, git ops, history, metric, sprint management
-  runner/      Runner service, build, testpmd, execute (DTS), protocol
+  runner/      Runner service, phase runners, protocol
   protocol/    Shared schema (TestRequest dataclass)
+  plugins/     Plugin protocols (Builder, Deployer, Tester, Profiler) and loader
   perf/        Profiling: perf record, stack analysis, arch profiles
-  logging_config.py  Shared logging setup
-config/
-  campaign.toml           Campaign settings (metric, goal, test backend, scope)
-  runner.toml.example     Runner-specific paths, build, and testpmd settings
-sprints/       Per-sprint experiment artifacts
-  <name>/
-    requests/       Test request JSON files
-    results.tsv     Iteration history
-    failures.tsv    Reverted attempts (created on first failure)
-    campaign.toml   Frozen campaign config snapshot
-    docs/           Summaries and graphs
-dpdk/          DPDK source (git submodule)
-docs/          Documentation
+  campaign.py  Pointer load/save, campaign resolution
+projects/
+  dpdk/
+    builds/          Build plugins (e.g. local-server.py)
+    deploys/         Deploy plugins (e.g. local.py)
+    tests/           Test plugins (e.g. testpmd-memif.py, dts-mlx5.py)
+    perfs/           Profiler plugins (e.g. perf-record.py)
+    repo/            DPDK source (git submodule)
+    runner.toml.example  Runner config template for DPDK
+    sprints/
+      <name>/
+        campaign.toml   Campaign config for this sprint
+        requests/       Test request JSON files
+        results.tsv     Iteration history
+        docs/           Summaries and graphs
+docs/            Documentation
 ```
 
 ## Development

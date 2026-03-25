@@ -20,8 +20,7 @@ setup-agent: check-common venv  ## Setup for agent workstation
 setup-runner: check-common check-runner venv  ## Setup for runner lab machine
 	$(UV) run pre-commit install
 	@echo "Runner setup complete."
-	@test -f config/runner.toml || \
-		echo "NOTE: Copy config/runner.toml.example to config/runner.toml and configure."
+	@echo "NOTE: Ensure projects/<project>/runner.toml exists (copy from runner.toml.example)."
 
 venv: pyproject.toml  ## Create venv and install deps
 	$(UV) sync --group dev

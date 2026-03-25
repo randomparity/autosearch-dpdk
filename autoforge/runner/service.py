@@ -25,10 +25,20 @@ PHASE_RUNNERS = {
 }
 
 
+def resolve_config_path(explicit: str | None = None) -> str:
+    """Resolve runner config path: explicit > env var > pointer-based default."""
+    if explicit:
+        return explicit
+    env = os.environ.get("AUTOFORGE_CONFIG")
+    if env:
+        return env
+    pointer = load_pointer()
+    return str(REPO_ROOT / "projects" / pointer["project"] / "runner.toml")
+
+
 def load_config(path: str | None = None) -> dict:
     """Load runner configuration from a TOML file."""
-    default = str(REPO_ROOT / "config" / "runner.toml")
-    config_path = path or os.environ.get("AUTOFORGE_CONFIG", default)
+    config_path = resolve_config_path(path)
     with open(config_path, "rb") as f:
         return tomllib.load(f)
 
