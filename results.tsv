@@ -26,3 +26,4 @@ sequence	timestamp	dpdk_commit	metric_value	status	description
 34	2026-03-25T11:46:02.139882+00:00	2f590e9ec443ba70f17ed10ebb8671b86c518578	118.6338	completed	increase memif_free_stored_mbufs batch from 32 to 64
 35	2026-03-25T11:49:04.321650+00:00	8df50003a312c11d11bc8f40751368235cc6ecee	118.472	completed	increase zc rx refill threshold 32->128 for larger batches
 36	2026-03-25T11:52:08.194229+00:00	de7c2a4eff4490bf608192f461c9199f3afb3c02	118.5665	completed	batch mq->last_tail write in memif_free_stored_mbufs
+37	2026-03-25T11:56:13.390587+00:00	672ac06aacc46d8956f340aa06ceb793ff16c4ae	119.8066	completed	eal/ppc: add fast path for n==64 in rte_memcpy_func, skip branch chain
