@@ -23,3 +23,5 @@ timestamp	dpdk_commit	metric_value	description	diff_summary
  1 file changed, 21 insertions(+), 8 deletions(-)"
 2026-03-25T11:42:39.151883+00:00	d1e55591c37ee8813398df086fe4746f3797d866	115.9509	4x unroll non-ZC tx with interleaved copy+desc writes	"drivers/net/memif/rte_eth_memif.c | 55 +++++++++++++++++++++++++++++++++++++++
  1 file changed, 55 insertions(+)"
+2026-03-25T11:49:04.368410+00:00	8df50003a312c11d11bc8f40751368235cc6ecee	118.472	increase zc rx refill threshold 32->128 for larger batches	"drivers/net/memif/rte_eth_memif.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)"

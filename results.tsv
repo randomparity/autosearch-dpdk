@@ -24,3 +24,4 @@ sequence	timestamp	dpdk_commit	metric_value	status	description
 32	2026-03-25T11:05:20.644312+00:00	0c84450175b85e884c2cd61273286c3659a45169	118.4331	completed	ZC tx fast free: use mbuf->pool directly, not mq->mempool (fix)
 33	2026-03-25T11:42:39.105689+00:00	d1e55591c37ee8813398df086fe4746f3797d866	115.9509	completed	4x unroll non-ZC tx with interleaved copy+desc writes
 34	2026-03-25T11:46:02.139882+00:00	2f590e9ec443ba70f17ed10ebb8671b86c518578	118.6338	completed	increase memif_free_stored_mbufs batch from 32 to 64
+35	2026-03-25T11:49:04.321650+00:00	8df50003a312c11d11bc8f40751368235cc6ecee	118.472	completed	increase zc rx refill threshold 32->128 for larger batches
