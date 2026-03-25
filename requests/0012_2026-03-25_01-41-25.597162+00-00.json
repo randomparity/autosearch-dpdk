@@ -11,7 +11,7 @@
   "metric_path": "throughput_mpps",
   "description": "fix RTE_MIN shadow warning and remove dead pkts==0 check",
   "backend": "testpmd",
-  "status": "claimed",
+  "status": "building",
   "claimed_at": "2026-03-25T01:42:53.143283+00:00",
   "completed_at": null,
   "build_log_snippet": null,
