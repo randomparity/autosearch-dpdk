@@ -11,7 +11,7 @@
   "metric_path": "throughput_mpps",
   "description": "batch n_bytes accumulation in zc rx/tx paths",
   "backend": "testpmd",
-  "status": "claimed",
+  "status": "building",
   "claimed_at": "2026-03-25T01:34:24.919774+00:00",
   "completed_at": null,
   "build_log_snippet": null,
