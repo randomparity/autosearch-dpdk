@@ -122,6 +122,7 @@ LOOP FOREVER:
 - **Avoid UB.** DPDK runs with `-O3`; undefined behavior will be exploited by the optimizer.
 - **Guard arch-specific changes.** Use `#ifdef RTE_ARCH_PPC_64` for POWER-only optimizations in library code.
 - **Read past failures.** The `context` command shows what was tried and failed. Don't repeat failed approaches.
+- **Read arch-specific hints.** Run `uv run autosearch hints` for the target architecture's optimization checklist (cache lines, SIMD, memory ordering, compiler flags).
 
 ### Sprint 001 observations (POWER9 memif)
 

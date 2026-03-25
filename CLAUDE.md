@@ -45,7 +45,8 @@ src/perf/        Profiling: perf record orchestration, stack analysis, arch prof
 
 ### Agent modules
 
-- `cli.py` — CLI subcommands (`context`, `submit`, `poll`, `judge`, `baseline`, `revert`, `build-log`, `status`) for Claude Code
+- `cli.py` — CLI subcommands (`context`, `submit`, `poll`, `judge`, `baseline`, `revert`, `build-log`, `status`, `hints`) for Claude Code
+- `hints.py` — architecture-specific optimization hints lookup
 - `loop.py` — interactive iteration loop (manual fallback)
 - `git_ops.py` — git subprocess wrappers (`GIT_TIMEOUT=60`), `record_result_or_revert()`, `full_revert()`, `force_push_submodule()`
 - `campaign.py` — `CampaignConfig` TypedDict, `load_campaign()`

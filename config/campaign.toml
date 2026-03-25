@@ -1,6 +1,9 @@
 [sprint]
 name = "2026-03-23-memif-ppc64le"
 
+[platform]
+arch = "ppc64le"
+
 [campaign]
 name = "memif-throughput"
 max_iterations = 50

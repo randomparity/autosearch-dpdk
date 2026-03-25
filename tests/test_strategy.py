@@ -73,3 +73,13 @@ class TestFormatContext:
         result = format_context(history, SAMPLE_CAMPAIGN)
         assert "#5" not in result or "iter 5" in result
         assert "iter 9" in result
+
+    def test_includes_hints_tip_when_arch_set(self) -> None:
+        campaign = {**SAMPLE_CAMPAIGN, "platform": {"arch": "ppc64le"}}
+        result = format_context([], campaign)
+        assert "autosearch hints" in result
+        assert "ppc64le" in result
+
+    def test_no_hints_tip_when_arch_absent(self) -> None:
+        result = format_context([], SAMPLE_CAMPAIGN)
+        assert "autosearch hints" not in result

@@ -65,6 +65,12 @@ class SprintConfig(TypedDict, total=False):
     name: str
 
 
+class PlatformConfig(TypedDict, total=False):
+    """Platform configuration from campaign TOML."""
+
+    arch: str
+
+
 class CampaignConfig(TypedDict, total=False):
     """Full campaign configuration as loaded from TOML."""
 
@@ -76,6 +82,7 @@ class CampaignConfig(TypedDict, total=False):
     goal: GoalConfig
     profiling: ProfilingConfig
     sprint: SprintConfig
+    platform: PlatformConfig
 
 
 def load_campaign(path: Path | None = None) -> CampaignConfig:

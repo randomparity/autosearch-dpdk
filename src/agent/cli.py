@@ -13,6 +13,7 @@ from src.agent.git_ops import (
     git_submodule_head,
     record_result_or_revert,
 )
+from src.agent.hints import hints_summary, resolve_arch
 from src.agent.history import (
     append_result,
     best_result,
@@ -283,6 +284,19 @@ def cmd_build_log(campaign: CampaignConfig, seq: int) -> None:
     print(_format_build_log(snippet))
 
 
+def cmd_hints(campaign: CampaignConfig, arch_override: str | None) -> None:
+    """Print architecture-specific optimization hints location."""
+    arch = arch_override or resolve_arch(campaign)
+    if not arch:
+        print("ERROR: No arch specified. Set [platform] arch in campaign.toml or pass --arch.")
+        sys.exit(1)
+    try:
+        print(hints_summary(arch))
+    except (ValueError, FileNotFoundError) as exc:
+        print(f"ERROR: {exc}")
+        sys.exit(1)
+
+
 def cmd_status(campaign: CampaignConfig) -> None:
     """Print the latest request status without polling."""
     req = _req_dir(campaign)
@@ -355,6 +369,13 @@ def main() -> None:
     sub.add_parser("baseline", help="Submit baseline request")
     sub.add_parser("revert", help="Revert last DPDK change and force-push fork")
 
+    hints_p = sub.add_parser("hints", help="Show architecture optimization hints")
+    hints_p.add_argument(
+        "--arch",
+        default=None,
+        help="Override arch (default: from campaign.toml [platform] arch)",
+    )
+
     submit_p = sub.add_parser("submit", help="Submit a code change for testing")
     submit_p.add_argument(
         "--description",
@@ -404,6 +425,8 @@ def main() -> None:
         elif args.sprint_command == "switch":
             switch_sprint(args.name, campaign_path)
             print(f"Switched to sprint: {args.name}")
+    elif args.command == "hints":
+        cmd_hints(campaign, args.arch)
     elif args.command == "context":
         cmd_context(campaign)
     elif args.command == "submit":

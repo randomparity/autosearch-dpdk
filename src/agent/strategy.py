@@ -71,6 +71,11 @@ def format_context(
         lines.append("")
         lines.extend(format_profile_lines(profile_summary))
 
+    arch = campaign.get("platform", {}).get("arch")
+    if arch:
+        lines.append("")
+        lines.append(f"Tip: run `uv run autosearch hints` for {arch} optimization guidance.")
+
     return "\n".join(lines)
 
 
