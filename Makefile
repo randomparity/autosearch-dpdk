@@ -13,6 +13,8 @@ setup: check-common venv  ## Full setup (common deps + venv + hooks)
 	@echo "Setup complete. Run 'uv run autoforge context' to verify."
 
 setup-agent: check-common check-agent venv  ## Setup for agent workstation
+	$(UV) sync --group dev --group agent
+	$(UV) run pre-commit install
 	@echo "Agent setup complete."
 
 setup-runner: check-common check-runner venv  ## Setup for runner lab machine

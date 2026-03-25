@@ -11,8 +11,10 @@ dependencies = [
 ]
 
 [package.dev-dependencies]
-dev = [
+agent = [
     { name = "matplotlib" },
+]
+dev = [
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "ruff" },
@@ -22,8 +24,8 @@ dev = [
 requires-dist = [{ name = "pyelftools", specifier = ">=0.31" }]
 
 [package.metadata.requires-dev]
+agent = [{ name = "matplotlib", specifier = ">=3.10.8" }]
 dev = [
-    { name = "matplotlib", specifier = ">=3.10.8" },
     { name = "pre-commit", specifier = ">=4.5" },
     { name = "pytest", specifier = ">=8.0" },
     { name = "ruff", specifier = ">=0.15.6" },
