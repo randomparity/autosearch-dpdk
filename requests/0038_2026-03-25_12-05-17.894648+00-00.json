@@ -1,0 +1,22 @@
+{
+  "sequence": 38,
+  "created_at": "2026-03-25T12:05:17.894648+00:00",
+  "dpdk_commit": "16b2932d7f40859ccb8d1c72f4829b2f556859ee",
+  "test_suites": [
+    "TestPmd"
+  ],
+  "test_cases": null,
+  "perf": true,
+  "metric_name": "throughput_mpps",
+  "metric_path": "throughput_mpps",
+  "description": "remove zc rx prefetch (hurts on POWER9) and cache d0->length locally",
+  "backend": "testpmd",
+  "status": "pending",
+  "claimed_at": null,
+  "completed_at": null,
+  "build_log_snippet": null,
+  "results_json": null,
+  "results_summary": null,
+  "metric_value": null,
+  "error": null
+}
