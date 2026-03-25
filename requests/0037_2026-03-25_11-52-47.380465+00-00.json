@@ -1,0 +1,22 @@
+{
+  "sequence": 37,
+  "created_at": "2026-03-25T11:52:47.380465+00:00",
+  "dpdk_commit": "672ac06aacc46d8956f340aa06ceb793ff16c4ae",
+  "test_suites": [
+    "TestPmd"
+  ],
+  "test_cases": null,
+  "perf": true,
+  "metric_name": "throughput_mpps",
+  "metric_path": "throughput_mpps",
+  "description": "eal/ppc: add fast path for n==64 in rte_memcpy_func, skip branch chain",
+  "backend": "testpmd",
+  "status": "pending",
+  "claimed_at": null,
+  "completed_at": null,
+  "build_log_snippet": null,
+  "results_json": null,
+  "results_summary": null,
+  "metric_value": null,
+  "error": null
+}
