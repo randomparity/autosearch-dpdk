@@ -11,7 +11,7 @@
   "metric_path": "throughput_mpps",
   "description": "cache region 0 base in 4x rx loop with NULL guard (fix startup crash)",
   "backend": "testpmd",
-  "status": "claimed",
+  "status": "building",
   "claimed_at": "2026-03-25T12:15:37.182635+00:00",
   "completed_at": null,
   "build_log_snippet": null,
