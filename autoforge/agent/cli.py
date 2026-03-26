@@ -218,6 +218,56 @@ def cmd_judge(campaign: CampaignConfig, dry_run: bool) -> None:
     )
 
 
+def _poll_and_record(
+    campaign: CampaignConfig,
+    seq: int,
+    req: Path,
+    description: str,
+    label: str,
+    dry_run: bool,
+    request_path: Path,
+) -> None:
+    """Poll for request completion and record result in TSV history."""
+    if dry_run:
+        print(f"[dry-run] Request written to {request_path}")
+        return
+
+    poll_interval = campaign.get("agent", {}).get("poll_interval", 30)
+    timeout = campaign.get("agent", {}).get("timeout_minutes", 60) * 60
+
+    try:
+        result = poll_for_completion(
+            seq,
+            timeout=timeout,
+            interval=poll_interval,
+            requests_dir=req,
+        )
+    except TimeoutError:
+        print(f"{label.capitalize()} request {seq:04d} timed out.")
+        return
+
+    _print_result(result)
+
+    if result.status == "completed" and result.metric_value is not None:
+        res = results_path()
+        append_result(
+            result.sequence,
+            result.source_commit,
+            result.metric_value,
+            result.status,
+            result.description or description,
+            path=res,
+        )
+        git_add_commit_push(
+            [str(res)],
+            f"{label} {seq:04d}: recorded result",
+            dry_run=False,
+        )
+        print(f"{label.capitalize()} recorded in results.tsv.")
+    elif result.status == "failed":
+        print(f"{label.capitalize()} failed — not recorded. Fix the issue and retry.")
+
+
 def cmd_baseline(campaign: CampaignConfig, dry_run: bool) -> None:
     """Submit a baseline request (no code changes) and optionally poll."""
     if not dry_run:
@@ -236,44 +286,7 @@ def cmd_baseline(campaign: CampaignConfig, dry_run: bool) -> None:
     )
     print(f"Baseline request {seq:04d} submitted (commit {commit[:12]}).")
 
-    if dry_run:
-        print(f"[dry-run] Request written to {request_path}")
-        return
-
-    poll_interval = campaign.get("agent", {}).get("poll_interval", 30)
-    timeout = campaign.get("agent", {}).get("timeout_minutes", 60) * 60
-
-    try:
-        result = poll_for_completion(
-            seq,
-            timeout=timeout,
-            interval=poll_interval,
-            requests_dir=req,
-        )
-    except TimeoutError:
-        print(f"Baseline request {seq:04d} timed out.")
-        return
-
-    _print_result(result)
-
-    if result.status == "completed" and result.metric_value is not None:
-        res = results_path()
-        append_result(
-            result.sequence,
-            result.source_commit,
-            result.metric_value,
-            result.status,
-            result.description or description,
-            path=res,
-        )
-        git_add_commit_push(
-            [str(res)],
-            f"baseline {seq:04d}: recorded result",
-            dry_run=False,
-        )
-        print("Baseline recorded in results.tsv.")
-    elif result.status == "failed":
-        print("Baseline failed — not recorded. Fix the issue and retry.")
+    _poll_and_record(campaign, seq, req, description, "baseline", dry_run, request_path)
 
 
 def cmd_finale(campaign: CampaignConfig, dry_run: bool) -> None:
@@ -310,44 +323,7 @@ def cmd_finale(campaign: CampaignConfig, dry_run: bool) -> None:
     )
     print(f"Finale request {seq:04d} submitted (commit {commit[:12]}).")
 
-    if dry_run:
-        print(f"[dry-run] Request written to {request_path}")
-        return
-
-    poll_interval = campaign.get("agent", {}).get("poll_interval", 30)
-    timeout = campaign.get("agent", {}).get("timeout_minutes", 60) * 60
-
-    try:
-        result = poll_for_completion(
-            seq,
-            timeout=timeout,
-            interval=poll_interval,
-            requests_dir=req,
-        )
-    except TimeoutError:
-        print(f"Finale request {seq:04d} timed out.")
-        return
-
-    _print_result(result)
-
-    if result.status == "completed" and result.metric_value is not None:
-        res = results_path()
-        append_result(
-            result.sequence,
-            result.source_commit,
-            result.metric_value,
-            result.status,
-            result.description or description,
-            path=res,
-        )
-        git_add_commit_push(
-            [str(res)],
-            f"finale {seq:04d}: recorded result",
-            dry_run=False,
-        )
-        print("Finale recorded in results.tsv.")
-    elif result.status == "failed":
-        print("Finale failed — not recorded. Fix the issue and retry.")
+    _poll_and_record(campaign, seq, req, description, "finale", dry_run, request_path)
 
 
 def cmd_revert(campaign: CampaignConfig, dry_run: bool) -> None:

@@ -9,6 +9,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 
 from autoforge.protocol import (
+    GIT_TIMEOUT,
     STATUS_BUILDING,
     STATUS_BUILT,
     STATUS_CLAIMED,
@@ -27,9 +28,6 @@ from autoforge.runner.protocol import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-GIT_TIMEOUT = 60
 
 
 def git_pull() -> bool:

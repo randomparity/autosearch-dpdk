@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from autoforge.protocol import (
+    GIT_TIMEOUT,
     STATUS_CLAIMED,
     STATUS_FAILED,
     StatusLiteral,
@@ -15,8 +16,6 @@ from autoforge.protocol import (
 )
 
 logger = logging.getLogger(__name__)
-
-GIT_TIMEOUT = 60
 
 
 def _git_commit_push(path: Path, message: str, retries: int = 3) -> bool:

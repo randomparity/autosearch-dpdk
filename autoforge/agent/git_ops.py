@@ -7,11 +7,10 @@ import subprocess
 from pathlib import Path
 
 from autoforge.agent.history import append_failure
-from autoforge.agent.metric import compare_metric
+from autoforge.agent.metric import Direction, compare_metric
+from autoforge.protocol import GIT_TIMEOUT
 
 logger = logging.getLogger(__name__)
-
-GIT_TIMEOUT = 60
 
 
 class DirtyWorkingTreeError(RuntimeError):
@@ -205,7 +204,7 @@ def full_revert(source_path: Path, branch: str, dry_run: bool) -> str:
 def record_result_or_revert(
     metric: float | None,
     best_val: float | None,
-    direction: str,
+    direction: Direction,
     seq: int,
     commit: str,
     description: str,

@@ -22,7 +22,11 @@ from autoforge.protocol.schema import (
     validate_transition,
 )
 
+GIT_TIMEOUT = 60
+"""Timeout in seconds for git subprocess calls (shared by agent and runner)."""
+
 __all__ = [
+    "GIT_TIMEOUT",
     "STATUS_BUILDING",
     "STATUS_BUILT",
     "STATUS_CLAIMED",
