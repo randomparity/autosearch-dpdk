@@ -7,7 +7,7 @@
 - "submodule" = projects/dpdk/repo git submodule
 - "request JSON" or "request file", not "job" or "task"
 - "bi-directional Mpps" for the throughput metric
-- "autoforge/optimize" is the default optimization branch name (set in campaign.toml template, not code default — code defaults to "")
+- Per-sprint optimization branches: sprint init stamps "autoforge/{sprint-name}" into campaign.toml automatically (feat 7e18b60). No shared "autoforge/optimize" branch — that is now stale terminology. campaign.toml.example uses placeholder "autoforge/YYYY-MM-DD-slug".
 
 ## Doc inventory (as of 2026-03-26, branch docs/walkthrough-fixes)
 - README.md — project overview, quick-start, layout, dev commands
@@ -57,14 +57,29 @@ All registered: context, status, poll, judge, baseline, finale, revert, build-lo
 - runner/protocol.py CLAUDE.md description accurate (complete_request added, returns None)
 - `[paths].dpdk_src` is the correct key (not `source`) — runner.md and plugin-sdk.md config example both now use `dpdk_src`
 
-## New doc gaps found (docs/walkthrough-fixes branch — 2026-03-26)
-1. README.md line 3: typo "erformance" (missing P in "performance")
-2. docs/agent.md line 26: `make setup-agent` — agent dep group is now empty in pyproject.toml; functionally identical to `make setup` (installs --group dev only + pre-commit). The note is harmless but slightly misleading.
-3. docs/runner.md line 24: `make setup-runner` installs dev deps and checks prerequisites — description says "dev dependencies (pytest, ruff, pre-commit)" which is accurate but worth verifying perf note (Makefile warns if perf absent, which is correct)
-4. docs/agent.md line 140: "On startup, the agent creates an autoforge/optimize branch" — this is done by the user / program.md, not the agent itself on startup. The CLI has no branch-creation code. Misleading.
-5. docs/plugin-sdk.md line 378: configure() signature shows `project_config: dict[str, Any]` but actual Protocol has `project_config: ProjectConfig` (TypedDict from autoforge.campaign). Minor — TypedDict is structurally compatible with dict but worth noting.
-6. sprint summary 2026-03-25, line 24: references `autosearch/optimize` branch — this was the historical incident (wrong branch name used). Contextually correct in the retrospective but could confuse readers about canonical branch name.
-7. docs/agent.md: missing `[platform]` section in campaign config table — `platform_arch` is used by hints command but `[platform] arch` is not documented in the config reference table.
+## Confirmed resolved (as of docs/walkthrough-fixes — after commits 879110f + 8dd86d6)
+1. README.md typo "erformance" → "performance" — FIXED
+2. docs/agent.md "On startup, the agent creates an autoforge/optimize branch" — FIXED
+3. docs/plugin-sdk.md configure() now uses `ProjectConfig` type — FIXED
+4. docs/agent.md `[platform] arch` now in campaign config table — FIXED
+5. docs/runner.md perf-record config path fixed: "Enable in projects/dpdk/perfs/perf-record.toml" — FIXED
+6. docs/runner.md testpmd PCI/lcore path fixed: "projects/dpdk/tests/testpmd-memif.toml" — FIXED
+7. docs/runner.md `autoforge doctor --role runner` advisory added — FIXED
+8. docs/agent.md `--dry-run` description clarified — FIXED
+9. sprint summary 2026-03-25: autosearch/optimize ref updated with clarifying note — FIXED
+
+## Remaining doc gaps after commit 7e18b60 (per-sprint branch feature)
+1. docs/agent.md line 54: optimization_branch description says `campaign.toml.example` sets `"autoforge/optimize"` — STALE. Template placeholder is now `"autoforge/YYYY-MM-DD-slug"` and sprint init stamps the real name automatically.
+2. docs/agent.md line 142: "Optimization branch" section says default is `autoforge/optimize` and shows `checkout -b autoforge/optimize` — both stale. Branch is per-sprint, auto-stamped; example command should use `autoforge/{sprint-name}` pattern or be dropped.
+3. CLAUDE.md line 135: sprint init description doesn't mention the auto-stamp of optimization_branch. Low priority but worth a note.
+
+## Per-sprint branch feature behavior (confirmed in code, 7e18b60)
+- sprint_branch_name(name) → f"autoforge/{name}" e.g. "autoforge/2026-03-26-my-sprint"
+- sprint init stamps branch into campaign.toml at creation (template, --from, missing key all handled)
+- loop.py: empty optimization_branch → SystemExit with clear error (no fallback to "autoforge/optimize")
+- cli.py (submit/judge): empty optimization_branch → silently skips push (by design — "empty = skip")
+- config/campaign.toml.example placeholder: "autoforge/YYYY-MM-DD-slug" (intentionally non-runnable)
+- OPT_BRANCH_RE: canonical pattern is r"^autoforge/\d{4}-\d{2}-\d{2}-[a-z0-9][a-z0-9-]*$"
 
 ## New doc gaps found (refactor/continued-quality-improvements)
 1. CLAUDE.md line 63: campaign.py description says "pointer load/save" — pointer ops moved to autoforge/pointer.py; campaign.py now provides typed accessor functions
