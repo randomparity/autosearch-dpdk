@@ -73,8 +73,8 @@ def cmd_context(campaign: CampaignConfig) -> None:
     try:
         name = active_sprint_name()
         print(f"Sprint: {name}")
-    except KeyError:
-        pass
+    except (KeyError, FileNotFoundError):
+        print("Sprint: (not configured)")
 
     print(format_context(history, campaign, profile_summary=profile))
 

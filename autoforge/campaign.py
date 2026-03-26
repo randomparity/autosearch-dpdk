@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 import tomllib
 from pathlib import Path
-from typing import TypedDict
+from typing import Literal, TypedDict
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 POINTER_PATH = REPO_ROOT / ".autoforge.toml"
@@ -16,7 +16,7 @@ class MetricConfig(TypedDict, total=False):
 
     name: str
     path: str
-    direction: str
+    direction: Literal["maximize", "minimize"]
     threshold: float
 
 
@@ -66,7 +66,13 @@ class PlatformConfig(TypedDict, total=False):
 
 
 class CampaignConfig(TypedDict, total=False):
-    """Full campaign configuration as loaded from TOML."""
+    """Full campaign configuration as loaded from TOML.
+
+    Outer section keys use total=False because TOML files may omit sections.
+    Callers should use campaign.get("section", {}) for optional sections,
+    or direct subscript campaign["section"] for sections known to be present
+    after validation.
+    """
 
     campaign: CampaignMeta
     metric: MetricConfig
@@ -121,6 +127,7 @@ def resolve_campaign_path(explicit: Path | None = None) -> Path:
 
     Raises:
         FileNotFoundError: If the resolved path does not exist.
+        KeyError: If the pointer file has no active sprint configured.
     """
     if explicit is not None:
         if not explicit.exists():

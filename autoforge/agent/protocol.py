@@ -8,6 +8,7 @@ import time
 from datetime import UTC, datetime
 from pathlib import Path
 
+from autoforge.campaign import CampaignConfig
 from autoforge.protocol import TestRequest
 
 logger = logging.getLogger(__name__)
@@ -33,7 +34,7 @@ def next_sequence(requests_dir: Path) -> int:
 def create_request(
     seq: int,
     commit: str,
-    campaign: dict,
+    campaign: CampaignConfig,
     description: str,
     requests_dir: Path,
     *,
@@ -45,10 +46,11 @@ def create_request(
     Args:
         seq: Sequence number for this iteration.
         commit: DPDK submodule commit SHA.
-        campaign: Campaign configuration dict.
+        campaign: Campaign configuration.
         description: Human-readable description of the change.
         requests_dir: Directory to write the request file into.
         skip_profiling: If True, omit the profiler plugin from the request.
+        tags: Optional experiment category tags.
 
     Returns:
         Path to the newly created JSON file.

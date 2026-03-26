@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from autoforge.campaign import CampaignConfig
+    from autoforge.protocol import TestRequest
 
 logger = logging.getLogger(__name__)
 
@@ -133,7 +134,7 @@ def format_profile_lines(summary: dict) -> list[str]:
     return lines
 
 
-def extract_profile_summary(result: object) -> dict | None:
+def extract_profile_summary(result: TestRequest) -> dict | None:
     """Extract profiling summary from a completed test result.
 
     Args:
@@ -142,7 +143,7 @@ def extract_profile_summary(result: object) -> dict | None:
     Returns:
         Profile summary dict, or None if not available.
     """
-    raw = getattr(result, "results_json", None)
+    raw = result.results_json
     if raw is None:
         return None
     if isinstance(raw, str):

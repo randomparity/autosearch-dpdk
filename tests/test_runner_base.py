@@ -159,7 +159,7 @@ class TestBuildRunnerExecutePhase:
     def test_success_transitions_to_built(self, mock_fail, mock_update, tmp_path) -> None:
         req, path = _make_request(tmp_path, status="claimed")
         builder = _mock_builder(success=True)
-        with patch("autoforge.plugins.loader.load_component", return_value=builder):
+        with patch("autoforge.runner.base.load_component", return_value=builder):
             runner = BuildRunner(
                 config=SAMPLE_CONFIG,
                 campaign=SAMPLE_CAMPAIGN,
@@ -176,7 +176,7 @@ class TestBuildRunnerExecutePhase:
     def test_failure_calls_fail(self, mock_fail, mock_update, tmp_path) -> None:
         req, path = _make_request(tmp_path, status="claimed")
         builder = _mock_builder(success=False)
-        with patch("autoforge.plugins.loader.load_component", return_value=builder):
+        with patch("autoforge.runner.base.load_component", return_value=builder):
             runner = BuildRunner(
                 config=SAMPLE_CONFIG,
                 campaign=SAMPLE_CAMPAIGN,
@@ -193,7 +193,7 @@ class TestDeployRunnerExecutePhase:
     def test_success_transitions_to_deployed(self, mock_fail, mock_update, tmp_path) -> None:
         req, path = _make_request(tmp_path, status="built")
         deployer = _mock_deployer(success=True)
-        with patch("autoforge.plugins.loader.load_component", return_value=deployer):
+        with patch("autoforge.runner.base.load_component", return_value=deployer):
             runner = DeployRunner(
                 config=SAMPLE_CONFIG,
                 campaign=SAMPLE_CAMPAIGN,
@@ -210,7 +210,7 @@ class TestDeployRunnerExecutePhase:
     def test_failure_calls_fail(self, mock_fail, mock_update, tmp_path) -> None:
         req, path = _make_request(tmp_path, status="built")
         deployer = _mock_deployer(success=False)
-        with patch("autoforge.plugins.loader.load_component", return_value=deployer):
+        with patch("autoforge.runner.base.load_component", return_value=deployer):
             runner = DeployRunner(
                 config=SAMPLE_CONFIG,
                 campaign=SAMPLE_CAMPAIGN,
@@ -226,7 +226,7 @@ class TestTestRunnerExecutePhase:
     def test_success_transitions_to_completed(self, mock_fail, mock_update, tmp_path) -> None:
         req, path = _make_request(tmp_path, status="deployed")
         tester = _mock_tester(success=True)
-        with patch("autoforge.plugins.loader.load_component", return_value=tester):
+        with patch("autoforge.runner.base.load_component", return_value=tester):
             runner = TestRunner(
                 config=SAMPLE_CONFIG,
                 campaign=SAMPLE_CAMPAIGN,
@@ -245,7 +245,7 @@ class TestTestRunnerExecutePhase:
     def test_failure_calls_fail(self, mock_fail, mock_update, tmp_path) -> None:
         req, path = _make_request(tmp_path, status="deployed")
         tester = _mock_tester(success=False)
-        with patch("autoforge.plugins.loader.load_component", return_value=tester):
+        with patch("autoforge.runner.base.load_component", return_value=tester):
             runner = TestRunner(
                 config=SAMPLE_CONFIG,
                 campaign=SAMPLE_CAMPAIGN,
@@ -267,7 +267,7 @@ class TestFullRunnerExecutePhase:
         def load_side_effect(_proj, category, _name, **_kw):
             return {"build": builder, "deploy": deployer, "test": tester}[category]
 
-        with patch("autoforge.plugins.loader.load_component", side_effect=load_side_effect):
+        with patch("autoforge.runner.base.load_component", side_effect=load_side_effect):
             runner = FullRunner(
                 config=SAMPLE_CONFIG,
                 campaign=SAMPLE_CAMPAIGN,
@@ -290,7 +290,7 @@ class TestFullRunnerExecutePhase:
         req, path = _make_request(tmp_path, status="claimed")
         builder = _mock_builder(success=False)
 
-        with patch("autoforge.plugins.loader.load_component", return_value=builder):
+        with patch("autoforge.runner.base.load_component", return_value=builder):
             runner = FullRunner(
                 config=SAMPLE_CONFIG,
                 campaign=SAMPLE_CAMPAIGN,
@@ -312,7 +312,7 @@ class TestFullRunnerExecutePhase:
         def load_side_effect(_proj, category, _name, **_kw):
             return {"build": builder, "deploy": deployer}[category]
 
-        with patch("autoforge.plugins.loader.load_component", side_effect=load_side_effect):
+        with patch("autoforge.runner.base.load_component", side_effect=load_side_effect):
             runner = FullRunner(
                 config=SAMPLE_CONFIG,
                 campaign=SAMPLE_CAMPAIGN,
@@ -335,7 +335,7 @@ class TestFullRunnerExecutePhase:
         def load_side_effect(_proj, category, _name, **_kw):
             return {"build": builder, "deploy": deployer, "test": tester}[category]
 
-        with patch("autoforge.plugins.loader.load_component", side_effect=load_side_effect):
+        with patch("autoforge.runner.base.load_component", side_effect=load_side_effect):
             runner = FullRunner(
                 config=SAMPLE_CONFIG,
                 campaign=SAMPLE_CAMPAIGN,

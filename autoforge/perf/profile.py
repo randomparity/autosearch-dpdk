@@ -179,8 +179,10 @@ def profile_pid(
         )
 
     if stat_proc.returncode != 0:
+        # Non-fatal: perf stat counters are supplementary to perf record.
+        # The profile result is still usable from the recorded data alone.
         logger.warning(
-            "perf stat failed (rc=%d): %s",
+            "perf stat failed (rc=%d), continuing without counters: %s",
             stat_proc.returncode,
             stat_stderr_text[:300],
         )

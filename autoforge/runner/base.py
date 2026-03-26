@@ -6,13 +6,17 @@ import logging
 import subprocess
 import time
 from abc import ABC, abstractmethod
+from datetime import UTC, datetime
 from pathlib import Path
 
+from autoforge.plugins.loader import load_component
+from autoforge.plugins.protocols import BuildResult, DeployResult
 from autoforge.protocol import (
     GIT_TIMEOUT,
     STATUS_BUILDING,
     STATUS_BUILT,
     STATUS_CLAIMED,
+    STATUS_COMPLETED,
     STATUS_DEPLOYED,
     STATUS_DEPLOYING,
     STATUS_PENDING,
@@ -63,6 +67,109 @@ def recover_stale_requests(requests_dir: Path, stale_statuses: frozenset[str]) -
                 request.status,
             )
             fail(request, path, error="runner restarted")
+
+
+def _run_build(
+    request: TestRequest,
+    request_path: Path,
+    campaign: dict,
+    config: dict,
+) -> BuildResult | None:
+    """Execute the build phase. Returns BuildResult on success, None on failure."""
+    project_config = campaign.get("project", {})
+    project_name = project_config.get("name", "dpdk")
+    paths = config.get("paths", {})
+    timeouts = config.get("timeouts", {})
+    source_path = Path(paths.get("dpdk_src", "/opt/dpdk"))
+    build_dir = Path(paths.get("build_dir", "/tmp/dpdk-build"))
+    build_timeout = int(timeouts.get("build_minutes", 30)) * 60
+
+    builder = load_component(
+        project_name,
+        "build",
+        request.build_plugin,
+        project_config=project_config,
+        runner_config=config,
+    )
+
+    update_status(request, STATUS_BUILDING, request_path)
+    build_result = builder.build(source_path, request.source_commit, build_dir, build_timeout)
+
+    if not build_result.success:
+        fail(request, request_path, error="Build failed", log_snippet=build_result.log)
+        return None
+
+    update_status(request, STATUS_BUILT, request_path)
+    return build_result
+
+
+def _run_deploy(
+    request: TestRequest,
+    request_path: Path,
+    campaign: dict,
+    config: dict,
+    build_result: BuildResult,
+) -> DeployResult | None:
+    """Execute the deploy phase. Returns DeployResult on success, None on failure."""
+    project_config = campaign.get("project", {})
+    project_name = project_config.get("name", "dpdk")
+
+    deployer = load_component(
+        project_name,
+        "deploy",
+        request.deploy_plugin,
+        project_config=project_config,
+        runner_config=config,
+    )
+
+    update_status(request, STATUS_DEPLOYING, request_path)
+    deploy_result = deployer.deploy(build_result)
+
+    if not deploy_result.success:
+        fail(request, request_path, error=deploy_result.error or "Deploy failed")
+        return None
+
+    update_status(request, STATUS_DEPLOYED, request_path)
+    return deploy_result
+
+
+def _run_test(
+    request: TestRequest,
+    request_path: Path,
+    campaign: dict,
+    config: dict,
+    deploy_result: DeployResult,
+) -> None:
+    """Execute the test phase and update request to completed/failed."""
+    project_config = campaign.get("project", {})
+    project_name = project_config.get("name", "dpdk")
+    timeouts = config.get("timeouts", {})
+    test_timeout = int(timeouts.get("test_minutes", 10)) * 60
+
+    tester = load_component(
+        project_name,
+        "test",
+        request.test_plugin,
+        project_config=project_config,
+        runner_config=config,
+    )
+
+    update_status(request, STATUS_RUNNING, request_path)
+    test_result = tester.test(deploy_result, timeout=test_timeout)
+
+    if not test_result.success:
+        fail(request, request_path, error=test_result.error or "Test failed")
+        return
+
+    update_status(
+        request,
+        STATUS_COMPLETED,
+        request_path,
+        results_json=test_result.results_json,
+        results_summary=test_result.results_summary,
+        metric_value=test_result.metric_value,
+        completed_at=datetime.now(UTC).isoformat(),
+    )
 
 
 class PhaseRunner(ABC):
@@ -150,32 +257,7 @@ class BuildRunner(PhaseRunner):
     stale_statuses = frozenset({STATUS_CLAIMED, STATUS_BUILDING, STATUS_BUILT})
 
     def execute_phase(self, request: TestRequest, request_path: Path) -> None:
-        from autoforge.plugins.loader import load_component
-
-        project_config = self.campaign.get("project", {})
-        project_name = project_config.get("name", "dpdk")
-        paths = self.config.get("paths", {})
-        timeouts = self.config.get("timeouts", {})
-        source_path = Path(paths.get("dpdk_src", "/opt/dpdk"))
-        build_dir = Path(paths.get("build_dir", "/tmp/dpdk-build"))
-        build_timeout = int(timeouts.get("build_minutes", 30)) * 60
-
-        builder = load_component(
-            project_name,
-            "build",
-            request.build_plugin,
-            project_config=project_config,
-            runner_config=self.config,
-        )
-
-        update_status(request, STATUS_BUILDING, request_path)
-        build_result = builder.build(source_path, request.source_commit, build_dir, build_timeout)
-
-        if not build_result.success:
-            fail(request, request_path, error="Build failed", log_snippet=build_result.log)
-            return
-
-        update_status(request, STATUS_BUILT, request_path)
+        _run_build(request, request_path, self.campaign, self.config)
 
 
 class DeployRunner(PhaseRunner):
@@ -185,24 +267,6 @@ class DeployRunner(PhaseRunner):
     stale_statuses = frozenset({STATUS_DEPLOYING, STATUS_DEPLOYED})
 
     def execute_phase(self, request: TestRequest, request_path: Path) -> None:
-        from autoforge.plugins.loader import load_component
-
-        project_config = self.campaign.get("project", {})
-        project_name = project_config.get("name", "dpdk")
-
-        deployer = load_component(
-            project_name,
-            "deploy",
-            request.deploy_plugin,
-            project_config=project_config,
-            runner_config=self.config,
-        )
-
-        update_status(request, STATUS_DEPLOYING, request_path)
-
-        # DeployRunner needs the build artifacts; for now read from request
-        from autoforge.plugins.protocols import BuildResult
-
         build_result = BuildResult(
             success=True,
             log="",
@@ -211,13 +275,7 @@ class DeployRunner(PhaseRunner):
                 "build_dir": self.config.get("paths", {}).get("build_dir", "/tmp/dpdk-build"),
             },
         )
-        deploy_result = deployer.deploy(build_result)
-
-        if not deploy_result.success:
-            fail(request, request_path, error=deploy_result.error or "Deploy failed")
-            return
-
-        update_status(request, STATUS_DEPLOYED, request_path)
+        _run_deploy(request, request_path, self.campaign, self.config, build_result)
 
 
 class TestRunner(PhaseRunner):
@@ -227,49 +285,13 @@ class TestRunner(PhaseRunner):
     stale_statuses = frozenset({STATUS_RUNNING})
 
     def execute_phase(self, request: TestRequest, request_path: Path) -> None:
-        from datetime import UTC, datetime
-
-        from autoforge.plugins.loader import load_component
-        from autoforge.plugins.protocols import DeployResult
-
-        project_config = self.campaign.get("project", {})
-        project_name = project_config.get("name", "dpdk")
-        timeouts = self.config.get("timeouts", {})
-        test_timeout = int(timeouts.get("test_minutes", 10)) * 60
-
-        tester = load_component(
-            project_name,
-            "test",
-            request.test_plugin,
-            project_config=project_config,
-            runner_config=self.config,
-        )
-
-        update_status(request, STATUS_RUNNING, request_path)
-
         deploy_result = DeployResult(
             success=True,
             target_info={
                 "build_dir": self.config.get("paths", {}).get("build_dir", "/tmp/dpdk-build"),
             },
         )
-        test_result = tester.test(deploy_result, timeout=test_timeout)
-
-        if not test_result.success:
-            fail(request, request_path, error=test_result.error or "Test failed")
-            return
-
-        from autoforge.protocol import STATUS_COMPLETED
-
-        update_status(
-            request,
-            STATUS_COMPLETED,
-            request_path,
-            results_json=test_result.results_json,
-            results_summary=test_result.results_summary,
-            metric_value=test_result.metric_value,
-            completed_at=datetime.now(UTC).isoformat(),
-        )
+        _run_test(request, request_path, self.campaign, self.config, deploy_result)
 
 
 class FullRunner(PhaseRunner):
@@ -288,74 +310,12 @@ class FullRunner(PhaseRunner):
     )
 
     def execute_phase(self, request: TestRequest, request_path: Path) -> None:
-        from datetime import UTC, datetime
-
-        from autoforge.plugins.loader import load_component
-
-        project_config = self.campaign.get("project", {})
-        project_name = project_config.get("name", "dpdk")
-        paths = self.config.get("paths", {})
-        timeouts = self.config.get("timeouts", {})
-        source_path = Path(paths.get("dpdk_src", "/opt/dpdk"))
-        build_dir = Path(paths.get("build_dir", "/tmp/dpdk-build"))
-        build_timeout = int(timeouts.get("build_minutes", 30)) * 60
-        test_timeout = int(timeouts.get("test_minutes", 10)) * 60
-
-        # Build
-        builder = load_component(
-            project_name,
-            "build",
-            request.build_plugin,
-            project_config=project_config,
-            runner_config=self.config,
-        )
-        update_status(request, STATUS_BUILDING, request_path)
-        build_result = builder.build(source_path, request.source_commit, build_dir, build_timeout)
-
-        if not build_result.success:
-            fail(request, request_path, error="Build failed", log_snippet=build_result.log)
+        build_result = _run_build(request, request_path, self.campaign, self.config)
+        if build_result is None:
             return
 
-        # Deploy
-        deployer = load_component(
-            project_name,
-            "deploy",
-            request.deploy_plugin,
-            project_config=project_config,
-            runner_config=self.config,
-        )
-        update_status(request, STATUS_BUILT, request_path)
-        update_status(request, STATUS_DEPLOYING, request_path)
-        deploy_result = deployer.deploy(build_result)
-
-        if not deploy_result.success:
-            fail(request, request_path, error=deploy_result.error or "Deploy failed")
+        deploy_result = _run_deploy(request, request_path, self.campaign, self.config, build_result)
+        if deploy_result is None:
             return
 
-        # Test
-        tester = load_component(
-            project_name,
-            "test",
-            request.test_plugin,
-            project_config=project_config,
-            runner_config=self.config,
-        )
-        update_status(request, STATUS_DEPLOYED, request_path)
-        update_status(request, STATUS_RUNNING, request_path)
-        test_result = tester.test(deploy_result, timeout=test_timeout)
-
-        if not test_result.success:
-            fail(request, request_path, error=test_result.error or "Test failed")
-            return
-
-        from autoforge.protocol import STATUS_COMPLETED
-
-        update_status(
-            request,
-            STATUS_COMPLETED,
-            request_path,
-            results_json=test_result.results_json,
-            results_summary=test_result.results_summary,
-            metric_value=test_result.metric_value,
-            completed_at=datetime.now(UTC).isoformat(),
-        )
+        _run_test(request, request_path, self.campaign, self.config, deploy_result)

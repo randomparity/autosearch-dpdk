@@ -37,10 +37,22 @@ def resolve_config_path(explicit: str | None = None) -> str:
 
 
 def load_config(path: str | None = None) -> dict:
-    """Load runner configuration from a TOML file."""
+    """Load runner configuration from a TOML file.
+
+    Raises:
+        FileNotFoundError: If the config file doesn't exist (with guidance).
+        tomllib.TOMLDecodeError: If the file is not valid TOML.
+    """
     config_path = resolve_config_path(path)
-    with open(config_path, "rb") as f:
-        return tomllib.load(f)
+    try:
+        with open(config_path, "rb") as f:
+            return tomllib.load(f)
+    except FileNotFoundError:
+        msg = (
+            f"Runner config not found: {config_path}\n"
+            "Copy from runner.toml.example and edit for your environment."
+        )
+        raise FileNotFoundError(msg) from None
 
 
 def main() -> None:
