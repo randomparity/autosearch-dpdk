@@ -117,7 +117,7 @@ Each iteration appends a row to
 
 - `sequence` — zero-padded iteration number
 - `timestamp` — ISO 8601 UTC
-- `dpdk_commit` — DPDK submodule HEAD at time of request
+- `source_commit` — DPDK submodule HEAD at time of request
 - `metric_value` — extracted metric (empty if failed/timed out)
 - `status` — `completed`, `failed`, `timed_out`, or `dry_run`
 - `description` — user-provided or agent-generated change description
@@ -126,14 +126,14 @@ Failed attempts are recorded in `sprints/<name>/failures.tsv` (created on
 first failure) with columns:
 
 - `timestamp` — ISO 8601 UTC
-- `dpdk_commit` — DPDK submodule HEAD of the reverted change
+- `source_commit` — DPDK submodule HEAD of the reverted change
 - `metric_value` — measured value that didn't improve
 - `description` — change description
 - `diff_summary` — summary of the reverted diff
 
 Request JSON files in `sprints/<name>/requests/` follow the naming pattern
 `{seq:04d}_{isodate}.json` and track the full lifecycle:
-`pending -> claimed -> building -> running -> completed|failed`.
+`pending -> claimed -> building -> built -> deploying -> deployed -> running -> completed|failed`.
 
 ## Optimization branch
 

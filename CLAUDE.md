@@ -75,7 +75,7 @@ autoforge/perf/        Profiling: perf record orchestration, stack analysis, arc
 - `cli.py` — CLI subcommands (`context`, `submit`, `poll`, `judge`, `baseline`, `finale`, `revert`, `build-log`, `status`, `hints`, `sprint`, `project`, `summarize`, `doctor`) for Claude Code
 - `hints.py` — architecture-specific optimization hints lookup (supports topics: optimization, perf-counters)
 - `loop.py` — interactive iteration loop (manual fallback)
-- `git_ops.py` — git subprocess wrappers (`GIT_TIMEOUT=60`), `record_result_or_revert()`, `full_revert()`, `force_push_source()`
+- `git_ops.py` — git subprocess wrappers (imports `GIT_TIMEOUT` from `autoforge.protocol`), `record_result_or_revert()`, `full_revert()`, `force_push_source()`
 - `project.py` — `init_project()` for scaffolding new projects
 - `strategy.py` — `format_context()`, `validate_change()`, `extract_profile_summary()`
 - `history.py` — TSV-based results/failures tracking
@@ -108,7 +108,7 @@ Campaign config resolution order: explicit `--campaign` flag → `AUTOFORGE_CAMP
 
 ### Key types
 
-- `StatusLiteral` — `Literal["pending", "claimed", "building", "running", "completed", "failed"]`
+- `StatusLiteral` — `Literal["pending", "claimed", "building", "built", "deploying", "deployed", "running", "completed", "failed"]`
 - `CampaignConfig` — TypedDict hierarchy matching campaign TOML structure
 - `ProjectConfig` — plugin name + project-specific config (scope, submodule_path, etc.)
 - `Direction` — `Literal["maximize", "minimize"]`
