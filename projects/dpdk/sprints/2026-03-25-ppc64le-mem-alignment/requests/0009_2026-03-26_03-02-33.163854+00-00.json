@@ -9,17 +9,17 @@
   "profile_plugin": "perf-record",
   "metric_name": "throughput_mpps",
   "metric_path": "throughput_mpps",
-  "status": "building",
+  "status": "failed",
   "claimed_at": "2026-03-26T03:04:35.170471+00:00",
   "built_at": null,
   "deployed_at": null,
-  "completed_at": null,
+  "completed_at": "2026-03-26T03:04:38.935433+00:00",
   "build_runner_id": null,
   "deploy_runner_id": null,
   "test_runner_id": null,
-  "build_log_snippet": null,
+  "build_log_snippet": "\nfatal: reference is not a tree: ca20fa064140e8bbd9645ddb5683d0fe55b70b91\n",
   "results_json": null,
   "results_summary": null,
   "metric_value": null,
-  "error": null
+  "error": "Build failed"
 }
