@@ -21,3 +21,5 @@ timestamp	source_commit	metric_value	description	diff_summary
  1 file changed, 13 insertions(+), 12 deletions(-)"
 2026-03-26T04:48:00.392913+00:00	2658a0fe7aecae4440379e40cd48f95afa298000	180.8293	memif rx: use pre-computed rearm_data for single-store mbuf init	"drivers/net/memif/rte_eth_memif.c | 19 +++++++++----------
  1 file changed, 9 insertions(+), 10 deletions(-)"
+2026-03-26T12:47:03.893240+00:00	380639e39b0a9f7cf7d31049f6ea94a680ea4107	180.1111	memif tx: interleave per-packet operations in 4-at-a-time path	"drivers/net/memif/rte_eth_memif.c | 25 +++++++++++++------------
+ 1 file changed, 13 insertions(+), 12 deletions(-)"
