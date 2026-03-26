@@ -5,20 +5,21 @@ real hardware.
 
 ## How it works
 
-An **agent** on your workstation proposes source changes to DPDK and writes a
-test request JSON file. It commits the request and the DPDK submodule pointer,
-then pushes. A **runner** on a lab machine polls git, claims the request, builds
-DPDK at the specified commit, runs performance tests (testpmd or DTS), and
-pushes the results back. The agent detects completion, records the metric,
-keeps good changes, reverts bad ones, and starts the next iteration.
+An **agent** on your workstation proposes source changes to a specified source
+code repository cloned on your system and writes a test request JSON file. It
+commits the request and the repo submodule pointer, then pushes. A **runner**
+on a lab machine polls git, claims the request, builds the source code at the
+specified commit, runs performance tests, and pushes the results back. The
+agent detects completion, records the metric, keeps good changes, reverts bad
+ones, and starts the next iteration.
 
 ```
 Agent                              Runner
   |  write request JSON              |
   |  commit + push ----------------> |
   |                         claim request
-  |                         build DPDK
-  |                         run testpmd / DTS
+  |                         build source code
+  |                         run desired tests
   |  <-------------- push results    |
   |  read metric, keep or revert     |
 ```
