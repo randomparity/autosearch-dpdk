@@ -24,3 +24,4 @@ sequence	timestamp	source_commit	metric_value	status	description
 35	2026-03-26T12:50:13.769236+00:00	4e5b046279911032fdc2229901e4e8f4058cf49b	180.8569	completed	testpmd+memif: increase default burst size from 32 to 64
 36	2026-03-26T12:52:40.611899+00:00	5ac1efaa6bcd648024b7effd6500b36c91ab63f1	181.2525	completed	memif: increase MAX_PKT_BURST to 128 to match testpmd burst size
 37	2026-03-26T12:56:04.347786+00:00	d0877aa4906bc7fc16ed577748fea8913ec17f96	183.1376	completed	memif rx: skip zeroing fields that remain 0 in steady-state io-fwd
+38	2026-03-26T12:58:52.568053+00:00	3d1b71b34193313cd24744c7542577233f88b096	183.8013	completed	memif rx: skip ol_flags zeroing (stays 0 in io-fwd steady state)
