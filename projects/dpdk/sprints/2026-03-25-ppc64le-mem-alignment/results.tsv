@@ -22,3 +22,4 @@ sequence	timestamp	source_commit	metric_value	status	description
 33	2026-03-26T04:47:59.242582+00:00	2658a0fe7aecae4440379e40cd48f95afa298000	180.8293	completed	memif rx: use pre-computed rearm_data for single-store mbuf init
 34	2026-03-26T12:47:02.434595+00:00	380639e39b0a9f7cf7d31049f6ea94a680ea4107	180.1111	completed	memif tx: interleave per-packet operations in 4-at-a-time path
 35	2026-03-26T12:50:13.769236+00:00	4e5b046279911032fdc2229901e4e8f4058cf49b	180.8569	completed	testpmd+memif: increase default burst size from 32 to 64
+36	2026-03-26T12:52:40.611899+00:00	5ac1efaa6bcd648024b7effd6500b36c91ab63f1	181.2525	completed	memif: increase MAX_PKT_BURST to 128 to match testpmd burst size
