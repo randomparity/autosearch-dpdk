@@ -6,3 +6,4 @@ sequence	timestamp	source_commit	metric_value	status	description
 14	2026-03-26T03:38:39.469575+00:00	050762700a833e571dd82b565e08b812b6d25e4a	162.8654	completed	ppc64le memcpy: use __builtin_memcpy for 64-byte fast path
 15	2026-03-26T03:43:14.663135+00:00	e3ebb7e91e514e910c8e8e0e7ec9913efde28055	170.8344	completed	memif rx: expand descriptor length refill to 8-at-a-time
 17	2026-03-26T03:50:46.294870+00:00	39f1e0bc101dda0897a853dd2fd77a9c3cacfe70	170.8963	completed	mempool/ppc64le: add memory channel spreading for POWER9
+18	2026-03-26T03:55:27.904543+00:00	409383865b81f7c6c8e8f2738e67bd38625b5cfd	172.6451	completed	mempool: replace per-element reverse copy with bulk memcpy in cache get
