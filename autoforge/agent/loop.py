@@ -37,9 +37,9 @@ def run_interactive_iteration(
 
     Returns True to continue, False to stop.
     """
-    req = requests_dir(campaign)
-    res = results_path(campaign)
-    fail = failures_path(campaign)
+    req = requests_dir()
+    res = results_path()
+    fail = failures_path()
 
     history = load_history(res)
     metric_cfg = campaign["metric"]
@@ -143,7 +143,7 @@ def run_baseline(
     dry_run: bool,
 ) -> None:
     """Submit a baseline request for the current DPDK commit and wait for results."""
-    req = requests_dir(campaign)
+    req = requests_dir()
     commit = git_submodule_head(source_path)
     seq = next_sequence(req)
     description = "Baseline: unmodified DPDK"

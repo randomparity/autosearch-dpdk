@@ -10,7 +10,6 @@ from pathlib import Path
 from autoforge.protocol import (
     STATUS_CLAIMED,
     STATUS_FAILED,
-    STATUS_PENDING,
     StatusLiteral,
     TestRequest,
 )
@@ -98,11 +97,6 @@ def find_by_status(requests_dir: Path, status: StatusLiteral) -> tuple[TestReque
             return (request, path)
 
     return None
-
-
-def find_pending(requests_dir: Path) -> tuple[TestRequest, Path] | None:
-    """Scan the requests directory for the oldest pending request."""
-    return find_by_status(requests_dir, STATUS_PENDING)
 
 
 def claim(request: TestRequest, request_path: Path) -> bool:

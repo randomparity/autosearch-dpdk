@@ -7,6 +7,8 @@ import logging
 from datetime import UTC, datetime
 from pathlib import Path
 
+from autoforge.agent.metric import Direction
+
 logger = logging.getLogger(__name__)
 
 COLUMNS = [
@@ -83,7 +85,7 @@ def load_history(path: Path) -> list[dict]:
 
 def best_result(
     path: Path,
-    direction: str = "maximize",
+    direction: Direction = "maximize",
 ) -> dict | None:
     """Return the history row with the best metric value.
 

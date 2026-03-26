@@ -9,7 +9,7 @@ from autoforge.runner.base import (
     PhaseRunner,
     TestRunner,
 )
-from autoforge.runner.protocol import claim, fail, find_by_status, find_pending, update_status
+from autoforge.runner.protocol import claim, fail, find_by_status, update_status
 from autoforge.runner.service import main
 
 __all__ = [
@@ -21,7 +21,6 @@ __all__ = [
     "claim",
     "fail",
     "find_by_status",
-    "find_pending",
     "main",
     "update_status",
 ]

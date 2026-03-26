@@ -127,7 +127,7 @@ def poll_for_completion(
     seq: int,
     timeout: int = 3600,
     interval: int = 30,
-    requests_dir: Path | None = None,
+    requests_dir: Path = Path("requests"),
 ) -> TestRequest:
     """Poll git until the given request reaches a terminal state.
 
@@ -144,9 +144,6 @@ def poll_for_completion(
         TimeoutError: If the request does not complete within the timeout.
         FileNotFoundError: If the request file cannot be found.
     """
-    if requests_dir is None:
-        msg = "requests_dir is required"
-        raise ValueError(msg)
 
     deadline = time.monotonic() + timeout
 

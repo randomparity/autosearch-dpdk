@@ -7,14 +7,10 @@ import logging
 import re
 import shutil
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from autoforge.campaign import REPO_ROOT, load_pointer, save_pointer
 
 logger = logging.getLogger(__name__)
-
-if TYPE_CHECKING:
-    from autoforge.campaign import CampaignConfig
 
 SPRINT_NAME_RE = re.compile(r"^\d{4}-\d{2}-\d{2}-[a-z0-9][a-z0-9-]*$")
 
@@ -55,12 +51,8 @@ def validate_sprint_name(name: str) -> None:
         raise ValueError(msg)
 
 
-def active_sprint_name(campaign: CampaignConfig | None = None) -> str:
+def active_sprint_name() -> str:
     """Return the active sprint name from the .autoforge.toml pointer.
-
-    Args:
-        campaign: Ignored (kept for backward compatibility). Sprint identity
-            now comes from the pointer file, not campaign config.
 
     Raises:
         KeyError: If no sprint is configured.
@@ -73,7 +65,7 @@ def active_sprint_name(campaign: CampaignConfig | None = None) -> str:
     return pointer["sprint"]
 
 
-def sprint_dir(campaign: CampaignConfig) -> Path:
+def sprint_dir() -> Path:
     """Return the sprint root directory."""
     pointer = load_pointer()
     if not pointer["sprint"]:
@@ -82,24 +74,24 @@ def sprint_dir(campaign: CampaignConfig) -> Path:
     return _sprints_root(pointer["project"]) / pointer["sprint"]
 
 
-def requests_dir(campaign: CampaignConfig) -> Path:
+def requests_dir() -> Path:
     """Return the sprint's requests directory."""
-    return sprint_dir(campaign) / "requests"
+    return sprint_dir() / "requests"
 
 
-def results_path(campaign: CampaignConfig) -> Path:
+def results_path() -> Path:
     """Return the sprint's results.tsv path."""
-    return sprint_dir(campaign) / "results.tsv"
+    return sprint_dir() / "results.tsv"
 
 
-def failures_path(campaign: CampaignConfig) -> Path:
+def failures_path() -> Path:
     """Return the sprint's failures.tsv path."""
-    return sprint_dir(campaign) / "failures.tsv"
+    return sprint_dir() / "failures.tsv"
 
 
-def docs_dir(campaign: CampaignConfig) -> Path:
+def docs_dir() -> Path:
     """Return the sprint's docs directory."""
-    return sprint_dir(campaign) / "docs"
+    return sprint_dir() / "docs"
 
 
 def init_sprint(
@@ -176,7 +168,7 @@ def switch_sprint(name: str) -> None:
     save_pointer(project, name)
 
 
-def list_sprints(campaign: CampaignConfig | None = None) -> list[dict]:
+def list_sprints() -> list[dict]:
     """Return summary info for all sprints.
 
     Returns:
@@ -187,12 +179,7 @@ def list_sprints(campaign: CampaignConfig | None = None) -> list[dict]:
     try:
         root, _ = _sprints_root_from_pointer()
     except (FileNotFoundError, KeyError):
-        # Fall back to campaign-based resolution if pointer missing
-        if campaign is not None:
-            project_name = campaign.get("project", {}).get("name", "")
-            root = _sprints_root(project_name)
-        else:
-            return []
+        return []
 
     if not root.is_dir():
         return []

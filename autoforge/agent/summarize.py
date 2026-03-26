@@ -103,9 +103,9 @@ def _load_summary_data(campaign: CampaignConfig) -> dict[str, Any]:
     """Aggregate sprint data into a dict for template rendering."""
     from autoforge.agent.sprint import active_sprint_name
 
-    res_path = results_path(campaign)
-    fail_path = failures_path(campaign)
-    req_dir = requests_dir(campaign)
+    res_path = results_path()
+    fail_path = failures_path()
+    req_dir = requests_dir()
 
     history = load_history(res_path)
     failures = load_failures(fail_path)
@@ -116,7 +116,7 @@ def _load_summary_data(campaign: CampaignConfig) -> dict[str, Any]:
     platform_cfg = campaign.get("platform", {})
 
     try:
-        sprint_name = active_sprint_name(campaign)
+        sprint_name = active_sprint_name()
     except (KeyError, FileNotFoundError):
         sprint_name = campaign_cfg.get("name", "unknown")
 

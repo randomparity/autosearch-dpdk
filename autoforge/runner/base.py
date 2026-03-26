@@ -14,6 +14,7 @@ from autoforge.protocol import (
     STATUS_CLAIMED,
     STATUS_DEPLOYED,
     STATUS_DEPLOYING,
+    STATUS_PENDING,
     STATUS_RUNNING,
     StatusLiteral,
     TestRequest,
@@ -124,7 +125,7 @@ class PhaseRunner(ABC):
                     request.description,
                 )
 
-                if self.watch_status == "pending" and not claim(request, request_path):
+                if self.watch_status == STATUS_PENDING and not claim(request, request_path):
                     logger.error(
                         "Failed to claim request %04d, skipping",
                         request.sequence,
