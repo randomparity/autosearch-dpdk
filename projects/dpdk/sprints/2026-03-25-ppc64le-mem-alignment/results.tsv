@@ -10,3 +10,4 @@ sequence	timestamp	source_commit	metric_value	status	description
 19	2026-03-26T03:58:40.819955+00:00	1e751d3528565028cad0d8ef9aeff58625d565f4	171.3308	completed	mempool: bulk memcpy in remaining cache get paths
 20	2026-03-26T04:05:29.620531+00:00	6adc81faaca68a69ecbb8b1b104348525b7847d2	171.0193	completed	memif: enable -funroll-loops for the memif driver
 22	2026-03-26T04:13:38.196308+00:00	0c95015466587eaf435b6de77dab44ba727448a6	173.5568	completed	ppc64le memcpy: add branch prediction hints in rte_memcpy_func
+23	2026-03-26T04:15:47.238192+00:00	e1b9e72ffac469f0e2f4eec9418c235e71b083ae	172.6587	completed	memif: mark rx/tx functions as hot for better code placement

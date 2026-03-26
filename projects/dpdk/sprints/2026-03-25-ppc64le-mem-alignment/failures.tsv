@@ -5,3 +5,5 @@ timestamp	source_commit	metric_value	description	diff_summary
  1 file changed, 4 insertions(+), 5 deletions(-)"
 2026-03-26T04:05:30.795752+00:00	6adc81faaca68a69ecbb8b1b104348525b7847d2	171.0193	memif: enable -funroll-loops for the memif driver	"drivers/net/memif/meson.build | 2 ++
  1 file changed, 2 insertions(+)"
+2026-03-26T04:15:48.287180+00:00	e1b9e72ffac469f0e2f4eec9418c235e71b083ae	172.6587	memif: mark rx/tx functions as hot for better code placement	"drivers/net/memif/rte_eth_memif.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)"
