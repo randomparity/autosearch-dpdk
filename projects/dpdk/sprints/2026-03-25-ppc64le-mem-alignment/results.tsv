@@ -31,3 +31,4 @@ sequence	timestamp	source_commit	metric_value	status	description
 42	2026-03-26T13:28:58.925184+00:00	ad24e47b32ec3a30bd8c02d973e650b92edef45a	184.2683	completed	memif: reduce MAX_PKT_BURST to 64 to fit working set in L1D cache
 45	2026-03-26T13:37:48.306556+00:00	5338f4afee92d19d4a1cb13974e29fcd11f85cf6	139.8978	completed	memif: try -Os for smaller code / better icache
 46	2026-03-26T13:39:32.096446+00:00	bbc5506d3ca4b546e581784b9e1792f29efc3220	180.9665	completed	memif: add -fomit-frame-pointer to free register
+47	2026-03-26T13:42:53.394044+00:00	ccb9928052e2be8931a4d48e43547fe8c8679953	185.1043	completed	memif rx: remove unused data_off computation

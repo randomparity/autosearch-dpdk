@@ -33,3 +33,5 @@ timestamp	source_commit	metric_value	description	diff_summary
  1 file changed, 3 insertions(+)"
 2026-03-26T13:39:33.382921+00:00	bbc5506d3ca4b546e581784b9e1792f29efc3220	180.9665	memif: add -fomit-frame-pointer to free register	"drivers/net/memif/meson.build | 2 ++
  1 file changed, 2 insertions(+)"
+2026-03-26T13:42:54.797233+00:00	ccb9928052e2be8931a4d48e43547fe8c8679953	185.1043	memif rx: remove unused data_off computation	"drivers/net/memif/rte_eth_memif.c | 2 --
+ 1 file changed, 2 deletions(-)"
