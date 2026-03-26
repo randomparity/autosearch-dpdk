@@ -21,7 +21,8 @@ NUMA-local memory alignment optimization for DPDK memif on POWER9 ppc64le.
 
 ## Accepted Patches
 
-15 commits accumulated on the `autosearch/optimize` branch, building on each other.
+15 commits accumulated on the `autoforge/optimize` branch, building on each other.
+(Note: the sprint initially used the incorrect name `autosearch/optimize`; see §Issues encountered.)
 
 | # | Request | Mpps | Cumulative gain | Category | Optimization |
 |---|---------|------|-----------------|----------|-------------|

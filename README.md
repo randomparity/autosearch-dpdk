@@ -1,6 +1,6 @@
 # Autoforge
 
-Iterative erformance optimization through automated build-test cycles on
+Iterative performance optimization through automated build-test cycles on
 real hardware.
 
 ## How it works

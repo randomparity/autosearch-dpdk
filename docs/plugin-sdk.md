@@ -34,6 +34,7 @@ import time
 from pathlib import Path
 from typing import Any
 
+from autoforge.campaign import ProjectConfig
 from autoforge.plugins.protocols import BuildResult
 
 
@@ -41,7 +42,7 @@ class KernelBuilder:
     name = "local"
 
     def configure(
-        self, project_config: dict[str, Any], runner_config: dict[str, Any],
+        self, project_config: ProjectConfig, runner_config: dict[str, Any],
     ) -> None:
         self._cfg = runner_config.get("build", {})
 
@@ -124,13 +125,14 @@ conformance, not by name.
 Compiles project source into build artifacts.
 
 ```python
+from autoforge.campaign import ProjectConfig
 from autoforge.plugins.protocols import BuildResult
 
 class MyBuilder:
     name = "local"
 
     def configure(
-        self, project_config: dict[str, Any], runner_config: dict[str, Any],
+        self, project_config: ProjectConfig, runner_config: dict[str, Any],
     ) -> None:
         """Called once at startup. Store config for later."""
 
@@ -165,13 +167,14 @@ builds on the same machine, this can be a pass-through. For remote targets,
 this is where you copy files, push containers, or restart services.
 
 ```python
+from autoforge.campaign import ProjectConfig
 from autoforge.plugins.protocols import BuildResult, DeployResult
 
 class MyDeployer:
     name = "local"
 
     def configure(
-        self, project_config: dict[str, Any], runner_config: dict[str, Any],
+        self, project_config: ProjectConfig, runner_config: dict[str, Any],
     ) -> None:
         pass
 
@@ -202,7 +205,7 @@ class PodmanDeployer:
     name = "podman"
 
     def configure(
-        self, project_config: dict[str, Any], runner_config: dict[str, Any],
+        self, project_config: ProjectConfig, runner_config: dict[str, Any],
     ) -> None:
         self._cfg = runner_config.get("podman", {})
 
@@ -247,13 +250,14 @@ image = "localhost/my-app:test"
 Runs the actual benchmark or test and returns the metric the agent optimizes.
 
 ```python
+from autoforge.campaign import ProjectConfig
 from autoforge.plugins.protocols import DeployResult, TestResult
 
 class MyTester:
     name = "wrk-bench"
 
     def configure(
-        self, project_config: dict[str, Any], runner_config: dict[str, Any],
+        self, project_config: ProjectConfig, runner_config: dict[str, Any],
     ) -> None:
         """Store test parameters."""
 
@@ -301,7 +305,7 @@ class WrkBenchTester:
     name = "wrk-bench"
 
     def configure(
-        self, project_config: dict[str, Any], runner_config: dict[str, Any],
+        self, project_config: ProjectConfig, runner_config: dict[str, Any],
     ) -> None:
         self._cfg = runner_config.get("wrk", {})
 
@@ -367,13 +371,14 @@ Captures performance profiles during the test measurement window. This is
 optional — not all projects need profiling.
 
 ```python
+from autoforge.campaign import ProjectConfig
 from autoforge.plugins.protocols import ProfileResult
 
 class MyProfiler:
     name = "perf-record"
 
     def configure(
-        self, project_config: dict[str, Any], runner_config: dict[str, Any],
+        self, project_config: ProjectConfig, runner_config: dict[str, Any],
     ) -> None:
         self._cfg = runner_config.get("profiling", {})
 
@@ -537,6 +542,7 @@ class TestBuild:
 ## Checklist for new plugins
 
 - [ ] Plugin file at `projects/<project>/<category>/<name>.py`
+- [ ] `from __future__ import annotations` at top of file
 - [ ] Class with `name` attribute matching the filename stem
 - [ ] `configure()` method stores relevant config
 - [ ] Protocol method returns the correct Result dataclass

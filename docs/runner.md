@@ -26,6 +26,8 @@ checks for runner prerequisites (meson, ninja, compiler, pkg-config).
 
 ## Runner configuration
 
+Run `uv run autoforge doctor --role runner` to validate your setup before starting the service.
+
 Configuration is split into framework config and per-plugin config:
 
 ```bash
@@ -161,7 +163,7 @@ into where CPU cycles are spent.
 - Kernel support for hardware performance counters
 - If `profiling.sudo = true`: passwordless sudo for `perf` (same pattern as testpmd above)
 
-**Enable in `projects/dpdk/runner.toml`:**
+**Enable in `projects/dpdk/perfs/perf-record.toml`** (copy from `perf-record.toml.example`):
 
 ```toml
 [profiling]
@@ -272,7 +274,7 @@ last lines of build output. Common causes: missing dependencies, incompatible
 compiler version, or meson configuration errors.
 
 **Test failures**
-For testpmd: check that PCI addresses and lcores are correct in `projects/dpdk/runner.toml`.
+For testpmd: check that PCI addresses and lcores are correct in `projects/dpdk/tests/testpmd-memif.toml`.
 For DTS: check the DTS output directory for full test logs. The request JSON
 `error` field contains the failure reason.
 

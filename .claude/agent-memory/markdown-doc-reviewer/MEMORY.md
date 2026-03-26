@@ -9,14 +9,15 @@
 - "bi-directional Mpps" for the throughput metric
 - "autoforge/optimize" is the default optimization branch name (set in campaign.toml template, not code default — code defaults to "")
 
-## Doc inventory (as of 2026-03-26, branch fix/runner-setup)
+## Doc inventory (as of 2026-03-26, branch docs/walkthrough-fixes)
 - README.md — project overview, quick-start, layout, dev commands
 - CLAUDE.md — AI agent guidance (architecture, commands, style rules)
 - docs/agent.md — agent setup, campaign config, CLI ref, history, troubleshooting
 - docs/runner.md — runner setup, config table, testpmd/DTS backends, systemd, troubleshooting
-- docs/plugin-sdk.md — NEW (this branch): plugin authoring guide, 547 lines
+- docs/plugin-sdk.md — plugin authoring guide
 - projects/dpdk/runner.toml.example — authoritative runner config template for DPDK
 - projects/dpdk/sprints/2026-03-25-ppc64le-mem-alignment/docs/summary.md — sprint retrospective
+- projects/dpdk/sprints/2026-03-23-memif-ppc64le/docs/summary.md — sprint 001 retrospective
 
 ## Plugin architecture (fix/runner-setup — confirmed)
 - Plugins are Python files under projects/<project>/{builds,deploys,tests,perfs}/
@@ -45,6 +46,25 @@ All registered: context, status, poll, judge, baseline, finale, revert, build-lo
 4. docs/agent.md line 136: protocol flow summary says `pending -> claimed -> building -> running -> completed|failed` — omits built/deploying/deployed (same gap as CLAUDE.md, both still present on this branch)
 5. CLAUDE.md line 111: StatusLiteral shown as `Literal["pending", "claimed", "building", "running", "completed", "failed"]` — omits "built", "deploying", "deployed" (these exist in schema.py and protocol/__init__.py)
 6. pyproject.toml [dependency-groups] agent group is now empty — `make setup-agent` note in docs/agent.md (line 24) and memory note about matplotlib are now stale; matplotlib was removed
+
+## Confirmed resolved (as of docs/walkthrough-fixes)
+- docs/agent.md CLI table now includes finale, summarize, sprint init --from, submit -t/--tags
+- results.tsv column is `source_commit` (confirmed in history.py COLUMNS) — doc now correct
+- failures.tsv column is `source_commit` (confirmed in history.py FAILURE_COLUMNS) — doc now correct
+- Protocol flow in CLAUDE.md and agent.md now includes built/deploying/deployed — correct
+- StatusLiteral in CLAUDE.md now includes all 9 values — correct
+- README.md pointer.py description accurate; campaign.py description accurate
+- runner/protocol.py CLAUDE.md description accurate (complete_request added, returns None)
+- `[paths].dpdk_src` is the correct key (not `source`) — runner.md and plugin-sdk.md config example both now use `dpdk_src`
+
+## New doc gaps found (docs/walkthrough-fixes branch — 2026-03-26)
+1. README.md line 3: typo "erformance" (missing P in "performance")
+2. docs/agent.md line 26: `make setup-agent` — agent dep group is now empty in pyproject.toml; functionally identical to `make setup` (installs --group dev only + pre-commit). The note is harmless but slightly misleading.
+3. docs/runner.md line 24: `make setup-runner` installs dev deps and checks prerequisites — description says "dev dependencies (pytest, ruff, pre-commit)" which is accurate but worth verifying perf note (Makefile warns if perf absent, which is correct)
+4. docs/agent.md line 140: "On startup, the agent creates an autoforge/optimize branch" — this is done by the user / program.md, not the agent itself on startup. The CLI has no branch-creation code. Misleading.
+5. docs/plugin-sdk.md line 378: configure() signature shows `project_config: dict[str, Any]` but actual Protocol has `project_config: ProjectConfig` (TypedDict from autoforge.campaign). Minor — TypedDict is structurally compatible with dict but worth noting.
+6. sprint summary 2026-03-25, line 24: references `autosearch/optimize` branch — this was the historical incident (wrong branch name used). Contextually correct in the retrospective but could confuse readers about canonical branch name.
+7. docs/agent.md: missing `[platform]` section in campaign config table — `platform_arch` is used by hints command but `[platform] arch` is not documented in the config reference table.
 
 ## New doc gaps found (refactor/continued-quality-improvements)
 1. CLAUDE.md line 63: campaign.py description says "pointer load/save" — pointer ops moved to autoforge/pointer.py; campaign.py now provides typed accessor functions

@@ -54,6 +54,7 @@ Campaign settings are per-sprint at
 | `[project]` | `optimization_branch` | Branch for good changes (empty = skip branch push; `campaign.toml.example` sets `"autoforge/optimize"`) |
 | `[project]` | `scope` | Source paths the agent may modify (relative to submodule) |
 | `[profiling]` | `enabled` | Include profiling summary in results (default: `false`) |
+| `[platform]` | `arch` | Target architecture for `autoforge hints` (e.g. `"ppc64le"`, `"x86_64"`). Required unless `--arch` is passed. |
 
 ## Interactive mode
 
@@ -106,7 +107,7 @@ Global flags (before the subcommand):
 | Flag | Description |
 |------|-------------|
 | `--campaign <path>` | Path to campaign TOML (overrides `.autoforge.toml` pointer) |
-| `--dry-run` | Skip git push (local testing only) |
+| `--dry-run` | Skip git push — applies to `submit`, `judge`, `baseline`, `finale`, `revert` |
 
 For interactive manual iteration: `uv run autoforge-loop [--dry-run]`
 
@@ -137,9 +138,15 @@ Request JSON files in `sprints/<name>/requests/` follow the naming pattern
 
 ## Optimization branch
 
-On startup, the agent creates an `autoforge/optimize` branch in the DPDK
-submodule (configurable via `[project].optimization_branch`). All proposed
-changes are committed to this branch.
+The agent commits all proposed changes to the branch named in
+`[project].optimization_branch` (default: `autoforge/optimize`). Create this
+branch in the submodule before your first submit:
+
+```bash
+git -C projects/dpdk/repo checkout -b autoforge/optimize
+```
+
+This is typically handled by the sprint's `program.md`.
 
 After each measurement:
 
