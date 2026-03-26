@@ -9,6 +9,7 @@ from abc import ABC, abstractmethod
 from datetime import UTC, datetime
 from pathlib import Path
 
+from autoforge.campaign import CampaignConfig
 from autoforge.plugins.loader import load_component
 from autoforge.plugins.protocols import BuildResult, DeployResult
 from autoforge.protocol import (
@@ -72,7 +73,7 @@ def recover_stale_requests(requests_dir: Path, stale_statuses: frozenset[str]) -
 def _run_build(
     request: TestRequest,
     request_path: Path,
-    campaign: dict,
+    campaign: CampaignConfig,
     config: dict,
 ) -> BuildResult | None:
     """Execute the build phase. Returns BuildResult on success, None on failure."""
@@ -106,7 +107,7 @@ def _run_build(
 def _run_deploy(
     request: TestRequest,
     request_path: Path,
-    campaign: dict,
+    campaign: CampaignConfig,
     config: dict,
     build_result: BuildResult,
 ) -> DeployResult | None:
@@ -136,7 +137,7 @@ def _run_deploy(
 def _run_test(
     request: TestRequest,
     request_path: Path,
-    campaign: dict,
+    campaign: CampaignConfig,
     config: dict,
     deploy_result: DeployResult,
 ) -> None:
@@ -253,7 +254,7 @@ class PhaseRunner(ABC):
 class BuildRunner(PhaseRunner):
     """Watches for pending requests, builds, transitions to built."""
 
-    watch_status: StatusLiteral = "pending"
+    watch_status: StatusLiteral = STATUS_PENDING
     stale_statuses = frozenset({STATUS_CLAIMED, STATUS_BUILDING, STATUS_BUILT})
 
     def execute_phase(self, request: TestRequest, request_path: Path) -> None:
@@ -263,7 +264,7 @@ class BuildRunner(PhaseRunner):
 class DeployRunner(PhaseRunner):
     """Watches for built requests, deploys, transitions to deployed."""
 
-    watch_status: StatusLiteral = "built"
+    watch_status: StatusLiteral = STATUS_BUILT
     stale_statuses = frozenset({STATUS_DEPLOYING, STATUS_DEPLOYED})
 
     def execute_phase(self, request: TestRequest, request_path: Path) -> None:
@@ -281,7 +282,7 @@ class DeployRunner(PhaseRunner):
 class TestRunner(PhaseRunner):
     """Watches for deployed requests, tests, transitions to completed."""
 
-    watch_status: StatusLiteral = "deployed"
+    watch_status: StatusLiteral = STATUS_DEPLOYED
     stale_statuses = frozenset({STATUS_RUNNING})
 
     def execute_phase(self, request: TestRequest, request_path: Path) -> None:
@@ -297,7 +298,7 @@ class TestRunner(PhaseRunner):
 class FullRunner(PhaseRunner):
     """Runs all phases sequentially (single-machine mode)."""
 
-    watch_status: StatusLiteral = "pending"
+    watch_status: StatusLiteral = STATUS_PENDING
     stale_statuses = frozenset(
         {
             STATUS_CLAIMED,

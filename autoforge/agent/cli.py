@@ -469,7 +469,7 @@ def cmd_sprint_active(campaign: CampaignConfig) -> None:
     """Print the active sprint name."""
     try:
         print(active_sprint_name())
-    except KeyError as exc:
+    except (KeyError, FileNotFoundError) as exc:
         print(f"ERROR: {exc}")
         sys.exit(1)
 

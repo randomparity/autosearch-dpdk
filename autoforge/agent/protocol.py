@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from autoforge.campaign import CampaignConfig
-from autoforge.protocol import TestRequest
+from autoforge.protocol import GIT_TIMEOUT, TestRequest
 
 logger = logging.getLogger(__name__)
 
@@ -129,7 +129,8 @@ def poll_for_completion(
     seq: int,
     timeout: int = 3600,
     interval: int = 30,
-    requests_dir: Path = Path("requests"),
+    *,
+    requests_dir: Path,
 ) -> TestRequest:
     """Poll git until the given request reaches a terminal state.
 
@@ -154,7 +155,7 @@ def poll_for_completion(
             ["git", "pull", "--rebase"],
             capture_output=True,
             text=True,
-            timeout=60,
+            timeout=GIT_TIMEOUT,
         )
         if pull_result.returncode != 0:
             logger.warning("git pull --rebase failed: %s", pull_result.stderr.strip())
