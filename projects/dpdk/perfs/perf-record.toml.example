@@ -1,0 +1,12 @@
+# perf-record profiler plugin configuration
+# Copy to perf-record.toml and adjust for your environment.
+
+[profiling]
+# Capture perf profiles during measurement window
+enabled = false
+
+# Sampling frequency in Hz (99 avoids aliasing with timer interrupts)
+frequency = 99
+
+# Run perf commands with sudo
+sudo = true

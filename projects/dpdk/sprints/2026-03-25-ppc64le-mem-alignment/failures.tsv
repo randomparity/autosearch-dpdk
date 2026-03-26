@@ -1,0 +1,39 @@
+timestamp	source_commit	metric_value	description	diff_summary
+2026-03-26T03:38:40.511639+00:00	050762700a833e571dd82b565e08b812b6d25e4a	162.8654	ppc64le memcpy: use __builtin_memcpy for 64-byte fast path	"lib/eal/ppc/include/rte_memcpy.h | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)"
+2026-03-26T03:58:42.114472+00:00	1e751d3528565028cad0d8ef9aeff58625d565f4	171.3308	mempool: bulk memcpy in remaining cache get paths	"lib/mempool/rte_mempool.h | 9 ++++-----
+ 1 file changed, 4 insertions(+), 5 deletions(-)"
+2026-03-26T04:05:30.795752+00:00	6adc81faaca68a69ecbb8b1b104348525b7847d2	171.0193	memif: enable -funroll-loops for the memif driver	"drivers/net/memif/meson.build | 2 ++
+ 1 file changed, 2 insertions(+)"
+2026-03-26T04:15:48.287180+00:00	e1b9e72ffac469f0e2f4eec9418c235e71b083ae	172.6587	memif: mark rx/tx functions as hot for better code placement	"drivers/net/memif/rte_eth_memif.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)"
+2026-03-26T04:18:38.142226+00:00	947249d881645c74719699203e084d1b459e0159	172.4471	memif: flatten rx/tx functions for aggressive inlining	"drivers/net/memif/rte_eth_memif.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)"
+2026-03-26T04:21:58.520484+00:00	195656d556da16c7dc91e36c06d671e9d755baa5	168.9995	memif rx: use dcbz to avoid read-for-ownership on POWER9 mbuf data	"drivers/net/memif/rte_eth_memif.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)"
+2026-03-26T04:25:21.698490+00:00	33853c80ef4f8fa7e59b8c50f56cad5d0f7245a8	172.182	ppc64le memcpy: mark small-copy fallback paths as unlikely	"lib/eal/ppc/include/rte_memcpy.h | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)"
+2026-03-26T04:28:26.818799+00:00	0e3fa35104a2c30d3ca2e38d80152af4f2c0493e	172.7391	ppc64le memcpy: full load-then-store for rte_mov256 using 16 VSX registers	"lib/eal/ppc/include/rte_memcpy.h | 37 +++++++++++++++++++++++++++++++++++--
+ 1 file changed, 35 insertions(+), 2 deletions(-)"
+2026-03-26T04:34:27.452651+00:00	c36b80edfc6d9582808d611258bde59e0b7536fd	176.4306	memif tx: interleave per-packet descriptor writes with data copies	"drivers/net/memif/rte_eth_memif.c | 27 +++++++++++++++------------
+ 1 file changed, 15 insertions(+), 12 deletions(-)"
+2026-03-26T04:40:05.981880+00:00	2196fd1573941846453ed7b5bef91e65f8ce332b	180.7728	memif tx: interleave per-packet descriptor operations in 4-at-a-time path	"drivers/net/memif/rte_eth_memif.c | 25 +++++++++++++------------
+ 1 file changed, 13 insertions(+), 12 deletions(-)"
+2026-03-26T04:48:00.392913+00:00	2658a0fe7aecae4440379e40cd48f95afa298000	180.8293	memif rx: use pre-computed rearm_data for single-store mbuf init	"drivers/net/memif/rte_eth_memif.c | 19 +++++++++----------
+ 1 file changed, 9 insertions(+), 10 deletions(-)"
+2026-03-26T12:47:03.893240+00:00	380639e39b0a9f7cf7d31049f6ea94a680ea4107	180.1111	memif tx: interleave per-packet operations in 4-at-a-time path	"drivers/net/memif/rte_eth_memif.c | 25 +++++++++++++------------
+ 1 file changed, 13 insertions(+), 12 deletions(-)"
+2026-03-26T13:06:38.854033+00:00	099cacd106b19219ec05d4165c5c0a927e5effe3	180.5952	memif rx: prefetch next batch source buffers one iteration ahead	"drivers/net/memif/rte_eth_memif.c | 16 +++++++++++++---
+ 1 file changed, 13 insertions(+), 3 deletions(-)"
+2026-03-26T13:09:53.006249+00:00	58cda4e40f5c5100b6b7dddd67f064dd77aa0f23	181.1104	memif rx: 8-at-a-time fast path to halve loop iterations	"drivers/net/memif/rte_eth_memif.c | 126 +++++++++++++++++++++++++++++---------
+ 1 file changed, 98 insertions(+), 28 deletions(-)"
+2026-03-26T13:29:00.508740+00:00	ad24e47b32ec3a30bd8c02d973e650b92edef45a	184.2683	memif: reduce MAX_PKT_BURST to 64 to fit working set in L1D cache	"drivers/net/memif/rte_eth_memif.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)"
+2026-03-26T13:37:49.813069+00:00	5338f4afee92d19d4a1cb13974e29fcd11f85cf6	139.8978	memif: try -Os for smaller code / better icache	"drivers/net/memif/meson.build | 3 +++
+ 1 file changed, 3 insertions(+)"
+2026-03-26T13:39:33.382921+00:00	bbc5506d3ca4b546e581784b9e1792f29efc3220	180.9665	memif: add -fomit-frame-pointer to free register	"drivers/net/memif/meson.build | 2 ++
+ 1 file changed, 2 insertions(+)"
+2026-03-26T13:42:54.797233+00:00	ccb9928052e2be8931a4d48e43547fe8c8679953	185.1043	memif rx: remove unused data_off computation	"drivers/net/memif/rte_eth_memif.c | 2 --
+ 1 file changed, 2 deletions(-)"
+2026-03-26T13:45:42.619858+00:00	8ade09a97e6164ef42a6fa4eb6f42de88baeefb6	182.6216	memif rx: combine pkt_len+data_len into single 64-bit store	"drivers/net/memif/rte_eth_memif.c | 21 ++++++++++-----------
+ 1 file changed, 10 insertions(+), 11 deletions(-)"

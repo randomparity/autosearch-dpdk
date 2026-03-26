@@ -46,6 +46,22 @@ class TestAppendResult:
         assert "T" in ts
 
 
+class TestAppendResultIdempotency:
+    def test_duplicate_sequence_skipped(self, tmp_path) -> None:
+        path = make_tsv(tmp_path)
+        append_result(1, "abc123", 14.5, "completed", "First attempt", path=path)
+        append_result(1, "abc123", 14.5, "completed", "First attempt", path=path)
+        rows = load_history(path=path)
+        assert len(rows) == 1
+
+    def test_different_sequences_allowed(self, tmp_path) -> None:
+        path = make_tsv(tmp_path)
+        append_result(1, "abc123", 14.5, "completed", "First", path=path)
+        append_result(2, "def456", 15.0, "completed", "Second", path=path)
+        rows = load_history(path=path)
+        assert len(rows) == 2
+
+
 class TestLoadHistory:
     def test_empty_file_returns_empty_list(self, tmp_path) -> None:
         path = make_tsv(tmp_path)
@@ -58,6 +74,35 @@ class TestLoadHistory:
         assert isinstance(rows[0], dict)
         assert "sequence" in rows[0]
         assert "timestamp" in rows[0]
+
+
+class TestAppendResultWithTags:
+    def test_tags_written_as_csv(self, tmp_path) -> None:
+        path = tmp_path / "results.tsv"
+        path.write_text(
+            "sequence\ttimestamp\tsource_commit\tmetric_value\tstatus\tdescription\ttags\n"
+        )
+        append_result(
+            1,
+            "abc123",
+            14.5,
+            "completed",
+            "Test",
+            path=path,
+            tags=["memcpy", "cache"],
+        )
+        rows = load_history(path=path)
+        assert len(rows) == 1
+        assert rows[0]["tags"] == "memcpy,cache"
+
+    def test_no_tags_writes_empty(self, tmp_path) -> None:
+        path = tmp_path / "results.tsv"
+        path.write_text(
+            "sequence\ttimestamp\tsource_commit\tmetric_value\tstatus\tdescription\ttags\n"
+        )
+        append_result(1, "abc123", 14.5, "completed", "Test", path=path)
+        rows = load_history(path=path)
+        assert rows[0]["tags"] == ""
 
 
 class TestBestResult:

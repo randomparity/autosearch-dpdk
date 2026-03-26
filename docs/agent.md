@@ -3,6 +3,15 @@
 The agent runs on your development workstation. It manages the optimization
 loop: proposing DPDK changes, submitting test requests, and tracking results.
 
+## Quick start
+
+```
+read the active sprint's program.md and start experimenting
+```
+
+Paste that into Claude Code. It reads the sprint program, proposes changes,
+submits them for testing, and iterates based on results.
+
 ## Prerequisites
 
 - Python 3.13+
@@ -12,15 +21,19 @@ loop: proposing DPDK changes, submitting test requests, and tracking results.
 ## Installation
 
 ```bash
-uv sync
+git clone --recurse-submodules <repo-url>
+cd autosearch-dpdk
+make setup-agent
 ```
 
-This installs the `autosearch` and `autosearch-loop` CLI entry points.
+## Configuration
 
-## Campaign configuration
+The agent reads configuration from `.autoforge.toml` (pointer to active
+project/sprint) and the sprint's `campaign.toml`. Run `autoforge doctor
+--role agent` to validate your setup.
 
-All campaign settings live in `config/campaign.toml`. The agent reads this file
-on startup (override with `--campaign <path>`).
+Campaign settings are per-sprint at
+`projects/<project>/sprints/<sprint>/campaign.toml`:
 
 | Section | Key | Description |
 |---------|-----|-------------|
@@ -30,17 +43,17 @@ on startup (override with `--campaign <path>`).
 | `[metric]` | `path` | Key path into results JSON (dot-separated for nested dicts) |
 | `[metric]` | `direction` | `"maximize"` or `"minimize"` |
 | `[metric]` | `threshold` | Stop early if improvement falls below this value |
-| `[test]` | `backend` | Test backend: `"testpmd"` (default) or `"dts"` |
-| `[test]` | `test_suites` | List of test suite names to run |
-| `[test]` | `perf` | Enable performance mode (`true`/`false`) |
 | `[agent]` | `poll_interval` | Seconds between polling for results (default: 30) |
 | `[agent]` | `timeout_minutes` | Max wait for a single test run (default: 60) |
 | `[goal]` | `description` | Freeform text injected into the agent prompt |
-| `[dpdk]` | `submodule_path` | Path to the DPDK submodule (default: `"dpdk"`) |
-| `[dpdk]` | `optimization_branch` | Branch in submodule for good changes (default: `"autosearch/optimize"`) |
-| `[dpdk]` | `scope` | Source paths the agent may modify (relative to submodule) |
+| `[project]` | `build` | Build plugin name (e.g. `"local"`) |
+| `[project]` | `deploy` | Deploy plugin name (e.g. `"local"`) |
+| `[project]` | `test` | Test plugin name (e.g. `"testpmd-memif"`) |
+| `[project]` | `profiler` | Profiler plugin name (e.g. `"perf-record"`) |
+| `[project]` | `submodule_path` | Path to the DPDK submodule |
+| `[project]` | `optimization_branch` | Branch for good changes (empty = skip branch push; `campaign.toml.example` sets `"autosearch/optimize"`) |
+| `[project]` | `scope` | Source paths the agent may modify (relative to submodule) |
 | `[profiling]` | `enabled` | Include profiling summary in results (default: `false`) |
-| `[sprint]` | `name` | Active sprint name; set by `autosearch sprint init` or `sprint switch` |
 
 ## Interactive mode
 
@@ -48,7 +61,7 @@ For manual experimentation. You make changes in the DPDK submodule, commit
 them, and the loop submits a test request.
 
 ```bash
-uv run autosearch-loop
+uv run autoforge-loop
 ```
 
 Use `--dry-run` to skip git push (local testing only — the runner won't see
@@ -56,45 +69,51 @@ the request).
 
 ## Autonomous mode (Claude Code)
 
-Autonomous mode is handled by Claude Code reading the active sprint's `program.md`.
-Each sprint directory contains a `program.md` tailored to that sprint's optimization
-goals. Claude Code uses the CLI subcommands (`context`, `submit`, `poll`, `judge`)
-to interact with the remote runner.
+Autonomous mode is handled by Claude Code reading the active sprint's
+`program.md`. Each sprint directory contains a `program.md` tailored to that
+sprint's optimization goals. Claude Code uses the CLI subcommands (`context`,
+`submit`, `poll`, `judge`) to interact with the remote runner.
 
 ## CLI reference
 
-`autosearch` subcommands:
+`autoforge` subcommands:
 
 | Command | Description |
 |---------|-------------|
-| `autosearch context` | Print campaign state, history, failures, profiling data |
-| `autosearch submit -d "description"` | Validate submodule change, create request, push |
-| `autosearch poll` | Poll until latest request completes |
-| `autosearch judge` | Compare result to best, keep or revert, record in TSV |
-| `autosearch baseline` | Submit baseline (no changes) and poll for result |
-| `autosearch status` | Print latest request status without polling |
-| `autosearch sprint init <name>` | Create a new sprint (`YYYY-MM-DD-slug`) |
-| `autosearch sprint list` | List all sprints with iteration counts |
-| `autosearch sprint active` | Print active sprint name |
-| `autosearch sprint switch <name>` | Switch active sprint in `campaign.toml` |
-| `autosearch revert` | Revert last DPDK submodule commit and force-push fork |
-| `autosearch build-log --seq N` | Print formatted build log for request N (`-s N` short form) |
-| `autosearch hints` | Show arch optimization checklist for the campaign's target architecture |
-| `autosearch hints --list` | List available hint topics (e.g., `optimization`, `perf-counters`) |
-| `autosearch hints --topic perf-counters` | Show PMU performance counter reference for the architecture |
+| `autoforge context` | Print campaign state, history, failures, profiling data |
+| `autoforge submit -d "description" [-t "tags"]` | Validate submodule change, create request, push (optional comma-separated experiment tags) |
+| `autoforge poll` | Poll until latest request completes |
+| `autoforge judge` | Compare result to best, keep or revert, record in TSV |
+| `autoforge baseline` | Submit baseline (no changes) and poll for result |
+| `autoforge finale` | Submit finale request (modified source, profiling disabled) |
+| `autoforge summarize` | Generate sprint summary document from results history |
+| `autoforge status` | Print latest request status without polling |
+| `autoforge doctor` | Validate configuration setup |
+| `autoforge doctor --role agent` | Agent-side configuration checks only |
+| `autoforge sprint init <name> [--from <sprint>]` | Create a new sprint (`YYYY-MM-DD-slug`); optionally clone config from existing sprint |
+| `autoforge sprint list` | List all sprints with iteration counts |
+| `autoforge sprint active` | Print active sprint name |
+| `autoforge sprint switch <name>` | Switch active sprint |
+| `autoforge project init <name>` | Scaffold a new project |
+| `autoforge revert` | Revert last DPDK submodule commit and force-push fork |
+| `autoforge build-log --seq N` | Print formatted build log for request N (`-s N` short form) |
+| `autoforge hints` | Show arch optimization checklist for the target architecture |
+| `autoforge hints --list` | List available hint topics |
+| `autoforge hints --topic perf-counters` | Show PMU performance counter reference |
 
 Global flags (before the subcommand):
 
 | Flag | Description |
 |------|-------------|
-| `--campaign <path>` | Path to campaign TOML (default: `config/campaign.toml`) |
+| `--campaign <path>` | Path to campaign TOML (overrides `.autoforge.toml` pointer) |
 | `--dry-run` | Skip git push (local testing only) |
 
-For interactive manual iteration: `uv run autosearch-loop [--dry-run]`
+For interactive manual iteration: `uv run autoforge-loop [--dry-run]`
 
 ## How results are tracked
 
-Each iteration appends a row to `sprints/<name>/results.tsv` with columns:
+Each iteration appends a row to
+`projects/<project>/sprints/<name>/results.tsv` with columns:
 
 - `sequence` — zero-padded iteration number
 - `timestamp` — ISO 8601 UTC
@@ -119,10 +138,11 @@ Request JSON files in `sprints/<name>/requests/` follow the naming pattern
 ## Optimization branch
 
 On startup, the agent creates an `autosearch/optimize` branch in the DPDK
-submodule (configurable via `[dpdk].optimization_branch`). All proposed
+submodule (configurable via `[project].optimization_branch`). All proposed
 changes are committed to this branch.
 
 After each measurement:
+
 - **Metric improves**: the commit is kept and the submodule pointer is updated
 - **Metric worsens or stays flat**: the commit is reverted (`git reset --hard
   HEAD~1`), the submodule's optimization branch is force-pushed to keep the
@@ -134,9 +154,9 @@ repeating failed approaches.
 ## Troubleshooting
 
 **"No submodule change detected"**
-Commit your changes inside `dpdk/` before pressing Enter. The agent checks
-whether the submodule pointer has changed relative to the last commit.
+Commit your changes inside the DPDK submodule before pressing Enter. The agent
+checks whether the submodule pointer has changed relative to the last commit.
 
 **Request timed out**
-Increase `agent.timeout_minutes` in `config/campaign.toml`. The default is 60
-minutes. Check the runner logs if timeouts are frequent.
+Increase `agent.timeout_minutes` in the sprint's `campaign.toml`. The default
+is 60 minutes. Check the runner logs if timeouts are frequent.

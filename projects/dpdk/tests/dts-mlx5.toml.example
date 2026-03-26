@@ -1,0 +1,19 @@
+# dts-mlx5 test plugin configuration
+# Copy to dts-mlx5.toml and adjust for your environment.
+#
+# Also requires DTS topology files:
+#   config/nodes.yaml and config/test_run.yaml
+
+[paths]
+# Path to the DTS installation directory
+dts_dir = "/opt/dts"
+
+[test]
+# DTS test suite names to run
+test_suites = ["perf"]
+
+# Enable DTS performance mode
+perf = true
+
+# Dot-separated path into the DTS JSON results to extract the metric
+metric_path = "throughput_mpps"

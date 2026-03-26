@@ -5,7 +5,37 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import patch
 
-from autoforge.agent.git_ops import GIT_TIMEOUT, force_push_source, full_revert
+import pytest
+
+from autoforge.agent.git_ops import GIT_TIMEOUT, force_push_source, full_revert, push_submodule
+
+
+class TestPushSubmodule:
+    def test_runs_git_push_without_force(self) -> None:
+        source_path = Path("/opt/dpdk")
+        with patch("autoforge.agent.git_ops.subprocess.run") as mock_run:
+            push_submodule(source_path, "autosearch/optimize")
+
+        mock_run.assert_called_once_with(
+            ["git", "-C", "/opt/dpdk", "push", "origin", "autosearch/optimize"],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=GIT_TIMEOUT,
+        )
+
+    def test_propagates_error(self) -> None:
+        import subprocess
+
+        source_path = Path("/opt/dpdk")
+        with (
+            patch(
+                "autoforge.agent.git_ops.subprocess.run",
+                side_effect=subprocess.CalledProcessError(1, "git push"),
+            ),
+            pytest.raises(subprocess.CalledProcessError),
+        ):
+            push_submodule(source_path, "autosearch/optimize")
 
 
 class TestForcePushSubmodule:

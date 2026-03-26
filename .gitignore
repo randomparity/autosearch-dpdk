@@ -7,9 +7,13 @@ __pycache__/
 dist/
 build/
 config/campaign.toml
-config/runner.toml
 config/nodes.yaml
 config/test_run.yaml
+projects/*/runner.toml
+projects/*/builds/*.toml
+projects/*/deploys/*.toml
+projects/*/tests/*.toml
+projects/*/perfs/*.toml
 .env
 .desloppify/
 perf/results/

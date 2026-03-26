@@ -12,7 +12,7 @@ SAMPLE_CAMPAIGN = {
         "path": "results.throughput_mpps",
     },
     "project": {
-        "build": "local-server",
+        "build": "local",
         "deploy": "local",
         "test": "testpmd-memif",
     },

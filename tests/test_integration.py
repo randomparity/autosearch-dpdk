@@ -21,7 +21,7 @@ SAMPLE_CAMPAIGN = {
         "direction": "maximize",
     },
     "project": {
-        "build": "local-server",
+        "build": "local",
         "deploy": "local",
         "test": "testpmd-memif",
     },

@@ -9,7 +9,15 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-COLUMNS = ["sequence", "timestamp", "source_commit", "metric_value", "status", "description"]
+COLUMNS = [
+    "sequence",
+    "timestamp",
+    "source_commit",
+    "metric_value",
+    "status",
+    "description",
+    "tags",
+]
 FAILURE_COLUMNS = ["timestamp", "source_commit", "metric_value", "description", "diff_summary"]
 
 
@@ -20,6 +28,8 @@ def append_result(
     status: str,
     description: str,
     path: Path,
+    *,
+    tags: list[str] | None = None,
 ) -> None:
     """Append an iteration result to the TSV history file.
 
@@ -30,14 +40,21 @@ def append_result(
         status: Final status (completed, failed, etc.).
         description: Human-readable description of the change.
         path: Path to the results.tsv file.
+        tags: Optional experiment category tags.
     """
+    existing = load_history(path)
+    if any(row.get("sequence") == str(seq) for row in existing):
+        logger.info("Sequence %d already recorded in %s, skipping", seq, path)
+        return
+
     timestamp = datetime.now(UTC).isoformat()
     metric_str = str(metric) if metric is not None else ""
 
     try:
         with open(path, "a", newline="") as f:
             writer = csv.writer(f, delimiter="\t")
-            writer.writerow([seq, timestamp, commit, metric_str, status, description])
+            tags_str = ",".join(tags) if tags else ""
+            writer.writerow([seq, timestamp, commit, metric_str, status, description, tags_str])
     except OSError as exc:
         msg = f"Failed to append result to {path}: {exc}"
         raise OSError(msg) from exc

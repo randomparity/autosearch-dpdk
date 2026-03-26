@@ -33,7 +33,7 @@ SAMPLE_CAMPAIGN = {
     },
     "project": {
         "name": "dpdk",
-        "build": "local-server",
+        "build": "local",
         "deploy": "local",
         "test": "testpmd-memif",
     },
@@ -264,7 +264,7 @@ class TestFullRunnerExecutePhase:
         deployer = _mock_deployer(success=True)
         tester = _mock_tester(success=True)
 
-        def load_side_effect(_proj, category, _name):
+        def load_side_effect(_proj, category, _name, **_kw):
             return {"build": builder, "deploy": deployer, "test": tester}[category]
 
         with patch("autoforge.plugins.loader.load_component", side_effect=load_side_effect):
@@ -309,7 +309,7 @@ class TestFullRunnerExecutePhase:
         builder = _mock_builder(success=True)
         deployer = _mock_deployer(success=False)
 
-        def load_side_effect(_proj, category, _name):
+        def load_side_effect(_proj, category, _name, **_kw):
             return {"build": builder, "deploy": deployer}[category]
 
         with patch("autoforge.plugins.loader.load_component", side_effect=load_side_effect):
@@ -332,7 +332,7 @@ class TestFullRunnerExecutePhase:
         deployer = _mock_deployer(success=True)
         tester = _mock_tester(success=False)
 
-        def load_side_effect(_proj, category, _name):
+        def load_side_effect(_proj, category, _name, **_kw):
             return {"build": builder, "deploy": deployer, "test": tester}[category]
 
         with patch("autoforge.plugins.loader.load_component", side_effect=load_side_effect):

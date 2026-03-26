@@ -74,6 +74,14 @@ def format_context(
         lines.extend(format_profile_lines(profile_summary))
 
     arch = resolve_arch(campaign)
+    if arch and profile_summary:
+        from autoforge.agent.hints import workload_hints
+
+        wh = workload_hints(arch, profile_summary)
+        if wh:
+            lines.append("")
+            lines.append(wh)
+
     if arch:
         lines.append("")
         lines.append(f"Tip: run `uv run autoforge hints` for {arch} optimization guidance.")

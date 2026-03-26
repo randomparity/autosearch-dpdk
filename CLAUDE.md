@@ -9,13 +9,15 @@ uv sync --group dev          # install deps + dev tools
 uv run pytest -q             # run all tests
 uv run pytest tests/test_schema.py -q                 # run one test file
 uv run pytest tests/test_schema.py::TestSerialization  # run one test class
-uv run ruff check autoforge/ autoforge_dpdk/ tests/    # lint
-uv run ruff format autoforge/ autoforge_dpdk/ tests/   # format
+uv run ruff check autoforge/ tests/    # lint
+uv run ruff format autoforge/ tests/   # format
 uv run autoforge context                               # show optimization state
 uv run autoforge submit -d "description"               # submit change for testing
+uv run autoforge submit -d "desc" -t "memcpy,cache"   # submit with experiment tags
 uv run autoforge poll                                  # wait for runner result
 uv run autoforge judge                                 # keep or revert based on metric
 uv run autoforge baseline                              # submit baseline (no changes)
+uv run autoforge finale                                # submit finale (modified, no profiling)
 uv run autoforge hints                                 # show arch optimization hints
 uv run autoforge hints --list                           # list available hint topics
 uv run autoforge hints --topic perf-counters            # show perf counter reference
@@ -24,6 +26,9 @@ uv run autoforge sprint init <name>                      # create new sprint
 uv run autoforge sprint init <name> --from <sprint>      # clone sprint config
 uv run autoforge sprint list                              # list all sprints
 uv run autoforge sprint switch <name>                    # switch active sprint
+uv run autoforge doctor                                  # validate configuration setup
+uv run autoforge doctor --role agent                     # agent-side checks only
+uv run autoforge summarize                               # generate sprint summary from results
 uv run autoforge-loop --dry-run                         # interactive mode (manual fallback)
 ```
 
@@ -33,18 +38,21 @@ Plugin-based optimization framework. An **agent** (workstation) proposes source 
 
 ### Plugin system
 
-Plugins are discovered via Python entry points (`autoforge.plugins` group). Each plugin provides three components:
+Plugins are Python files discovered under `projects/<name>/{builds,deploys,tests,perfs}/`. Each plugin provides one component:
 - **Builder** — compiles the project from source
 - **Deployer** — deploys build artifacts to the test target (bare metal, container, QEMU)
 - **Tester** — runs performance tests and returns metrics
+- **Profiler** — captures performance profiles during tests
 
-The DPDK plugin (`autoforge_dpdk/`) is the reference implementation. External plugins (vLLM, kernel) are separate packages.
+See [Plugin SDK](docs/plugin-sdk.md) for authoring guide and examples.
+
+The DPDK plugin (`projects/dpdk/`) is the reference implementation. External plugins (vLLM, kernel) are separate packages.
 
 ### Protocol flow
 
 ```
-pending → claimed → building → running → completed
-                                       → failed (from any state)
+pending → claimed → building → built → deploying → deployed → running → completed
+                                                                       → failed (from any state)
 ```
 
 `TestRequest` dataclass in `autoforge/protocol/schema.py` is the shared contract. Both sides serialize it as JSON files named `{seq:04d}_{timestamp}.json`. Status transitions are enforced by `VALID_TRANSITIONS`.
@@ -58,14 +66,13 @@ autoforge/plugins/     Plugin protocols (Builder, Deployer, Tester, Plugin) and 
 autoforge/agent/       Workstation: CLI subcommands, git ops, history tracking
 autoforge/runner/      Lab machine: service loop, git-based state transitions
 autoforge/perf/        Profiling: perf record orchestration, stack analysis, arch profiles
-autoforge_dpdk/        DPDK plugin: meson+ninja build, testpmd/DTS testing
 ```
 
-**Import rules:** `agent/` and `runner/` both import from `protocol/`, `plugins/`, and `autoforge.campaign`, never from each other. `autoforge_dpdk/` imports from `autoforge.plugins.protocols` for result types and from `autoforge.perf` for profiling. Always import from `autoforge.protocol` (the facade), not `autoforge.protocol.schema` directly.
+**Import rules:** `agent/` and `runner/` both import from `protocol/`, `plugins/`, and `autoforge.campaign`, never from each other. Always import from `autoforge.protocol` (the facade), not `autoforge.protocol.schema` directly.
 
 ### Agent modules
 
-- `cli.py` — CLI subcommands (`context`, `submit`, `poll`, `judge`, `baseline`, `revert`, `build-log`, `status`, `hints`, `sprint`, `project`) for Claude Code
+- `cli.py` — CLI subcommands (`context`, `submit`, `poll`, `judge`, `baseline`, `finale`, `revert`, `build-log`, `status`, `hints`, `sprint`, `project`, `summarize`, `doctor`) for Claude Code
 - `hints.py` — architecture-specific optimization hints lookup (supports topics: optimization, perf-counters)
 - `loop.py` — interactive iteration loop (manual fallback)
 - `git_ops.py` — git subprocess wrappers (`GIT_TIMEOUT=60`), `record_result_or_revert()`, `full_revert()`, `force_push_source()`
@@ -80,17 +87,20 @@ autoforge_dpdk/        DPDK plugin: meson+ninja build, testpmd/DTS testing
 - `service.py` — main polling loop, loads plugin, `execute_request()` orchestrates build→deploy→test→push
 - `protocol.py` — git commit/push with retry, `claim()`, `update_status()`, `fail()`
 
-### DPDK plugin modules (`autoforge_dpdk/`)
+### DPDK plugin modules (`projects/dpdk/`)
 
-- `builder.py` — `DpdkBuilder`: meson + ninja build orchestration
-- `deployer.py` — `DpdkDeployer`: trivial pass-through (bare-metal builds)
-- `tester.py` — `DpdkTester`: PTY-based testpmd execution, DTS test suites, profiling integration
+- `builds/local.py` — meson + ninja build orchestration
+- `deploys/local.py` — trivial pass-through (bare-metal builds)
+- `tests/testpmd-memif.py` — PTY-based testpmd execution, memif vdevs, repeat-run median
+- `tests/dts-mlx5.py` — DTS integration for mlx5
+- `perfs/perf-record.py` — Linux perf profile capture
 
 ### Configuration
 
 - `.autoforge.toml` — pointer file at repo root, sets active project + sprint (tracked in git)
 - `config/campaign.toml.example` — template for new sprint campaign configs
-- `config/runner.toml` — where to build/test (paths, PCI addresses, lcores, timeouts). Gitignored; copy from `runner.toml.example`
+- `projects/<project>/runner.toml` — framework runner config (paths, timeouts). Gitignored; copy from `runner.toml.example`
+- `projects/<project>/{builds,tests,perfs}/<plugin>.toml` — per-plugin config (sibling to .py). Gitignored; copy from `.toml.example`
 - `projects/<project>/sprints/<sprint>/campaign.toml` — authoritative campaign config per sprint
 - `pyelftools` in dependencies is required by DPDK's meson build, not by this project's Python code
 

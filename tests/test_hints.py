@@ -7,7 +7,14 @@ from unittest.mock import patch
 
 import pytest
 
-from autoforge.agent.hints import HINTS_DIR, hints_path, hints_summary, list_topics, resolve_arch
+from autoforge.agent.hints import (
+    HINTS_DIR,
+    hints_path,
+    hints_summary,
+    list_topics,
+    resolve_arch,
+    workload_hints,
+)
 
 
 class TestHintsPath:
@@ -71,6 +78,55 @@ class TestListTopics:
         with patch("autoforge.agent.hints.HINTS_DIR", Path("/nonexistent/dir")):
             topics = list_topics("ppc64le")
             assert topics == []
+
+
+class TestWorkloadHints:
+    def test_backend_bound_suggestion(self) -> None:
+        profile = {"derived_metrics": {"backend_bound": 0.45}, "top_functions": []}
+        result = workload_hints("ppc64le", profile)
+        assert "Backend-bound" in result
+        assert "128B" in result
+
+    def test_l1d_miss_rate_suggestion(self) -> None:
+        profile = {"derived_metrics": {"l1d_miss_rate": 0.08}, "top_functions": []}
+        result = workload_hints("x86_64", profile)
+        assert "L1D cache miss" in result
+        assert "64-byte" in result
+
+    def test_low_ipc_suggestion(self) -> None:
+        profile = {"derived_metrics": {"ipc": 0.7}, "top_functions": []}
+        result = workload_hints("ppc64le", profile)
+        assert "IPC is low" in result
+
+    def test_memcpy_hotspot(self) -> None:
+        profile = {
+            "derived_metrics": {},
+            "top_functions": [{"name": "rte_memcpy_func", "pct": 25.0}],
+        }
+        result = workload_hints("ppc64le", profile)
+        assert "rte_memcpy_func" in result
+        assert "25.0%" in result
+
+    def test_alloc_hotspot(self) -> None:
+        profile = {
+            "derived_metrics": {},
+            "top_functions": [{"name": "rte_mempool_get_bulk", "pct": 12.0}],
+        }
+        result = workload_hints("ppc64le", profile)
+        assert "rte_mempool_get_bulk" in result
+        assert "bulk allocation" in result
+
+    def test_empty_profile_returns_empty(self) -> None:
+        result = workload_hints("ppc64le", {})
+        assert result == ""
+
+    def test_no_issues_returns_empty(self) -> None:
+        profile = {
+            "derived_metrics": {"backend_bound": 0.1, "l1d_miss_rate": 0.01, "ipc": 2.5},
+            "top_functions": [{"name": "some_function", "pct": 10.0}],
+        }
+        result = workload_hints("ppc64le", profile)
+        assert result == ""
 
 
 class TestResolveArch:

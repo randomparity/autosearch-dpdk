@@ -25,7 +25,7 @@ def _truncate_log(log: str, max_lines: int = 200) -> str:
 class LocalServerBuilder:
     """Builds DPDK from source using meson + ninja."""
 
-    name = "local-server"
+    name = "local"
 
     def __init__(self) -> None:
         self._build_config: dict[str, Any] = {}

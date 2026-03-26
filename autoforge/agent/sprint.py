@@ -25,6 +25,7 @@ RESULTS_COLUMNS = [
     "metric_value",
     "status",
     "description",
+    "tags",
 ]
 
 

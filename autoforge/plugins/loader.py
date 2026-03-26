@@ -6,6 +6,7 @@ import importlib.util
 import inspect
 import logging
 import sys
+import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -59,7 +60,7 @@ def _find_plugin_file(project: str, category: str, name: str, root: Path | None 
     Args:
         project: Project name (directory under projects/).
         category: One of 'build', 'deploy', 'test', 'profiler'.
-        name: Plugin name (filename stem, e.g. 'local-server').
+        name: Plugin name (filename stem, e.g. 'local').
         root: Override projects root (for testing).
 
     Returns:
@@ -128,22 +129,48 @@ def _conforms_to_protocol(cls: type, protocol: type) -> bool:
         return False
 
 
+def load_plugin_config(plugin_path: Path) -> dict[str, Any]:
+    """Load the sibling .toml config file for a plugin.
+
+    Looks for a .toml file with the same stem as the plugin .py file
+    (e.g. ``local.toml`` next to ``local.py``).
+
+    Returns:
+        Config dict, or empty dict if the sibling file does not exist.
+    """
+    config_path = plugin_path.with_suffix(".toml")
+    if not config_path.is_file():
+        return {}
+    with open(config_path, "rb") as f:
+        return tomllib.load(f)
+
+
 def load_component(
     project: str,
     category: str,
     name: str,
     root: Path | None = None,
+    *,
+    project_config: dict[str, Any] | None = None,
+    runner_config: dict[str, Any] | None = None,
 ) -> ComponentType:
     """Load a single plugin component by project/category/name.
+
+    When ``runner_config`` is provided, the loader also:
+    1. Loads the sibling ``.toml`` config next to the plugin file
+    2. Merges it over the framework config (plugin sections win)
+    3. Calls ``configure()`` on the instance before returning it
 
     Args:
         project: Project name (directory under projects/).
         category: One of 'build', 'deploy', 'test', 'profiler'.
         name: Plugin name (filename stem).
         root: Override projects root (for testing).
+        project_config: Campaign project config (passed to configure).
+        runner_config: Framework runner config (merged with sibling .toml).
 
     Returns:
-        An instantiated plugin component.
+        An instantiated (and optionally configured) plugin component.
 
     Raises:
         ValueError: If the category is invalid or no conforming class found.
@@ -153,17 +180,23 @@ def load_component(
     protocol = CATEGORY_PROTOCOLS[category]
 
     cls = _load_python_class(plugin_path, protocol)
-    if cls is not None:
-        instance = cls()
-        logger.info("Loaded %s plugin %r from %s", category, name, plugin_path)
-        return instance
+    if cls is None:
+        msg = (
+            f"No class conforming to {protocol.__name__} found in {plugin_path}. "
+            f"The file must contain a class with 'name', 'configure', and the "
+            f"required method for the {category} protocol."
+        )
+        raise ValueError(msg)
 
-    msg = (
-        f"No class conforming to {protocol.__name__} found in {plugin_path}. "
-        f"The file must contain a class with 'name', 'configure', and the "
-        f"required method for the {category} protocol."
-    )
-    raise ValueError(msg)
+    instance = cls()
+    logger.info("Loaded %s plugin %r from %s", category, name, plugin_path)
+
+    if runner_config is not None:
+        plugin_cfg = load_plugin_config(plugin_path)
+        merged = {**runner_config, **plugin_cfg}
+        instance.configure(project_config or {}, merged)
+
+    return instance
 
 
 def list_components(

@@ -13,9 +13,17 @@ SAMPLE_CAMPAIGN = {
         "path": "throughput_mpps",
     },
     "project": {
-        "build": "local-server",
+        "build": "local",
         "deploy": "local",
         "test": "testpmd-memif",
+    },
+}
+
+CAMPAIGN_WITH_PROFILER = {
+    **SAMPLE_CAMPAIGN,
+    "project": {
+        **SAMPLE_CAMPAIGN["project"],
+        "profiler": "perf-record",
     },
 }
 
@@ -59,7 +67,7 @@ class TestCreateRequest:
         assert data["sequence"] == 1
         assert data["source_commit"] == "abc123"
         assert data["status"] == STATUS_PENDING
-        assert data["build_plugin"] == "local-server"
+        assert data["build_plugin"] == "local"
         assert data["deploy_plugin"] == "local"
         assert data["test_plugin"] == "testpmd-memif"
 
@@ -74,6 +82,43 @@ class TestCreateRequest:
         data = json.loads(path.read_text())
         assert data["metric_name"] == "throughput_mpps"
         assert data["metric_path"] == "throughput_mpps"
+
+
+class TestSkipProfiling:
+    def test_profiler_included_by_default(self, tmp_path) -> None:
+        path = create_request(
+            seq=1,
+            commit="abc123",
+            campaign=CAMPAIGN_WITH_PROFILER,
+            description="With profiling",
+            requests_dir=tmp_path,
+        )
+        data = json.loads(path.read_text())
+        assert data["profile_plugin"] == "perf-record"
+
+    def test_skip_profiling_omits_profiler(self, tmp_path) -> None:
+        path = create_request(
+            seq=1,
+            commit="abc123",
+            campaign=CAMPAIGN_WITH_PROFILER,
+            description="Finale: no profiling",
+            requests_dir=tmp_path,
+            skip_profiling=True,
+        )
+        data = json.loads(path.read_text())
+        assert data["profile_plugin"] == ""
+
+    def test_skip_profiling_no_effect_without_profiler(self, tmp_path) -> None:
+        path = create_request(
+            seq=1,
+            commit="abc123",
+            campaign=SAMPLE_CAMPAIGN,
+            description="No profiler configured",
+            requests_dir=tmp_path,
+            skip_profiling=True,
+        )
+        data = json.loads(path.read_text())
+        assert data["profile_plugin"] == ""
 
 
 class TestReadRequest:

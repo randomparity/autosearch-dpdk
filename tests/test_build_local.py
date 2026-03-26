@@ -1,4 +1,4 @@
-"""Tests for DPDK local-server build plugin."""
+"""Tests for DPDK local build plugin."""
 
 from __future__ import annotations
 
@@ -10,8 +10,8 @@ from unittest.mock import patch
 
 from autoforge.plugins.protocols import Builder, BuildResult
 
-PLUGIN_PATH = Path(__file__).parent.parent / "projects" / "dpdk" / "builds" / "local-server.py"
-MODULE_NAME = "autoforge_plugin_local_server_test"
+PLUGIN_PATH = Path(__file__).parent.parent / "projects" / "dpdk" / "builds" / "local.py"
+MODULE_NAME = "autoforge_plugin_local_build_test"
 
 
 def _load_module():

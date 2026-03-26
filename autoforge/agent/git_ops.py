@@ -14,6 +14,41 @@ logger = logging.getLogger(__name__)
 GIT_TIMEOUT = 60
 
 
+class DirtyWorkingTreeError(RuntimeError):
+    """Raised when a git operation requires a clean working tree."""
+
+
+def check_git_clean() -> None:
+    """Verify the working tree has no unstaged changes that block pull/push.
+
+    Untracked files (``??``) are ignored — they don't block
+    ``git pull --rebase``. Only modified or staged tracked files matter.
+
+    Raises DirtyWorkingTreeError with an actionable message if dirty.
+    """
+    result = subprocess.run(
+        ["git", "status", "--porcelain", "--ignore-submodules"],
+        capture_output=True,
+        text=True,
+        timeout=GIT_TIMEOUT,
+    )
+    if result.returncode != 0:
+        raise DirtyWorkingTreeError(
+            f"git status failed (exit {result.returncode}): {result.stderr.strip()}"
+        )
+    dirty = [
+        line for line in result.stdout.splitlines() if line.strip() and not line.startswith("??")
+    ]
+    if dirty:
+        files = "\n  ".join(dirty)
+        msg = (
+            f"Working tree is dirty — git push/pull will fail.\n"
+            f"  {files}\n"
+            f"Fix: commit or stash these changes, then retry."
+        )
+        raise DirtyWorkingTreeError(msg)
+
+
 def git_submodule_head(source_path: Path) -> str:
     """Return the current HEAD commit SHA of the DPDK submodule."""
     result = subprocess.run(
@@ -54,6 +89,25 @@ def git_add_commit_push(
             text=True,
             timeout=GIT_TIMEOUT,
         )
+
+
+def push_submodule(source_path: Path, branch: str) -> None:
+    """Push the submodule's optimization branch to its remote.
+
+    Uses a regular push (not force). Force-push is only used during reverts.
+
+    Args:
+        source_path: Path to the submodule directory.
+        branch: Branch name to push.
+    """
+    subprocess.run(
+        ["git", "-C", str(source_path), "push", "origin", branch],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=GIT_TIMEOUT,
+    )
+    logger.info("Pushed %s to origin in %s", branch, source_path)
 
 
 def ensure_optimization_branch(source_path: Path, branch: str) -> None:

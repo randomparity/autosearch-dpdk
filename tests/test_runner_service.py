@@ -8,7 +8,7 @@ from unittest.mock import patch
 import pytest
 
 from autoforge.runner.base import BuildRunner, DeployRunner, FullRunner, TestRunner
-from autoforge.runner.service import PHASE_RUNNERS, load_config
+from autoforge.runner.service import PHASE_RUNNERS, load_config, resolve_config_path
 
 
 class TestLoadConfig:
@@ -28,6 +28,15 @@ class TestLoadConfig:
     def test_missing_file_raises(self) -> None:
         with pytest.raises(FileNotFoundError):
             load_config("/nonexistent/path/runner.toml")
+
+    def test_default_resolves_from_pointer(self, monkeypatch) -> None:
+        monkeypatch.delenv("AUTOFORGE_CONFIG", raising=False)
+        with patch(
+            "autoforge.runner.service.load_pointer",
+            return_value={"project": "dpdk", "sprint": "test"},
+        ):
+            path = resolve_config_path()
+        assert path.endswith("projects/dpdk/runner.toml")
 
 
 class TestPhaseRunners:

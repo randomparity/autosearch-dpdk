@@ -73,6 +73,9 @@ class TestRequest:
     test_plugin: str
     profile_plugin: str = ""
 
+    # Experiment metadata
+    tags: list[str] | None = None
+
     # Test spec
     metric_name: str = ""
     metric_path: str = ""

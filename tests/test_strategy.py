@@ -83,3 +83,18 @@ class TestFormatContext:
     def test_no_hints_tip_when_arch_absent(self) -> None:
         result = format_context([], SAMPLE_CAMPAIGN)
         assert "autosearch hints" not in result
+
+    def test_includes_workload_hints_with_profile(self) -> None:
+        campaign = {**SAMPLE_CAMPAIGN, "platform": {"arch": "ppc64le"}}
+        profile = {
+            "derived_metrics": {"backend_bound": 0.5},
+            "top_functions": [],
+        }
+        result = format_context([], campaign, profile_summary=profile)
+        assert "Workload-specific suggestions" in result
+        assert "Backend-bound" in result
+
+    def test_no_workload_hints_without_profile(self) -> None:
+        campaign = {**SAMPLE_CAMPAIGN, "platform": {"arch": "ppc64le"}}
+        result = format_context([], campaign)
+        assert "Workload-specific suggestions" not in result

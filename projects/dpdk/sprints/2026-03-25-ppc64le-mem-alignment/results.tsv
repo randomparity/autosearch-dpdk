@@ -1,1 +1,36 @@
 sequence	timestamp	source_commit	metric_value	status	description
+10	2026-03-26T03:07:03.685574+00:00	d1000789ccb338539d365a0d09d44a67b960edb7	160.4264	completed	memif rx+tx: add prefetch hints for descriptors, buffers, and mbufs
+11	2026-03-26T03:21:36.043673+00:00	2cef1aed297129cba8139f1b8d91287211d1d67b	165.8883	completed	ppc64le memcpy: separate loads from stores in rte_mov64/rte_mov128 for better pipelining
+12	2026-03-26T03:24:32.912182+00:00	e7d0f842bef9a72fdec39ad781734350cae8a258	167.5572	completed	ppc64le memcpy: apply load-then-store pattern to rte_mov32 and rte_mov48
+13	2026-03-26T03:28:35.650182+00:00	fedd75e300e0bbdfe1a8d8a7c0316bd042e84e92	169.8307	completed	memif tx: add 4-at-a-time batch path for single-segment packets
+14	2026-03-26T03:38:39.469575+00:00	050762700a833e571dd82b565e08b812b6d25e4a	162.8654	completed	ppc64le memcpy: use __builtin_memcpy for 64-byte fast path
+15	2026-03-26T03:43:14.663135+00:00	e3ebb7e91e514e910c8e8e0e7ec9913efde28055	170.8344	completed	memif rx: expand descriptor length refill to 8-at-a-time
+17	2026-03-26T03:50:46.294870+00:00	39f1e0bc101dda0897a853dd2fd77a9c3cacfe70	170.8963	completed	mempool/ppc64le: add memory channel spreading for POWER9
+18	2026-03-26T03:55:27.904543+00:00	409383865b81f7c6c8e8f2738e67bd38625b5cfd	172.6451	completed	mempool: replace per-element reverse copy with bulk memcpy in cache get
+19	2026-03-26T03:58:40.819955+00:00	1e751d3528565028cad0d8ef9aeff58625d565f4	171.3308	completed	mempool: bulk memcpy in remaining cache get paths
+20	2026-03-26T04:05:29.620531+00:00	6adc81faaca68a69ecbb8b1b104348525b7847d2	171.0193	completed	memif: enable -funroll-loops for the memif driver
+22	2026-03-26T04:13:38.196308+00:00	0c95015466587eaf435b6de77dab44ba727448a6	173.5568	completed	ppc64le memcpy: add branch prediction hints in rte_memcpy_func
+23	2026-03-26T04:15:47.238192+00:00	e1b9e72ffac469f0e2f4eec9418c235e71b083ae	172.6587	completed	memif: mark rx/tx functions as hot for better code placement
+24	2026-03-26T04:18:36.887642+00:00	947249d881645c74719699203e084d1b459e0159	172.4471	completed	memif: flatten rx/tx functions for aggressive inlining
+25	2026-03-26T04:21:57.501449+00:00	195656d556da16c7dc91e36c06d671e9d755baa5	168.9995	completed	memif rx: use dcbz to avoid read-for-ownership on POWER9 mbuf data
+26	2026-03-26T04:25:20.306181+00:00	33853c80ef4f8fa7e59b8c50f56cad5d0f7245a8	172.182	completed	ppc64le memcpy: mark small-copy fallback paths as unlikely
+27	2026-03-26T04:28:25.568854+00:00	0e3fa35104a2c30d3ca2e38d80152af4f2c0493e	172.7391	completed	ppc64le memcpy: full load-then-store for rte_mov256 using 16 VSX registers
+28	2026-03-26T04:32:13.583215+00:00	94800e5470ff5ea1a79f3ae14854404b60799a65	177.5238	completed	memif rx: interleave metadata writes with data copies for cache locality
+29	2026-03-26T04:34:26.167723+00:00	c36b80edfc6d9582808d611258bde59e0b7536fd	176.4306	completed	memif tx: interleave per-packet descriptor writes with data copies
+30	2026-03-26T04:37:38.443274+00:00	94ad97031fd3e89e2c1e466a335e4f7defdbe2f9	180.8499	completed	memif rx: skip separate reset by init mbufs inline with interleaved copy
+31	2026-03-26T04:40:04.560971+00:00	2196fd1573941846453ed7b5bef91e65f8ce332b	180.7728	completed	memif tx: interleave per-packet descriptor operations in 4-at-a-time path
+33	2026-03-26T04:47:59.242582+00:00	2658a0fe7aecae4440379e40cd48f95afa298000	180.8293	completed	memif rx: use pre-computed rearm_data for single-store mbuf init
+34	2026-03-26T12:47:02.434595+00:00	380639e39b0a9f7cf7d31049f6ea94a680ea4107	180.1111	completed	memif tx: interleave per-packet operations in 4-at-a-time path
+35	2026-03-26T12:50:13.769236+00:00	4e5b046279911032fdc2229901e4e8f4058cf49b	180.8569	completed	testpmd+memif: increase default burst size from 32 to 64
+36	2026-03-26T12:52:40.611899+00:00	5ac1efaa6bcd648024b7effd6500b36c91ab63f1	181.2525	completed	memif: increase MAX_PKT_BURST to 128 to match testpmd burst size
+37	2026-03-26T12:56:04.347786+00:00	d0877aa4906bc7fc16ed577748fea8913ec17f96	183.1376	completed	memif rx: skip zeroing fields that remain 0 in steady-state io-fwd
+38	2026-03-26T12:58:52.568053+00:00	3d1b71b34193313cd24744c7542577233f88b096	183.8013	completed	memif rx: skip ol_flags zeroing (stays 0 in io-fwd steady state)
+39	2026-03-26T13:01:54.448065+00:00	e40fb3a88411f53e82c402613cb6bbf58e4bb27e	185.6884	completed	memif rx: eliminate data_off and port writes in 4-at-a-time path
+40	2026-03-26T13:06:37.608068+00:00	099cacd106b19219ec05d4165c5c0a927e5effe3	180.5952	completed	memif rx: prefetch next batch source buffers one iteration ahead
+41	2026-03-26T13:09:51.313729+00:00	58cda4e40f5c5100b6b7dddd67f064dd77aa0f23	181.1104	completed	memif rx: 8-at-a-time fast path to halve loop iterations
+42	2026-03-26T13:28:58.925184+00:00	ad24e47b32ec3a30bd8c02d973e650b92edef45a	184.2683	completed	memif: reduce MAX_PKT_BURST to 64 to fit working set in L1D cache
+45	2026-03-26T13:37:48.306556+00:00	5338f4afee92d19d4a1cb13974e29fcd11f85cf6	139.8978	completed	memif: try -Os for smaller code / better icache
+46	2026-03-26T13:39:32.096446+00:00	bbc5506d3ca4b546e581784b9e1792f29efc3220	180.9665	completed	memif: add -fomit-frame-pointer to free register
+47	2026-03-26T13:42:53.394044+00:00	ccb9928052e2be8931a4d48e43547fe8c8679953	185.1043	completed	memif rx: remove unused data_off computation
+48	2026-03-26T13:45:40.710381+00:00	8ade09a97e6164ef42a6fa4eb6f42de88baeefb6	182.6216	completed	memif rx: combine pkt_len+data_len into single 64-bit store
+49	2026-03-26T14:19:57.237064+00:00	8b85b0a909b1e4124dcc6e9190545c548df85239	186.2128	completed	memif: spread packet buffers across memory channels with odd-stride allocation

@@ -92,6 +92,88 @@ def list_topics(arch: str) -> list[str]:
     return sorted(topics)
 
 
+_CACHE_LINE_SIZES: dict[str, int] = {
+    "x86_64": 64,
+    "ppc64le": 128,
+    "aarch64": 64,
+    "s390x": 256,
+}
+
+
+def workload_hints(arch: str, profile_summary: dict) -> str:
+    """Generate workload-specific optimization suggestions from profiling data.
+
+    Args:
+        arch: Architecture identifier (e.g. "ppc64le").
+        profile_summary: Profile summary dict with top_functions,
+            derived_metrics, and diagnostics keys.
+
+    Returns:
+        Multi-line markdown string with data-driven suggestions,
+        or empty string if no suggestions apply.
+    """
+    suggestions: list[str] = []
+    derived = profile_summary.get("derived_metrics") or {}
+    top_fns = profile_summary.get("top_functions") or []
+    cache_line = _CACHE_LINE_SIZES.get(arch, 64)
+
+    # Check backend-bound ratio
+    backend = derived.get("backend_bound")
+    if backend is not None and backend > 0.3:
+        suggestions.append(
+            f"Backend-bound is high ({backend:.1%}). Focus on memory access patterns,"
+            f" cache alignment (cache line = {cache_line}B), and data locality."
+        )
+
+    # Check L1D miss rate
+    l1d = derived.get("l1d_miss_rate")
+    if l1d is not None and l1d > 0.05:
+        suggestions.append(
+            f"L1D cache miss rate is elevated ({l1d:.2%}). Consider interleaving"
+            " per-element processing, reducing working set, or aligning structures"
+            f" to {cache_line}-byte boundaries."
+        )
+
+    # Check IPC
+    ipc = derived.get("ipc")
+    if ipc is not None and ipc < 1.0:
+        suggestions.append(
+            f"IPC is low ({ipc:.2f}). Pipeline stalls likely from memory latency"
+            " or branch mispredictions. Check for data-dependent branches in hot loops."
+        )
+
+    # Check hot functions for common patterns
+    fn_names = [f.get("name", "") for f in top_fns[:10]]
+    fn_pcts = {f.get("name", ""): f.get("pct", 0) for f in top_fns[:10]}
+
+    memcpy_fns = [n for n in fn_names if "memcpy" in n.lower() or "rte_mov" in n.lower()]
+    if memcpy_fns:
+        total_pct = sum(fn_pcts.get(n, 0) for n in memcpy_fns)
+        suggestions.append(
+            f"Memory copy functions ({', '.join(memcpy_fns)}) account for"
+            f" {total_pct:.1f}% of samples. Optimize copy paths: separate loads"
+            " from stores, use architecture-native vector instructions, consider"
+            " batch sizes that align with cache lines."
+        )
+
+    alloc_fns = [n for n in fn_names if "alloc" in n.lower() or "mempool" in n.lower()]
+    if alloc_fns:
+        total_pct = sum(fn_pcts.get(n, 0) for n in alloc_fns)
+        suggestions.append(
+            f"Allocation functions ({', '.join(alloc_fns)}) account for"
+            f" {total_pct:.1f}% of samples. Consider bulk allocation, forward"
+            " copies instead of per-element loops, and memory channel spreading."
+        )
+
+    if not suggestions:
+        return ""
+
+    lines = ["Workload-specific suggestions (from profiling data):"]
+    for i, s in enumerate(suggestions, 1):
+        lines.append(f"  {i}. {s}")
+    return "\n".join(lines)
+
+
 def resolve_arch(campaign: CampaignConfig) -> str | None:
     """Extract arch from campaign config.
 
