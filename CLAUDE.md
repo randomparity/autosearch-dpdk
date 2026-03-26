@@ -33,10 +33,13 @@ Plugin-based optimization framework. An **agent** (workstation) proposes source 
 
 ### Plugin system
 
-Plugins are discovered via Python entry points (`autoforge.plugins` group). Each plugin provides three components:
+Plugins are Python files discovered under `projects/<name>/{builds,deploys,tests,perfs}/`. Each plugin provides one component:
 - **Builder** — compiles the project from source
 - **Deployer** — deploys build artifacts to the test target (bare metal, container, QEMU)
 - **Tester** — runs performance tests and returns metrics
+- **Profiler** — captures performance profiles during tests
+
+See [Plugin SDK](docs/plugin-sdk.md) for authoring guide and examples.
 
 The DPDK plugin (`autoforge_dpdk/`) is the reference implementation. External plugins (vLLM, kernel) are separate packages.
 
