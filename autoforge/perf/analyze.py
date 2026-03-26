@@ -4,9 +4,19 @@ from __future__ import annotations
 
 import logging
 from collections import Counter
-from typing import Any
+from typing import Any, TypedDict
 
 from autoforge.perf.arch import ArchProfile
+
+
+class ProfileSummary(TypedDict):
+    """Return type of summarize()."""
+
+    top_functions: list[dict[str, Any]]
+    derived_metrics: dict[str, float]
+    diagnostics: list[dict[str, Any]]
+    total_samples: int
+
 
 logger = logging.getLogger(__name__)
 
@@ -194,7 +204,7 @@ def summarize(
     counters: dict[str, float],
     stacks: dict[str, int],
     arch_profile: ArchProfile,
-) -> dict[str, Any]:
+) -> ProfileSummary:
     """Produce a compact JSON-serializable summary for results_json.
 
     Args:

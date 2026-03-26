@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from autoforge.protocol.schema import (
+    GIT_TIMEOUT,
     STATUS_BUILDING,
     STATUS_BUILT,
     STATUS_CLAIMED,
@@ -14,6 +15,7 @@ from autoforge.protocol.schema import (
     STATUS_RUNNING,
     VALID_STATUSES,
     VALID_TRANSITIONS,
+    Direction,
     StatusLiteral,
     TestRequest,
     extract_metric,
@@ -23,6 +25,8 @@ from autoforge.protocol.schema import (
 )
 
 __all__ = [
+    "GIT_TIMEOUT",
+    "Direction",
     "STATUS_BUILDING",
     "STATUS_BUILT",
     "STATUS_CLAIMED",

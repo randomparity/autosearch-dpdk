@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from autoforge.campaign import CampaignConfig, Direction, metric_threshold
+from autoforge.campaign import CampaignConfig, metric_threshold
+from autoforge.protocol import Direction
 
 
 def compare_metric(current: float, best: float, direction: Direction) -> bool:

@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Any
 
 from autoforge.campaign import (
-    GIT_TIMEOUT,
     CampaignConfig,
     project_name,
 )
@@ -20,6 +19,7 @@ from autoforge.campaign import (
 from autoforge.plugins.loader import load_component
 from autoforge.plugins.protocols import BuildResult, DeployResult
 from autoforge.protocol import (
+    GIT_TIMEOUT,
     STATUS_BUILDING,
     STATUS_BUILT,
     STATUS_CLAIMED,

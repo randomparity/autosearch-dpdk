@@ -12,9 +12,9 @@ from autoforge.agent.hints import (
     hints_file_ref,
     hints_path,
     list_topics,
-    resolve_arch,
     workload_hints,
 )
+from autoforge.campaign import platform_arch
 
 
 class TestHintsPath:
@@ -129,13 +129,13 @@ class TestWorkloadHints:
         assert result == ""
 
 
-class TestResolveArch:
+class TestPlatformArch:
     def test_present(self) -> None:
         campaign = {"platform": {"arch": "ppc64le"}}
-        assert resolve_arch(campaign) == "ppc64le"
+        assert platform_arch(campaign) == "ppc64le"
 
     def test_absent(self) -> None:
-        assert resolve_arch({}) is None
+        assert platform_arch({}) is None
 
     def test_no_platform_section(self) -> None:
-        assert resolve_arch({"goal": {}}) is None
+        assert platform_arch({"goal": {}}) is None

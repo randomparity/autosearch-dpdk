@@ -5,9 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from autoforge.campaign import CampaignConfig
-from autoforge.campaign import platform_arch as _platform_arch
-
 KNOWN_ARCHES: frozenset[str] = frozenset(
     {
         "x86_64",
@@ -172,15 +169,3 @@ def workload_hints(arch: str, profile_summary: dict[str, Any]) -> str:
     for i, s in enumerate(suggestions, 1):
         lines.append(f"  {i}. {s}")
     return "\n".join(lines)
-
-
-def resolve_arch(campaign: CampaignConfig) -> str | None:
-    """Extract arch from campaign config.
-
-    Args:
-        campaign: Parsed campaign TOML dict.
-
-    Returns:
-        Architecture string, or None if not configured.
-    """
-    return _platform_arch(campaign)

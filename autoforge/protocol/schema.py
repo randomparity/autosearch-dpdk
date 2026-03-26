@@ -7,6 +7,11 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Literal
 
+GIT_TIMEOUT = 60
+"""Timeout in seconds for git subprocess calls (shared by agent and runner)."""
+
+Direction = Literal["maximize", "minimize"]
+
 StatusLiteral = Literal[
     "pending",
     "claimed",

@@ -6,7 +6,8 @@ import logging
 import subprocess
 from typing import TYPE_CHECKING, Any
 
-from autoforge.agent.hints import resolve_arch, workload_hints
+from autoforge.agent.hints import workload_hints
+from autoforge.campaign import platform_arch
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -81,7 +82,7 @@ def format_context(
         lines.append("")
         lines.extend(format_profile_lines(profile_summary))
 
-    arch = resolve_arch(campaign)
+    arch = platform_arch(campaign)
     if arch and profile_summary:
         wh = workload_hints(arch, profile_summary)
         if wh:

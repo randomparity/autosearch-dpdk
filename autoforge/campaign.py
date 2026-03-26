@@ -8,11 +8,7 @@ from pathlib import Path
 from typing import Literal, TypedDict
 
 from autoforge.pointer import REPO_ROOT, load_pointer
-
-GIT_TIMEOUT = 60
-"""Timeout in seconds for git subprocess calls (shared by agent and runner)."""
-
-Direction = Literal["maximize", "minimize"]
+from autoforge.protocol import Direction
 
 
 class MetricConfig(TypedDict, total=False):

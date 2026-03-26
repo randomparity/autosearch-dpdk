@@ -8,8 +8,8 @@ import time
 from datetime import UTC, datetime
 from pathlib import Path
 
-from autoforge.campaign import GIT_TIMEOUT, CampaignConfig, metric_config, project_config
-from autoforge.protocol import TestRequest
+from autoforge.campaign import CampaignConfig, metric_config, project_config
+from autoforge.protocol import GIT_TIMEOUT, TestRequest
 
 logger = logging.getLogger(__name__)
 

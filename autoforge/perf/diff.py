@@ -4,7 +4,22 @@ from __future__ import annotations
 
 from collections import Counter
 from pathlib import Path
-from typing import Any
+from typing import Any, TypedDict
+
+
+class StackDiff(TypedDict):
+    """Return type of diff_stacks()."""
+
+    baseline_total_samples: int
+    current_total_samples: int
+    significant_changes: list[dict[str, Any]]
+    net_assessment: str
+
+
+class CounterDiff(TypedDict):
+    """Return type of diff_counters()."""
+
+    deltas: dict[str, dict[str, Any]]
 
 
 def load_folded(path: Path) -> dict[str, int]:
@@ -55,7 +70,7 @@ def diff_stacks(
     baseline: dict[str, int],
     current: dict[str, int],
     threshold: float = 1.0,
-) -> dict[str, Any]:
+) -> StackDiff:
     """Compare two folded-stack profiles.
 
     Args:
@@ -109,7 +124,7 @@ def diff_stacks(
 def diff_counters(
     baseline: dict[str, float],
     current: dict[str, float],
-) -> dict[str, Any]:
+) -> CounterDiff:
     """Compare two counter sets.
 
     Args:

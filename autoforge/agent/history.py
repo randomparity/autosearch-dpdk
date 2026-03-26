@@ -7,7 +7,7 @@ import logging
 from datetime import UTC, datetime
 from pathlib import Path
 
-from autoforge.campaign import Direction
+from autoforge.protocol import Direction
 
 logger = logging.getLogger(__name__)
 

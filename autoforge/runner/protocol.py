@@ -8,8 +8,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from autoforge.campaign import GIT_TIMEOUT
 from autoforge.protocol import (
+    GIT_TIMEOUT,
     STATUS_CLAIMED,
     STATUS_COMPLETED,
     STATUS_FAILED,
@@ -177,11 +177,9 @@ def update_status(
         f"runner: {status} request {request.sequence:04d}",
     )
     if not pushed:
-        logger.error(
-            "Failed to push status update to %s for request %04d", status, request.sequence
-        )
-    else:
-        logger.debug("Pushed status %s for request %04d", status, request.sequence)
+        msg = f"Failed to push status update to {status} for request {request.sequence:04d}"
+        raise RuntimeError(msg)
+    logger.debug("Pushed status %s for request %04d", status, request.sequence)
 
 
 def complete_request(

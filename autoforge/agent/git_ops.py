@@ -9,7 +9,7 @@ from pathlib import Path
 
 from autoforge.agent.history import append_failure
 from autoforge.agent.metric import compare_metric
-from autoforge.campaign import GIT_TIMEOUT, Direction
+from autoforge.protocol import GIT_TIMEOUT, Direction
 
 logger = logging.getLogger(__name__)
 
