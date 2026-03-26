@@ -214,7 +214,7 @@ def main() -> None:
     explicit = Path(args.campaign) if args.campaign else None
     campaign = load_campaign(resolve_campaign_path(explicit))
     source_path = Path(submodule_path(campaign))
-    opt_branch = optimization_branch(campaign) or "autosearch/optimize"
+    opt_branch = optimization_branch(campaign) or "autoforge/optimize"
     ensure_optimization_branch(source_path, opt_branch)
 
     if args.baseline:

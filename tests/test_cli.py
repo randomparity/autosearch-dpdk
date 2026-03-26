@@ -27,7 +27,7 @@ SAMPLE_CAMPAIGN = {
         "deploy": "local",
         "test": "testpmd-memif",
         "submodule_path": "dpdk",
-        "optimization_branch": "autosearch/optimize",
+        "optimization_branch": "autoforge/optimize",
     },
 }
 
@@ -143,7 +143,7 @@ class TestCmdRevert:
 
         mock_revert.assert_called_once_with(
             Path("dpdk"),
-            "autosearch/optimize",
+            "autoforge/optimize",
             False,
         )
         captured = capsys.readouterr()

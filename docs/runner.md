@@ -9,7 +9,7 @@ results back via git.
 - Python 3.13+
 - [uv](https://docs.astral.sh/uv/)
 - DPDK build dependencies: meson, ninja, gcc (or clang), pkg-config
-- Git access to the autosearch-dpdk repository (push permissions)
+- Git access to the autoforge repository (push permissions)
 - For testpmd plugin: NIC ports connected back-to-back (or memif vdevs)
 - For DTS plugin: DTS installed with a two-node topology (SUT + TG)
 
@@ -17,7 +17,7 @@ results back via git.
 
 ```bash
 git clone --recurse-submodules <repo-url>
-cd autosearch-dpdk
+cd autoforge
 make setup-runner
 ```
 

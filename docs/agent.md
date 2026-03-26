@@ -22,7 +22,7 @@ submits them for testing, and iterates based on results.
 
 ```bash
 git clone --recurse-submodules <repo-url>
-cd autosearch-dpdk
+cd autoforge
 make setup-agent
 ```
 
@@ -51,7 +51,7 @@ Campaign settings are per-sprint at
 | `[project]` | `test` | Test plugin name (e.g. `"testpmd-memif"`) |
 | `[project]` | `profiler` | Profiler plugin name (e.g. `"perf-record"`) |
 | `[project]` | `submodule_path` | Path to the DPDK submodule |
-| `[project]` | `optimization_branch` | Branch for good changes (empty = skip branch push; `campaign.toml.example` sets `"autosearch/optimize"`) |
+| `[project]` | `optimization_branch` | Branch for good changes (empty = skip branch push; `campaign.toml.example` sets `"autoforge/optimize"`) |
 | `[project]` | `scope` | Source paths the agent may modify (relative to submodule) |
 | `[profiling]` | `enabled` | Include profiling summary in results (default: `false`) |
 
@@ -137,7 +137,7 @@ Request JSON files in `sprints/<name>/requests/` follow the naming pattern
 
 ## Optimization branch
 
-On startup, the agent creates an `autosearch/optimize` branch in the DPDK
+On startup, the agent creates an `autoforge/optimize` branch in the DPDK
 submodule (configurable via `[project].optimization_branch`). All proposed
 changes are committed to this branch.
 

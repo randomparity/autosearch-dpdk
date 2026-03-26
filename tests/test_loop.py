@@ -45,7 +45,7 @@ SAMPLE_CAMPAIGN = {
         "deploy": "local",
         "test": "testpmd-memif",
         "submodule_path": "dpdk",
-        "optimization_branch": "autosearch/optimize",
+        "optimization_branch": "autoforge/optimize",
     },
     "sprint": {"name": "2026-01-01-test"},
 }

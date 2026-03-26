@@ -55,7 +55,7 @@ enabled = true
 # Path to the DPDK git submodule relative to repo root
 submodule_path = "dpdk"
 # Branch in the submodule where good changes accumulate
-optimization_branch = "autosearch/optimize"
+optimization_branch = "autoforge/optimize"
 # Source paths the agent is allowed to modify (relative to submodule_path)
 scope = [
     "drivers/net/memif/",

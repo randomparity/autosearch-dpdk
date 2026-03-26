@@ -29,7 +29,7 @@ Prerequisites: Python 3.13+, [uv](https://docs.astral.sh/uv/), git.
 
 ```bash
 git clone --recurse-submodules <repo-url>
-cd autosearch-dpdk
+cd autoforge
 uv sync
 uv run autoforge context             # show current optimization state
 uv run autoforge-loop --dry-run      # interactive mode (no git push)

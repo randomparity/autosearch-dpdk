@@ -14,10 +14,10 @@ class TestPushSubmodule:
     def test_runs_git_push_without_force(self) -> None:
         source_path = Path("/opt/dpdk")
         with patch("autoforge.agent.git_ops.subprocess.run") as mock_run:
-            push_submodule(source_path, "autosearch/optimize")
+            push_submodule(source_path, "autoforge/optimize")
 
         mock_run.assert_called_once_with(
-            ["git", "-C", "/opt/dpdk", "push", "origin", "autosearch/optimize"],
+            ["git", "-C", "/opt/dpdk", "push", "origin", "autoforge/optimize"],
             check=True,
             capture_output=True,
             text=True,
@@ -35,17 +35,17 @@ class TestPushSubmodule:
             ),
             pytest.raises(subprocess.CalledProcessError),
         ):
-            push_submodule(source_path, "autosearch/optimize")
+            push_submodule(source_path, "autoforge/optimize")
 
 
 class TestForcePushSubmodule:
     def test_runs_git_push_force(self) -> None:
         source_path = Path("/opt/dpdk")
         with patch("autoforge.agent.git_ops.subprocess.run") as mock_run:
-            force_push_source(source_path, "autosearch/optimize")
+            force_push_source(source_path, "autoforge/optimize")
 
         mock_run.assert_called_once_with(
-            ["git", "-C", "/opt/dpdk", "push", "--force", "origin", "autosearch/optimize"],
+            ["git", "-C", "/opt/dpdk", "push", "--force", "origin", "autoforge/optimize"],
             check=True,
             capture_output=True,
             text=True,
@@ -62,11 +62,11 @@ class TestFullRevert:
             patch("autoforge.agent.git_ops.force_push_source") as mock_push,
             patch("autoforge.agent.git_ops.git_add_commit_push") as mock_commit,
         ):
-            result = full_revert(source_path, "autosearch/optimize", dry_run=False)
+            result = full_revert(source_path, "autoforge/optimize", dry_run=False)
 
         assert result == "oldcommit123"
         mock_revert.assert_called_once_with(source_path)
-        mock_push.assert_called_once_with(source_path, "autosearch/optimize")
+        mock_push.assert_called_once_with(source_path, "autoforge/optimize")
         mock_commit.assert_called_once()
 
     def test_dry_run_skips_push(self) -> None:
@@ -77,7 +77,7 @@ class TestFullRevert:
             patch("autoforge.agent.git_ops.force_push_source") as mock_push,
             patch("autoforge.agent.git_ops.git_add_commit_push") as mock_commit,
         ):
-            full_revert(source_path, "autosearch/optimize", dry_run=True)
+            full_revert(source_path, "autoforge/optimize", dry_run=True)
 
         mock_push.assert_not_called()
         mock_commit.assert_called_once_with(
@@ -104,7 +104,7 @@ class TestRecordResultOrRevertWithBranch:
             source_path=dpdk,
             results_path=res,
             failures_path=fail,
-            optimization_branch="autosearch/optimize",
+            optimization_branch="autoforge/optimize",
         )
 
         with (
@@ -123,7 +123,7 @@ class TestRecordResultOrRevertWithBranch:
             )
 
         assert result is False
-        mock_push.assert_called_once_with(dpdk, "autosearch/optimize")
+        mock_push.assert_called_once_with(dpdk, "autoforge/optimize")
 
     def test_revert_skips_push_when_no_branch(self, tmp_path: Path) -> None:
         from autoforge.agent.git_ops import ResultContext, record_result_or_revert

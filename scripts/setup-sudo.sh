@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Setup passwordless sudo for the autosearch-dpdk runner.
+# Setup passwordless sudo for the autoforge runner.
 #
 # This creates a sudoers drop-in that allows the runner user to execute
 # only the specific commands needed: testpmd binary and perf tools.
@@ -19,7 +19,7 @@ set -euo pipefail
 
 RUNNER_USER="${1:-${SUDO_USER:-$(whoami)}}"
 BUILD_DIR="${2:-/tmp/dpdk-build}"
-SUDOERS_FILE="/etc/sudoers.d/autosearch-dpdk"
+SUDOERS_FILE="/etc/sudoers.d/autoforge"
 TESTPMD_BIN="${BUILD_DIR}/app/dpdk-testpmd"
 PERF_BIN="$(command -v perf 2>/dev/null || echo /usr/bin/perf)"
 
@@ -32,11 +32,11 @@ echo "Setting up sudoers for user: ${RUNNER_USER}"
 echo "  testpmd: ${TESTPMD_BIN}"
 echo "  perf:    ${PERF_BIN}"
 
-TMPFILE=$(mktemp /etc/sudoers.d/.autosearch-tmp-XXXXXX)
+TMPFILE=$(mktemp /etc/sudoers.d/.autoforge-tmp-XXXXXX)
 trap 'rm -f "$TMPFILE"' EXIT
 
 cat > "${TMPFILE}" <<EOF
-# autosearch-dpdk runner: allow testpmd and perf without password
+# autoforge runner: allow testpmd and perf without password
 ${RUNNER_USER} ALL=(ALL) NOPASSWD: ${TESTPMD_BIN}
 ${RUNNER_USER} ALL=(ALL) NOPASSWD: ${PERF_BIN}
 EOF
