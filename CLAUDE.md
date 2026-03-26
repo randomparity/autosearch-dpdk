@@ -24,6 +24,8 @@ uv run autoforge sprint init <name>                      # create new sprint
 uv run autoforge sprint init <name> --from <sprint>      # clone sprint config
 uv run autoforge sprint list                              # list all sprints
 uv run autoforge sprint switch <name>                    # switch active sprint
+uv run autoforge doctor                                  # validate configuration setup
+uv run autoforge doctor --role agent                     # agent-side checks only
 uv run autoforge-loop --dry-run                         # interactive mode (manual fallback)
 ```
 

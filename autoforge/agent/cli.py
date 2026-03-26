@@ -453,6 +453,15 @@ def main() -> None:
     switch_p = sprint_sub.add_parser("switch", help="Switch to an existing sprint")
     switch_p.add_argument("name", help="Sprint name to switch to")
 
+    # Doctor command
+    doctor_p = sub.add_parser("doctor", help="Validate configuration setup")
+    doctor_p.add_argument(
+        "--role",
+        choices=["agent", "runner", "all"],
+        default="all",
+        help="Check scope (default: all)",
+    )
+
     # Project subcommands
     project_p = sub.add_parser("project", help="Project management")
     project_sub = project_p.add_subparsers(dest="project_command", required=True)
@@ -473,6 +482,15 @@ def main() -> None:
     if args.command == "project":
         if args.project_command == "init":
             cmd_project_init(args.name)
+        return
+
+    if args.command == "doctor":
+        from autoforge.agent.doctor import format_results, run_doctor
+
+        results = run_doctor(role=args.role)
+        print(format_results(results))
+        if any(r.status == "fail" for r in results):
+            sys.exit(1)
         return
 
     campaign = load_campaign(resolve_campaign_path(campaign_path))
