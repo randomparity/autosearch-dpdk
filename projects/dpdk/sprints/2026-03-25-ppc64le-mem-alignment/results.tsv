@@ -16,3 +16,4 @@ sequence	timestamp	source_commit	metric_value	status	description
 26	2026-03-26T04:25:20.306181+00:00	33853c80ef4f8fa7e59b8c50f56cad5d0f7245a8	172.182	completed	ppc64le memcpy: mark small-copy fallback paths as unlikely
 27	2026-03-26T04:28:25.568854+00:00	0e3fa35104a2c30d3ca2e38d80152af4f2c0493e	172.7391	completed	ppc64le memcpy: full load-then-store for rte_mov256 using 16 VSX registers
 28	2026-03-26T04:32:13.583215+00:00	94800e5470ff5ea1a79f3ae14854404b60799a65	177.5238	completed	memif rx: interleave metadata writes with data copies for cache locality
+29	2026-03-26T04:34:26.167723+00:00	c36b80edfc6d9582808d611258bde59e0b7536fd	176.4306	completed	memif tx: interleave per-packet descriptor writes with data copies
