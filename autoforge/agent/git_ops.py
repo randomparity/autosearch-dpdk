@@ -265,7 +265,7 @@ def record_verdict(
         metric: Metric value from the completed request.
         best_val: Previous best metric value, or None if no baseline.
         ctx: Result context with paths and metadata.
-        dry_run: If True, skip git push operations.
+        dry_run: If True, skip git operations.
     """
     if keep:
         _record_improvement(metric, best_val, ctx, dry_run)

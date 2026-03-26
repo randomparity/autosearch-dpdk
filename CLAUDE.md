@@ -38,11 +38,12 @@ Plugin-based optimization framework. An **agent** (workstation) proposes source 
 
 ### Plugin system
 
-Plugins are Python files discovered under `projects/<name>/{builds,deploys,tests,perfs}/`. Each plugin provides one component:
+Plugins are Python files discovered under `projects/<name>/{builds,deploys,tests,perfs,judges}/`. Each plugin provides one component:
 - **Builder** — compiles the project from source
 - **Deployer** — deploys build artifacts to the test target (bare metal, container, QEMU)
 - **Tester** — runs performance tests and returns metrics
 - **Profiler** — captures performance profiles during tests
+- **Judge** — overrides the default keep/revert decision after a completed test (agent-side only)
 
 See [Plugin SDK](docs/plugin-sdk.md) for authoring guide and examples.
 
@@ -63,7 +64,7 @@ pending → claimed → building → built → deploying → deployed → runnin
 autoforge/pointer.py   Shared: REPO_ROOT, PointerConfig, load_pointer(), save_pointer()
 autoforge/campaign.py  Shared: CampaignConfig, typed accessor functions, campaign resolution
 autoforge/protocol/    Shared: TestRequest, Direction, GIT_TIMEOUT, status constants, StatusLiteral, extract_metric
-autoforge/plugins/     Plugin protocols (Builder, Deployer, Tester, Plugin) and loader
+autoforge/plugins/     Plugin protocols (Builder, Deployer, Tester, Profiler, Judge, JudgeVerdict) and loader (load_pipeline, load_judge)
 autoforge/agent/       Workstation: CLI subcommands, git ops, history tracking
 autoforge/runner/      Lab machine: service loop, git-based state transitions
 autoforge/perf/        Profiling: perf record orchestration, stack analysis, arch profiles
@@ -76,7 +77,7 @@ autoforge/perf/        Profiling: perf record orchestration, stack analysis, arc
 - `cli.py` — CLI subcommands (`context`, `submit`, `poll`, `judge`, `baseline`, `finale`, `revert`, `build-log`, `status`, `hints`, `sprint`, `project`, `summarize`, `doctor`) for Claude Code
 - `hints.py` — architecture-specific optimization hints lookup (supports topics: optimization, perf-counters)
 - `loop.py` — interactive iteration loop (manual fallback)
-- `git_ops.py` — git subprocess wrappers, `ResultContext`, `record_result_or_revert()`, `full_revert()`, `force_push_source()`
+- `git_ops.py` — git subprocess wrappers, `ResultContext`, `record_result_or_revert()`, `record_verdict()`, `full_revert()`, `force_push_source()`
 - `project.py` — `init_project()` for scaffolding new projects
 - `strategy.py` — `format_context()`, `has_submodule_change()`, `extract_profile_summary()`
 - `history.py` — TSV-based results/failures tracking
@@ -101,7 +102,7 @@ autoforge/perf/        Profiling: perf record orchestration, stack analysis, arc
 - `.autoforge.toml` — pointer file at repo root, sets active project + sprint (tracked in git)
 - `config/campaign.toml.example` — template for new sprint campaign configs
 - `projects/<project>/runner.toml` — framework runner config (paths, timeouts). Gitignored; copy from `runner.toml.example`
-- `projects/<project>/{builds,tests,perfs}/<plugin>.toml` — per-plugin config (sibling to .py). Gitignored; copy from `.toml.example`
+- `projects/<project>/{builds,deploys,tests,perfs,judges}/<plugin>.toml` — per-plugin config (sibling to .py). Gitignored; copy from `.toml.example`
 - `projects/<project>/sprints/<sprint>/campaign.toml` — authoritative campaign config per sprint
 - `pyelftools` in dependencies is required by DPDK's meson build, not by this project's Python code
 
@@ -113,8 +114,8 @@ Campaign config resolution order: explicit `--campaign` flag → `AUTOFORGE_CAMP
 - `CampaignConfig` — TypedDict hierarchy matching campaign TOML structure
 - `ProjectConfig` — plugin name + project-specific config (scope, submodule_path, etc.)
 - `Direction` — `Literal["maximize", "minimize"]` in `autoforge.protocol`
-- Plugin protocols: `Builder`, `Deployer`, `Tester`, `Plugin` in `autoforge.plugins.protocols`
-- Plugin results: `BuildResult`, `DeployResult`, `TestResult` in `autoforge.plugins.protocols`
+- Plugin protocols: `Builder`, `Deployer`, `Tester`, `Profiler`, `Judge` in `autoforge.plugins.protocols`
+- Plugin results: `BuildResult`, `DeployResult`, `TestResult`, `ProfileResult`, `JudgeVerdict` in `autoforge.plugins.protocols`
 
 ## Agent mode (Claude Code)
 

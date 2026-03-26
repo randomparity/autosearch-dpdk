@@ -42,6 +42,7 @@ class TestInitProject:
         assert (pdir / "deploys").is_dir()
         assert (pdir / "tests").is_dir()
         assert (pdir / "perfs").is_dir()
+        assert (pdir / "judges").is_dir()
         assert (pdir / "sprints").is_dir()
 
     def test_duplicate_raises(self, tmp_path: Path) -> None:

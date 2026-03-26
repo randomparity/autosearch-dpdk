@@ -302,11 +302,11 @@ class TestCmdJudge:
             patch("autoforge.agent.cli.find_latest_request", return_value=latest),
             patch("autoforge.agent.cli.best_result", return_value=None),
             patch("autoforge.agent.cli.append_result"),
-            patch("autoforge.agent.cli.record_result_or_revert") as mock_default,
+            patch("autoforge.agent.cli.apply_judge_verdict") as mock_apply,
         ):
             cmd_judge(campaign, dry_run=True)
 
-        mock_default.assert_called_once()
+        mock_apply.assert_called_once()
 
     def test_with_judge_plugin_uses_plugin(self, tmp_path: Path, capsys) -> None:
         from autoforge.agent.cli import cmd_judge
@@ -333,13 +333,11 @@ class TestCmdJudge:
             patch("autoforge.agent.cli.find_latest_request", return_value=latest),
             patch("autoforge.agent.cli.best_result", return_value=None),
             patch("autoforge.agent.cli.append_result"),
-            patch("autoforge.agent.cli.record_result_or_revert") as mock_default,
-            patch("autoforge.plugins.loader.load_judge", return_value=mock_judge),
-            patch("autoforge.agent.git_ops.record_verdict"),
+            patch("autoforge.agent.judge.load_judge", return_value=mock_judge),
+            patch("autoforge.agent.judge.record_verdict"),
         ):
             cmd_judge(campaign, dry_run=True)
 
-        mock_default.assert_not_called()
         out = capsys.readouterr().out
         assert "always-keep" in out
         assert "keep" in out

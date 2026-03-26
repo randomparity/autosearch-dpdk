@@ -363,3 +363,33 @@ class TestJudgePlugin:
         self._setup_judge(tmp_path)
         with pytest.raises(FileNotFoundError, match="not found"):
             load_judge("testproj", "nonexistent", root=tmp_path)
+
+    def test_load_judge_calls_configure_when_runner_config_provided(self, tmp_path) -> None:
+        """load_judge with runner_config invokes configure() on the instance."""
+        judge_source = """\
+from autoforge.plugins.protocols import JudgeVerdict
+
+class TrackingJudge:
+    name = "tracking"
+    configured_with = None
+
+    def configure(self, project_config, runner_config):
+        TrackingJudge.configured_with = (project_config, runner_config)
+
+    def judge(self, metric, best_val, direction, campaign, request):
+        return JudgeVerdict(keep=True, reason="ok")
+"""
+        judges_dir = tmp_path / "testproj" / "judges"
+        judges_dir.mkdir(parents=True)
+        (judges_dir / "tracking.py").write_text(judge_source)
+
+        j = load_judge(
+            "testproj",
+            "tracking",
+            root=tmp_path,
+            project_config={"name": "test"},
+            runner_config={"key": "val"},
+        )
+        assert isinstance(j, Judge)
+        # configure() was called — verify via the class attribute set in configure
+        assert j.__class__.configured_with == ({"name": "test"}, {"key": "val"})

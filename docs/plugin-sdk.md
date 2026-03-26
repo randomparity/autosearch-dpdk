@@ -1,8 +1,8 @@
 # Plugin SDK
 
 Autoforge uses a file-based plugin system. Each plugin is a standalone Python
-file that implements one of four protocols: Builder, Deployer, Tester, or
-Profiler. The framework discovers plugins automatically — no registration or
+file that implements one of five protocols: Builder, Deployer, Tester, Profiler, or
+Judge. The framework discovers plugins automatically — no registration or
 entry points needed.
 
 ## Quick start
@@ -21,6 +21,7 @@ projects/linux-kernel/
   deploys/
   tests/
   perfs/
+  judges/
   sprints/
 ```
 
@@ -108,7 +109,7 @@ test = "your-benchmark"
 
 ## Plugin discovery
 
-Plugins live under `projects/<project>/{builds,deploys,tests,perfs}/`. Each
+Plugins live under `projects/<project>/{builds,deploys,tests,perfs,judges}/`. Each
 `.py` file must contain exactly one class that conforms to the corresponding
 protocol. The class name is arbitrary — the loader finds it by protocol
 conformance, not by name.
@@ -117,7 +118,7 @@ conformance, not by name.
 
 1. A `name` class attribute (string, used for logging)
 2. A `configure(self, project_config, runner_config) -> None` method
-3. The protocol-specific method (`build`, `deploy`, `test`, or `profile`)
+3. The protocol-specific method (`build`, `deploy`, `test`, `profile`, or `judge`)
 4. A no-argument constructor (the loader calls `cls()` with no args)
 
 ## Builder
@@ -442,6 +443,67 @@ appears in results, check these common issues on the runner machine:
    in your campaign.toml. An empty profiler field skips profiling even when
    `profiling.enabled = true`.
 
+## Judge
+
+Overrides the default keep/revert decision after a test completes. This is
+optional — omitting `judge` in the campaign config uses the built-in
+threshold comparison.
+
+```python
+from __future__ import annotations
+from typing import Any
+from autoforge.campaign import CampaignConfig, ProjectConfig
+from autoforge.plugins.protocols import JudgeVerdict
+from autoforge.protocol import Direction, TestRequest
+
+class MyJudge:
+    name = "custom"
+
+    def configure(
+        self, project_config: ProjectConfig, runner_config: dict[str, Any],
+    ) -> None:
+        self._cfg = runner_config.get("judge", {})
+
+    def judge(
+        self,
+        metric: float | None,
+        best_val: float | None,
+        direction: Direction,
+        campaign: CampaignConfig,
+        request: TestRequest,
+    ) -> JudgeVerdict:
+        if metric is None:
+            return JudgeVerdict(keep=False, reason="no metric value")
+        if best_val is None or metric > best_val:
+            return JudgeVerdict(keep=True, reason=f"{metric:.2f} > {best_val}")
+        return JudgeVerdict(keep=False, reason=f"{metric:.2f} not better than {best_val}")
+```
+
+**Parameters passed to `judge()`:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `metric` | `float \| None` | Metric value from this test run, or `None` if the test failed |
+| `best_val` | `float \| None` | Best metric seen so far, or `None` if no prior baseline |
+| `direction` | `Direction` | `"maximize"` or `"minimize"` |
+| `campaign` | `CampaignConfig` | Full campaign config for this sprint |
+| `request` | `TestRequest` | The completed test request (includes description, tags, commit) |
+
+**JudgeVerdict fields:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `keep` | `bool` | yes | `True` to commit the change, `False` to revert |
+| `reason` | `str` | yes | Human-readable explanation printed by the agent |
+
+Place the plugin at `projects/<project>/judges/<name>.py` and set in the
+campaign config:
+
+```toml
+[project]
+judge = "custom"
+```
+
 ## Configuration
 
 ### Framework config: `projects/<project>/runner.toml`
@@ -496,6 +558,7 @@ build = "local"
 deploy = "podman"
 test = "wrk-bench"
 # profiler = "perf-record"  # optional
+# judge = "custom"          # optional: custom judge plugin under projects/<name>/judges/
 
 [metric]
 name = "requests_per_sec"
@@ -542,6 +605,7 @@ class TestBuild:
 ## Checklist for new plugins
 
 - [ ] Plugin file at `projects/<project>/<category>/<name>.py`
+  (categories: `builds`, `deploys`, `tests`, `perfs`, `judges`)
 - [ ] `from __future__ import annotations` at top of file
 - [ ] Class with `name` attribute matching the filename stem
 - [ ] `configure()` method stores relevant config

@@ -10,9 +10,9 @@ from autoforge.agent.git_ops import (
     ensure_optimization_branch,
     git_add_commit_push,
     git_submodule_head,
-    record_result_or_revert,
 )
 from autoforge.agent.history import append_result, best_result, load_history
+from autoforge.agent.judge import apply_judge_verdict
 from autoforge.agent.metric import below_threshold
 from autoforge.agent.protocol import create_request, next_sequence, poll_for_completion
 from autoforge.agent.sprint import failures_path, requests_dir, results_path
@@ -129,7 +129,7 @@ def run_interactive_iteration(
         failures_path=fail,
         optimization_branch=optimization_branch(campaign),
     )
-    record_result_or_revert(metric, best_val, direction, ctx, dry_run=dry_run)
+    apply_judge_verdict(metric, best_val, direction, campaign, result, ctx, dry_run=dry_run)
 
     if below_threshold(metric, best_val, campaign):
         threshold = metric_threshold(campaign)

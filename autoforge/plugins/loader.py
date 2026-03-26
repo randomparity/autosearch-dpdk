@@ -58,7 +58,7 @@ def _find_plugin_file(project: str, category: str, name: str, root: Path | None 
 
     Args:
         project: Project name (directory under projects/).
-        category: One of 'build', 'deploy', 'test', 'profiler'.
+        category: One of 'build', 'deploy', 'test', 'profiler', 'judge'.
         name: Plugin name (filename stem, e.g. 'local').
         root: Override projects root (for testing).
 
@@ -162,7 +162,7 @@ def load_component(
 
     Args:
         project: Project name (directory under projects/).
-        category: One of 'build', 'deploy', 'test', 'profiler'.
+        category: One of 'build', 'deploy', 'test', 'profiler', 'judge'.
         name: Plugin name (filename stem).
         root: Override projects root (for testing).
         project_config: Campaign project config (passed to configure).
@@ -207,7 +207,7 @@ def list_components(
 
     Args:
         project: Project name.
-        category: One of 'build', 'deploy', 'test', 'profiler'.
+        category: One of 'build', 'deploy', 'test', 'profiler', 'judge'.
         root: Override projects root (for testing).
 
     Returns:
@@ -226,18 +226,34 @@ def list_components(
     return sorted(p.stem for p in category_dir.glob("*.py") if p.is_file())
 
 
-def load_judge(project: str, name: str, root: Path | None = None) -> Judge:
+def load_judge(
+    project: str,
+    name: str,
+    root: Path | None = None,
+    *,
+    project_config: dict[str, Any] | None = None,
+    runner_config: dict[str, Any] | None = None,
+) -> Judge:
     """Load a judge plugin by project and name.
 
     Args:
         project: Project name (directory under projects/).
         name: Plugin name (filename stem).
         root: Override projects root (for testing).
+        project_config: Campaign project config (passed to configure).
+        runner_config: Framework runner config (merged with sibling .toml).
 
     Returns:
-        An instantiated Judge plugin.
+        An instantiated (and optionally configured) Judge plugin.
     """
-    return load_component(project, "judge", name, root=root)  # type: ignore[return-value]
+    return load_component(  # type: ignore[return-value]
+        project,
+        "judge",
+        name,
+        root=root,
+        project_config=project_config,
+        runner_config=runner_config,
+    )
 
 
 def load_pipeline(

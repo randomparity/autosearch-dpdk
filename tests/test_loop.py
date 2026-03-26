@@ -126,6 +126,50 @@ class TestRunBaseline:
         assert "dpdk" not in staged_paths[0]
 
 
+class TestRunInteractiveIterationJudge:
+    """Verify run_interactive_iteration delegates to apply_judge_verdict."""
+
+    def test_delegates_to_apply_judge_verdict(self, tmp_path: Path) -> None:
+        from autoforge.agent.loop import run_interactive_iteration
+        from autoforge.protocol import TestRequest
+
+        result = TestRequest(
+            sequence=1,
+            created_at="2026-03-26T00:00:00",
+            source_commit="abc123",
+            description="test change",
+            build_plugin="local",
+            deploy_plugin="local",
+            test_plugin="testpmd-memif",
+            profile_plugin="",
+            metric_name="throughput_mpps",
+            metric_path="throughput_mpps",
+        )
+        result.status = "completed"
+        result.metric_value = 90.0
+
+        with (
+            patch("autoforge.agent.loop.requests_dir", return_value=tmp_path / "requests"),
+            patch("autoforge.agent.loop.results_path", return_value=tmp_path / "results.tsv"),
+            patch("autoforge.agent.loop.failures_path", return_value=tmp_path / "failures.tsv"),
+            patch("autoforge.agent.loop.load_history", return_value=[]),
+            patch("autoforge.agent.loop.has_submodule_change", return_value=True),
+            patch("autoforge.agent.loop.git_submodule_head", return_value="abc123"),
+            patch("autoforge.agent.loop.next_sequence", return_value=1),
+            patch("autoforge.agent.loop.create_request", return_value=tmp_path / "req.json"),
+            patch("autoforge.agent.loop.git_add_commit_push"),
+            patch("autoforge.agent.loop.poll_for_completion", return_value=result),
+            patch("autoforge.agent.loop.best_result", return_value=None),
+            patch("autoforge.agent.loop.append_result"),
+            patch("autoforge.agent.loop.below_threshold", return_value=False),
+            patch("autoforge.agent.loop.apply_judge_verdict") as mock_apply,
+            patch("builtins.input", return_value="test change"),
+        ):
+            run_interactive_iteration(SAMPLE_CAMPAIGN, tmp_path / "dpdk", dry_run=False)
+
+        mock_apply.assert_called_once()
+
+
 class TestLoopMissingBranch:
     def test_empty_branch_raises_system_exit(self) -> None:
         campaign_empty_branch = {

@@ -8,7 +8,7 @@ from pathlib import Path
 from autoforge.pointer import REPO_ROOT, save_pointer
 
 PROJECT_NAME_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
-PROJECT_SUBDIRS = ("builds", "deploys", "tests", "perfs", "sprints")
+PROJECT_SUBDIRS = ("builds", "deploys", "tests", "perfs", "judges", "sprints")
 
 
 def validate_project_name(name: str) -> None:

@@ -45,6 +45,7 @@
 ### autoforge/plugins/loader.py (feat/plugin-architecture)
 - `spec.loader.exec_module(module)` has no try/except. Syntax errors or import
   failures in plugin files propagate uncaught into poll_loop.
+  (Fixed in feat/issue-17: now wrapped with try/except in _load_python_class.)
 
 ### autoforge/runner/service.py (feat/plugin-architecture)
 - `load_config` default `"config/runner.toml"` is relative to CWD — fails if
@@ -155,6 +156,24 @@
 - Runner config split (fix/runner-setup): runner.toml moved to `projects/<project>/runner.toml`.
   Plugin configs now live as sibling .toml files next to each plugin .py.
   `local-server.py` renamed to `local.py`.
+
+### feat/issue-17 patterns (reviewed 2026-03-26)
+- Judge protocol uses TYPE_CHECKING guard for CampaignConfig and TestRequest — correct.
+  No circular import. configure() is part of the protocol but never called in cmd_judge
+  (load_judge passes no runner_config). configure() is dead for judge plugins loaded by
+  the agent. This is a design gap — judge plugins cannot receive runner.toml config.
+- Docstrings in _find_plugin_file, load_component, list_components still say
+  "One of 'build', 'deploy', 'test', 'profiler'" — stale, missing 'judge'.
+- loop.py does NOT integrate the judge plugin. Only cmd_judge (CLI path) does.
+  The interactive fallback loop (autoforge-loop) always uses record_result_or_revert.
+  This is an undocumented limitation.
+- record_verdict returns None; record_result_or_revert returns bool.
+  Inconsistency is harmless because the return value of record_result_or_revert is
+  not used at either call site in cli.py or loop.py.
+- No test for judge plugin when request status is "failed" (metric=None passed to judge).
+- No test for judge plugin load failure surfacing through cmd_judge.
+- check_campaign() in doctor.py does not validate the judge plugin key — consistent
+  with existing behavior for profiler (also not validated), so not a regression.
 
 ### docs/walkthrough-fixes patterns (reviewed 2026-03-26)
 - `sprint_branch_name()` in sprint.py doesn't validate the input sprint name.

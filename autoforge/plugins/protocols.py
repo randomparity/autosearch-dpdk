@@ -140,5 +140,13 @@ class Judge(Protocol):
         campaign: CampaignConfig,
         request: TestRequest,
     ) -> JudgeVerdict:
-        """Return a verdict for whether to keep or revert the result."""
+        """Return a verdict for whether to keep or revert the result.
+
+        Args:
+            metric: Metric value from this test run, or None if the test failed.
+            best_val: Best metric seen so far, or None if no prior baseline.
+            direction: Whether higher or lower is better.
+            campaign: Full campaign config for this sprint.
+            request: The completed test request.
+        """
         ...
