@@ -164,6 +164,21 @@ class TestCheckCampaign:
         results = check_campaign(project, sprint, tmp_path)
         assert any(r.name == "campaign.metric_direction" and r.status == "fail" for r in results)
 
+    def test_missing_deploy_field(self, tmp_path: Path) -> None:
+        project, sprint = _build_config_tree(tmp_path, runner=False, plugins=False)
+        path = tmp_path / "projects" / project / "sprints" / sprint / "campaign.toml"
+        _write_toml(
+            path,
+            '[campaign]\nname = "test"\n'
+            '[metric]\nname = "x"\npath = "x"\n'
+            'direction = "maximize"\nthreshold = 0.01\n'
+            '[project]\nname = "testproj"\n'
+            'build = "local"\ntest = "testpmd-memif"\n'
+            'scope = ["src/"]\n',
+        )
+        results = check_campaign(project, sprint, tmp_path)
+        assert any(r.name == "campaign.project_deploy" and r.status == "fail" for r in results)
+
     def test_profiling_without_profiler(self, tmp_path: Path) -> None:
         project, sprint = _build_config_tree(tmp_path, runner=False, plugins=False)
         path = tmp_path / "projects" / project / "sprints" / sprint / "campaign.toml"

@@ -310,7 +310,7 @@ def check_campaign(
         )
 
     proj = data.get("project", {})
-    for field in ("build", "test"):
+    for field in ("build", "deploy", "test"):
         val = proj.get(field, "")
         if val:
             results.append(
@@ -952,10 +952,21 @@ def run_doctor(
 
     # Extract project/sprint from pointer
     pointer_path = root / ".autoforge.toml"
-    with open(pointer_path, "rb") as f:
-        pointer = tomllib.load(f)
-    project = pointer["project"]
-    sprint = pointer["sprint"]
+    try:
+        with open(pointer_path, "rb") as f:
+            pointer = tomllib.load(f)
+        project = pointer["project"]
+        sprint = pointer["sprint"]
+    except (OSError, KeyError, tomllib.TOMLDecodeError) as exc:
+        results.append(
+            CheckResult(
+                "pointer.read",
+                "fail",
+                f"Failed to read .autoforge.toml: {exc}",
+                "pointer",
+            )
+        )
+        return results, {}
 
     # Layer 2: Campaign
     campaign_results = check_campaign(project, sprint, root)

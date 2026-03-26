@@ -37,19 +37,29 @@ SAMPLE_POINTER = {"project": "dpdk", "sprint": "2026-01-01-test"}
 class TestCheckGitClean:
     def test_clean_tree_passes(self) -> None:
         with patch("autoforge.agent.git_ops.subprocess.run") as mock_run:
+            mock_run.return_value.returncode = 0
             mock_run.return_value.stdout = ""
             check_git_clean()
 
     def test_dirty_tree_raises(self) -> None:
         with patch("autoforge.agent.git_ops.subprocess.run") as mock_run:
+            mock_run.return_value.returncode = 0
             mock_run.return_value.stdout = " M some/file.py\n"
             with pytest.raises(DirtyWorkingTreeError, match="some/file.py"):
                 check_git_clean()
 
     def test_untracked_files_ignored(self) -> None:
         with patch("autoforge.agent.git_ops.subprocess.run") as mock_run:
+            mock_run.return_value.returncode = 0
             mock_run.return_value.stdout = "?? .claude/\n?? scorecard.png\n"
             check_git_clean()
+
+    def test_git_failure_raises(self) -> None:
+        with patch("autoforge.agent.git_ops.subprocess.run") as mock_run:
+            mock_run.return_value.returncode = 128
+            mock_run.return_value.stderr = "fatal: not a git repository"
+            with pytest.raises(DirtyWorkingTreeError, match="git status failed"):
+                check_git_clean()
 
 
 class TestCmdSprintInit:

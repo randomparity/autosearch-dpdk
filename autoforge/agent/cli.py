@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 from autoforge.agent.git_ops import (
+    DirtyWorkingTreeError,
     check_git_clean,
     full_revert,
     git_add_commit_push,
@@ -340,6 +341,25 @@ def cmd_finale(campaign: CampaignConfig, dry_run: bool) -> None:
 
     _print_result(result)
 
+    if result.status == "completed" and result.metric_value is not None:
+        res = _res_path(campaign)
+        append_result(
+            result.sequence,
+            result.source_commit,
+            result.metric_value,
+            result.status,
+            result.description or description,
+            path=res,
+        )
+        git_add_commit_push(
+            [str(res)],
+            f"finale {seq:04d}: recorded result",
+            dry_run=False,
+        )
+        print("Finale recorded in results.tsv.")
+    elif result.status == "failed":
+        print("Finale failed — not recorded. Fix the issue and retry.")
+
 
 def cmd_revert(campaign: CampaignConfig, dry_run: bool) -> None:
     """Revert the last DPDK submodule commit and force-push the fork."""
@@ -596,6 +616,15 @@ def main() -> None:
 
     args = parser.parse_args()
 
+    try:
+        _dispatch(args)
+    except DirtyWorkingTreeError as exc:
+        print(str(exc), file=sys.stderr)
+        sys.exit(1)
+
+
+def _dispatch(args: argparse.Namespace) -> None:
+    """Route parsed CLI arguments to the appropriate command handler."""
     campaign_path = Path(args.campaign) if args.campaign else None
 
     # Commands that don't need campaign loaded

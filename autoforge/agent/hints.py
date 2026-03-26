@@ -99,12 +99,6 @@ _CACHE_LINE_SIZES: dict[str, int] = {
     "s390x": 256,
 }
 
-# (condition_fn, suggestion_text) tuples for workload_hints
-_WORKLOAD_RULES: list[tuple[str, object, str]] = [
-    # (metric_key, threshold, suggestion)
-    # Checked via derived_metrics
-]
-
 
 def workload_hints(arch: str, profile_summary: dict) -> str:
     """Generate workload-specific optimization suggestions from profiling data.

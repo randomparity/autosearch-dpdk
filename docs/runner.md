@@ -45,6 +45,8 @@ The runner resolves framework config via: explicit path > `AUTOFORGE_CONFIG`
 env var > `.autoforge.toml` pointer. Plugin configs are loaded automatically
 from sibling `.toml` files next to each plugin `.py` file.
 
+**Framework config** (`projects/dpdk/runner.toml`):
+
 | Section | Key | Description |
 |---------|-----|-------------|
 | `[runner]` | `phase` | Runner phase: `all` (default), `build`, `deploy`, or `test` |
@@ -56,12 +58,24 @@ from sibling `.toml` files next to each plugin `.py` file.
 | `[paths]` | `dts_dir` | DTS installation path (DTS plugin only) |
 | `[timeouts]` | `build_minutes` | Max build time before abort (default: 30) |
 | `[timeouts]` | `test_minutes` | Max test time before abort (default: 10) |
+
+**Build plugin config** (`projects/dpdk/builds/local.toml`):
+
+| Section | Key | Description |
+|---------|-----|-------------|
 | `[build]` | `jobs` | Parallel build jobs (0 = all cores) |
 | `[build]` | `cross_file` | Meson cross-file for cross-compiling (empty for native) |
 | `[build]` | `extra_meson_args` | Additional meson setup arguments |
+
+**Profiler plugin config** (`projects/dpdk/perfs/perf-record.toml`):
+
+| Section | Key | Description |
+|---------|-----|-------------|
 | `[profiling]` | `enabled` | Capture `perf` profiles during testpmd measurement window (default: `false`) |
 | `[profiling]` | `frequency` | Sampling frequency in Hz (default: `99`) |
 | `[profiling]` | `sudo` | Run `perf` with sudo — must match `testpmd.sudo` (default: `true`) |
+
+The deploy plugin (`deploys/local.py`) is a pass-through and needs no config file.
 
 Override the config path with the `AUTOFORGE_CONFIG` environment variable.
 The log level can also be set via the `LOG_LEVEL` environment variable.
@@ -85,7 +99,7 @@ The test plugin is selected in the sprint's `campaign.toml` via `[project].test`
 then stops testpmd and computes bi-directional Mpps from accumulated forward
 statistics.
 
-Configure in `projects/dpdk/runner.toml`:
+Configure in `projects/dpdk/tests/testpmd-memif.toml`:
 
 | Key | Description |
 |-----|-------------|

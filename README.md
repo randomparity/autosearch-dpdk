@@ -31,8 +31,8 @@ Prerequisites: Python 3.13+, [uv](https://docs.astral.sh/uv/), git.
 git clone --recurse-submodules <repo-url>
 cd autosearch-dpdk
 uv sync
-uv run autosearch context            # show current optimization state
-uv run autosearch-loop --dry-run     # interactive mode (no git push)
+uv run autoforge context             # show current optimization state
+uv run autoforge-loop --dry-run      # interactive mode (no git push)
 ```
 
 The agent is Claude Code. Each sprint has a `program.md` with its optimization goals — read the active sprint's program file for the full autonomous workflow.
@@ -72,11 +72,12 @@ docs/            Documentation
 ```bash
 uv sync --group dev
 uv run pytest -q
-uv run ruff check src/ tests/
-uv run ruff format src/ tests/
+uv run ruff check autoforge/ tests/
+uv run ruff format autoforge/ tests/
 ```
 
 ## Documentation
 
 - [Agent guide](docs/agent.md) — workstation setup, campaign config, running
 - [Runner guide](docs/runner.md) — lab machine setup, testpmd/DTS config, deployment
+- [Plugin SDK](docs/plugin-sdk.md) — authoring guide for build, deploy, test, and profiler plugins

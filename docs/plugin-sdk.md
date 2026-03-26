@@ -450,7 +450,7 @@ log_level = "info"
 poll_interval = 30
 
 [paths]
-source = "/home/user/src/project"
+dpdk_src = "/home/user/src/project"    # key names are project-specific
 build_dir = "/tmp/project-build"
 
 [timeouts]

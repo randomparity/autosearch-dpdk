@@ -9,8 +9,8 @@ uv sync --group dev          # install deps + dev tools
 uv run pytest -q             # run all tests
 uv run pytest tests/test_schema.py -q                 # run one test file
 uv run pytest tests/test_schema.py::TestSerialization  # run one test class
-uv run ruff check autoforge/ autoforge_dpdk/ tests/    # lint
-uv run ruff format autoforge/ autoforge_dpdk/ tests/   # format
+uv run ruff check autoforge/ tests/    # lint
+uv run ruff format autoforge/ tests/   # format
 uv run autoforge context                               # show optimization state
 uv run autoforge submit -d "description"               # submit change for testing
 uv run autoforge submit -d "desc" -t "memcpy,cache"   # submit with experiment tags
@@ -46,13 +46,13 @@ Plugins are Python files discovered under `projects/<name>/{builds,deploys,tests
 
 See [Plugin SDK](docs/plugin-sdk.md) for authoring guide and examples.
 
-The DPDK plugin (`autoforge_dpdk/`) is the reference implementation. External plugins (vLLM, kernel) are separate packages.
+The DPDK plugin (`projects/dpdk/`) is the reference implementation. External plugins (vLLM, kernel) are separate packages.
 
 ### Protocol flow
 
 ```
-pending → claimed → building → running → completed
-                                       → failed (from any state)
+pending → claimed → building → built → deploying → deployed → running → completed
+                                                                       → failed (from any state)
 ```
 
 `TestRequest` dataclass in `autoforge/protocol/schema.py` is the shared contract. Both sides serialize it as JSON files named `{seq:04d}_{timestamp}.json`. Status transitions are enforced by `VALID_TRANSITIONS`.
@@ -66,14 +66,13 @@ autoforge/plugins/     Plugin protocols (Builder, Deployer, Tester, Plugin) and 
 autoforge/agent/       Workstation: CLI subcommands, git ops, history tracking
 autoforge/runner/      Lab machine: service loop, git-based state transitions
 autoforge/perf/        Profiling: perf record orchestration, stack analysis, arch profiles
-autoforge_dpdk/        DPDK plugin: meson+ninja build, testpmd/DTS testing
 ```
 
-**Import rules:** `agent/` and `runner/` both import from `protocol/`, `plugins/`, and `autoforge.campaign`, never from each other. `autoforge_dpdk/` imports from `autoforge.plugins.protocols` for result types and from `autoforge.perf` for profiling. Always import from `autoforge.protocol` (the facade), not `autoforge.protocol.schema` directly.
+**Import rules:** `agent/` and `runner/` both import from `protocol/`, `plugins/`, and `autoforge.campaign`, never from each other. Always import from `autoforge.protocol` (the facade), not `autoforge.protocol.schema` directly.
 
 ### Agent modules
 
-- `cli.py` — CLI subcommands (`context`, `submit`, `poll`, `judge`, `baseline`, `revert`, `build-log`, `status`, `hints`, `sprint`, `project`) for Claude Code
+- `cli.py` — CLI subcommands (`context`, `submit`, `poll`, `judge`, `baseline`, `finale`, `revert`, `build-log`, `status`, `hints`, `sprint`, `project`, `summarize`, `doctor`) for Claude Code
 - `hints.py` — architecture-specific optimization hints lookup (supports topics: optimization, perf-counters)
 - `loop.py` — interactive iteration loop (manual fallback)
 - `git_ops.py` — git subprocess wrappers (`GIT_TIMEOUT=60`), `record_result_or_revert()`, `full_revert()`, `force_push_source()`
@@ -88,11 +87,13 @@ autoforge_dpdk/        DPDK plugin: meson+ninja build, testpmd/DTS testing
 - `service.py` — main polling loop, loads plugin, `execute_request()` orchestrates build→deploy→test→push
 - `protocol.py` — git commit/push with retry, `claim()`, `update_status()`, `fail()`
 
-### DPDK plugin modules (`autoforge_dpdk/`)
+### DPDK plugin modules (`projects/dpdk/`)
 
-- `builder.py` — `DpdkBuilder`: meson + ninja build orchestration
-- `deployer.py` — `DpdkDeployer`: trivial pass-through (bare-metal builds)
-- `tester.py` — `DpdkTester`: PTY-based testpmd execution, DTS test suites, profiling integration
+- `builds/local.py` — meson + ninja build orchestration
+- `deploys/local.py` — trivial pass-through (bare-metal builds)
+- `tests/testpmd-memif.py` — PTY-based testpmd execution, memif vdevs, repeat-run median
+- `tests/dts-mlx5.py` — DTS integration for mlx5
+- `perfs/perf-record.py` — Linux perf profile capture
 
 ### Configuration
 

@@ -32,6 +32,10 @@ def check_git_clean() -> None:
         text=True,
         timeout=GIT_TIMEOUT,
     )
+    if result.returncode != 0:
+        raise DirtyWorkingTreeError(
+            f"git status failed (exit {result.returncode}): {result.stderr.strip()}"
+        )
     dirty = [
         line for line in result.stdout.splitlines() if line.strip() and not line.startswith("??")
     ]

@@ -51,7 +51,7 @@ Campaign settings are per-sprint at
 | `[project]` | `test` | Test plugin name (e.g. `"testpmd-memif"`) |
 | `[project]` | `profiler` | Profiler plugin name (e.g. `"perf-record"`) |
 | `[project]` | `submodule_path` | Path to the DPDK submodule |
-| `[project]` | `optimization_branch` | Branch for good changes (default: `"autosearch/optimize"`) |
+| `[project]` | `optimization_branch` | Branch for good changes (empty = skip branch push; `campaign.toml.example` sets `"autosearch/optimize"`) |
 | `[project]` | `scope` | Source paths the agent may modify (relative to submodule) |
 | `[profiling]` | `enabled` | Include profiling summary in results (default: `false`) |
 
@@ -81,14 +81,16 @@ sprint's optimization goals. Claude Code uses the CLI subcommands (`context`,
 | Command | Description |
 |---------|-------------|
 | `autoforge context` | Print campaign state, history, failures, profiling data |
-| `autoforge submit -d "description"` | Validate submodule change, create request, push |
+| `autoforge submit -d "description" [-t "tags"]` | Validate submodule change, create request, push (optional comma-separated experiment tags) |
 | `autoforge poll` | Poll until latest request completes |
 | `autoforge judge` | Compare result to best, keep or revert, record in TSV |
 | `autoforge baseline` | Submit baseline (no changes) and poll for result |
+| `autoforge finale` | Submit finale request (modified source, profiling disabled) |
+| `autoforge summarize` | Generate sprint summary document from results history |
 | `autoforge status` | Print latest request status without polling |
 | `autoforge doctor` | Validate configuration setup |
 | `autoforge doctor --role agent` | Agent-side configuration checks only |
-| `autoforge sprint init <name>` | Create a new sprint (`YYYY-MM-DD-slug`) |
+| `autoforge sprint init <name> [--from <sprint>]` | Create a new sprint (`YYYY-MM-DD-slug`); optionally clone config from existing sprint |
 | `autoforge sprint list` | List all sprints with iteration counts |
 | `autoforge sprint active` | Print active sprint name |
 | `autoforge sprint switch <name>` | Switch active sprint |
