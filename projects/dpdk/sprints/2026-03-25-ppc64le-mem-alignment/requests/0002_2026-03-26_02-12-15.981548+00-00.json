@@ -9,11 +9,11 @@
   "profile_plugin": "perf-record",
   "metric_name": "throughput_mpps",
   "metric_path": "throughput_mpps",
-  "status": "running",
+  "status": "failed",
   "claimed_at": "2026-03-26T02:13:25.039780+00:00",
   "built_at": null,
   "deployed_at": null,
-  "completed_at": null,
+  "completed_at": "2026-03-26T02:14:57.748706+00:00",
   "build_runner_id": null,
   "deploy_runner_id": null,
   "test_runner_id": null,
@@ -21,5 +21,5 @@
   "results_json": null,
   "results_summary": null,
   "metric_value": null,
-  "error": null
+  "error": "testpmd exited during startup"
 }
