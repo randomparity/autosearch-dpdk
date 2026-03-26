@@ -16,6 +16,7 @@ uv run autoforge submit -d "description"               # submit change for testi
 uv run autoforge poll                                  # wait for runner result
 uv run autoforge judge                                 # keep or revert based on metric
 uv run autoforge baseline                              # submit baseline (no changes)
+uv run autoforge finale                                # submit finale (modified, no profiling)
 uv run autoforge hints                                 # show arch optimization hints
 uv run autoforge hints --list                           # list available hint topics
 uv run autoforge hints --topic perf-counters            # show perf counter reference

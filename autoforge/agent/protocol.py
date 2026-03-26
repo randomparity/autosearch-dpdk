@@ -36,6 +36,8 @@ def create_request(
     campaign: dict,
     description: str,
     requests_dir: Path,
+    *,
+    skip_profiling: bool = False,
 ) -> Path:
     """Create a new pending test request file.
 
@@ -45,6 +47,7 @@ def create_request(
         campaign: Campaign configuration dict.
         description: Human-readable description of the change.
         requests_dir: Directory to write the request file into.
+        skip_profiling: If True, omit the profiler plugin from the request.
 
     Returns:
         Path to the newly created JSON file.
@@ -54,6 +57,8 @@ def create_request(
     metric = campaign.get("metric", {})
     project = campaign.get("project", {})
 
+    profiler = "" if skip_profiling else project.get("profiler", "")
+
     request = TestRequest(
         sequence=seq,
         created_at=datetime.now(UTC).isoformat(),
@@ -62,7 +67,7 @@ def create_request(
         build_plugin=project.get("build", ""),
         deploy_plugin=project.get("deploy", ""),
         test_plugin=project.get("test", ""),
-        profile_plugin=project.get("profiler", ""),
+        profile_plugin=profiler,
         metric_name=metric.get("name", ""),
         metric_path=metric.get("path", ""),
     )

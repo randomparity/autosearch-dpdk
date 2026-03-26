@@ -238,6 +238,55 @@ def cmd_baseline(campaign: CampaignConfig, dry_run: bool) -> None:
     _print_result(result)
 
 
+def cmd_finale(campaign: CampaignConfig, dry_run: bool) -> None:
+    """Submit a finale request (modified source, no profiling) and poll."""
+    source_path = _source_path(campaign)
+    req = _req_dir(campaign)
+
+    if not validate_change(source_path):
+        print("ERROR: No submodule change detected. Commit in the submodule first.")
+        sys.exit(1)
+
+    commit = git_submodule_head(source_path)
+    seq = next_sequence(req)
+    description = "Finale: modified source, no profiling"
+
+    request_path = create_request(
+        seq,
+        commit,
+        campaign,
+        description,
+        req,
+        skip_profiling=True,
+    )
+    git_add_commit_push(
+        [str(request_path), str(source_path)],
+        f"finale {seq:04d}: {description}",
+        dry_run=dry_run,
+    )
+    print(f"Finale request {seq:04d} submitted (commit {commit[:12]}).")
+
+    if dry_run:
+        print(f"[dry-run] Request written to {request_path}")
+        return
+
+    poll_interval = campaign.get("agent", {}).get("poll_interval", 30)
+    timeout = campaign.get("agent", {}).get("timeout_minutes", 60) * 60
+
+    try:
+        result = poll_for_completion(
+            seq,
+            timeout=timeout,
+            interval=poll_interval,
+            requests_dir=req,
+        )
+    except TimeoutError:
+        print(f"Finale request {seq:04d} timed out.")
+        return
+
+    _print_result(result)
+
+
 def cmd_revert(campaign: CampaignConfig, dry_run: bool) -> None:
     """Revert the last DPDK submodule commit and force-push the fork."""
     source_path = _source_path(campaign)
@@ -391,7 +440,8 @@ def main() -> None:
     sub.add_parser("status", help="Print latest request status")
     sub.add_parser("poll", help="Poll until latest request completes")
     sub.add_parser("judge", help="Compare result to best, keep or revert")
-    sub.add_parser("baseline", help="Submit baseline request")
+    sub.add_parser("baseline", help="Submit baseline request (unmodified source, no profiling)")
+    sub.add_parser("finale", help="Submit finale request (modified source, no profiling)")
     sub.add_parser("revert", help="Revert last DPDK change and force-push fork")
 
     hints_p = sub.add_parser("hints", help="Show architecture optimization hints")
@@ -515,6 +565,8 @@ def main() -> None:
         cmd_judge(campaign, args.dry_run)
     elif args.command == "baseline":
         cmd_baseline(campaign, args.dry_run)
+    elif args.command == "finale":
+        cmd_finale(campaign, args.dry_run)
     elif args.command == "revert":
         cmd_revert(campaign, args.dry_run)
     elif args.command == "build-log":
