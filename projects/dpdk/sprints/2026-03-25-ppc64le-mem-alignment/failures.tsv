@@ -25,3 +25,5 @@ timestamp	source_commit	metric_value	description	diff_summary
  1 file changed, 13 insertions(+), 12 deletions(-)"
 2026-03-26T13:06:38.854033+00:00	099cacd106b19219ec05d4165c5c0a927e5effe3	180.5952	memif rx: prefetch next batch source buffers one iteration ahead	"drivers/net/memif/rte_eth_memif.c | 16 +++++++++++++---
  1 file changed, 13 insertions(+), 3 deletions(-)"
+2026-03-26T13:09:53.006249+00:00	58cda4e40f5c5100b6b7dddd67f064dd77aa0f23	181.1104	memif rx: 8-at-a-time fast path to halve loop iterations	"drivers/net/memif/rte_eth_memif.c | 126 +++++++++++++++++++++++++++++---------
+ 1 file changed, 98 insertions(+), 28 deletions(-)"

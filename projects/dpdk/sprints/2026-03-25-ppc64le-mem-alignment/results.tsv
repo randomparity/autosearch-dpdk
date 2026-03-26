@@ -27,3 +27,4 @@ sequence	timestamp	source_commit	metric_value	status	description
 38	2026-03-26T12:58:52.568053+00:00	3d1b71b34193313cd24744c7542577233f88b096	183.8013	completed	memif rx: skip ol_flags zeroing (stays 0 in io-fwd steady state)
 39	2026-03-26T13:01:54.448065+00:00	e40fb3a88411f53e82c402613cb6bbf58e4bb27e	185.6884	completed	memif rx: eliminate data_off and port writes in 4-at-a-time path
 40	2026-03-26T13:06:37.608068+00:00	099cacd106b19219ec05d4165c5c0a927e5effe3	180.5952	completed	memif rx: prefetch next batch source buffers one iteration ahead
+41	2026-03-26T13:09:51.313729+00:00	58cda4e40f5c5100b6b7dddd67f064dd77aa0f23	181.1104	completed	memif rx: 8-at-a-time fast path to halve loop iterations
