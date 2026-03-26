@@ -1,3 +1,4 @@
 sequence	timestamp	source_commit	metric_value	status	description
 10	2026-03-26T03:07:03.685574+00:00	d1000789ccb338539d365a0d09d44a67b960edb7	160.4264	completed	memif rx+tx: add prefetch hints for descriptors, buffers, and mbufs
 11	2026-03-26T03:21:36.043673+00:00	2cef1aed297129cba8139f1b8d91287211d1d67b	165.8883	completed	ppc64le memcpy: separate loads from stores in rte_mov64/rte_mov128 for better pipelining
+12	2026-03-26T03:24:32.912182+00:00	e7d0f842bef9a72fdec39ad781734350cae8a258	167.5572	completed	ppc64le memcpy: apply load-then-store pattern to rte_mov32 and rte_mov48
