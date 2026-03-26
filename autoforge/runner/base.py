@@ -73,7 +73,13 @@ def recover_stale_requests(requests_dir: Path, stale_statuses: frozenset[str]) -
                 request.sequence,
                 request.status,
             )
-            fail(request, path, error="runner restarted")
+            try:
+                fail(request, path, error="runner restarted")
+            except RuntimeError:
+                logger.error(
+                    "Could not push failure status for request %04d; written locally",
+                    request.sequence,
+                )
 
 
 def _run_build(
@@ -249,7 +255,13 @@ class PhaseRunner(ABC):
                         "Unhandled error in execute_phase for request %04d",
                         request.sequence,
                     )
-                    fail(request, request_path, error="runner: unhandled exception")
+                    try:
+                        fail(request, request_path, error="runner: unhandled exception")
+                    except RuntimeError:
+                        logger.error(
+                            "Could not push failure status for request %04d; written locally",
+                            request.sequence,
+                        )
 
         except KeyboardInterrupt:
             logger.info("Runner stopped by user")

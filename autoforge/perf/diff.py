@@ -91,7 +91,7 @@ def diff_stacks(
         curr_pct = curr_pcts.get(symbol, 0.0)
         delta = curr_pct - base_pct
         if abs(delta) >= threshold:
-            verdict = "regressed" if delta > 0 else "improved"
+            verdict = "regressed" if delta > 0 else "improved" if delta < 0 else "neutral"
             changes.append(
                 {
                     "symbol": symbol,

@@ -24,7 +24,6 @@ from autoforge.agent.strategy import (
 )
 from autoforge.campaign import (
     CampaignConfig,
-    Direction,
     agent_poll_interval,
     agent_timeout,
     campaign_max_iterations,
@@ -36,6 +35,7 @@ from autoforge.campaign import (
     submodule_path,
 )
 from autoforge.logging_config import setup_logging
+from autoforge.protocol import Direction
 
 
 def run_interactive_iteration(
