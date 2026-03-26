@@ -8,3 +8,4 @@ sequence	timestamp	source_commit	metric_value	status	description
 17	2026-03-26T03:50:46.294870+00:00	39f1e0bc101dda0897a853dd2fd77a9c3cacfe70	170.8963	completed	mempool/ppc64le: add memory channel spreading for POWER9
 18	2026-03-26T03:55:27.904543+00:00	409383865b81f7c6c8e8f2738e67bd38625b5cfd	172.6451	completed	mempool: replace per-element reverse copy with bulk memcpy in cache get
 19	2026-03-26T03:58:40.819955+00:00	1e751d3528565028cad0d8ef9aeff58625d565f4	171.3308	completed	mempool: bulk memcpy in remaining cache get paths
+20	2026-03-26T04:05:29.620531+00:00	6adc81faaca68a69ecbb8b1b104348525b7847d2	171.0193	completed	memif: enable -funroll-loops for the memif driver

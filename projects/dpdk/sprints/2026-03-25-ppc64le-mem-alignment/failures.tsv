@@ -3,3 +3,5 @@ timestamp	source_commit	metric_value	description	diff_summary
  1 file changed, 5 insertions(+), 2 deletions(-)"
 2026-03-26T03:58:42.114472+00:00	1e751d3528565028cad0d8ef9aeff58625d565f4	171.3308	mempool: bulk memcpy in remaining cache get paths	"lib/mempool/rte_mempool.h | 9 ++++-----
  1 file changed, 4 insertions(+), 5 deletions(-)"
+2026-03-26T04:05:30.795752+00:00	6adc81faaca68a69ecbb8b1b104348525b7847d2	171.0193	memif: enable -funroll-loops for the memif driver	"drivers/net/memif/meson.build | 2 ++
+ 1 file changed, 2 insertions(+)"
