@@ -9,7 +9,7 @@
   "profile_plugin": "perf-record",
   "metric_name": "throughput_mpps",
   "metric_path": "throughput_mpps",
-  "status": "claimed",
+  "status": "building",
   "claimed_at": "2026-03-26T02:26:35.460005+00:00",
   "built_at": null,
   "deployed_at": null,
