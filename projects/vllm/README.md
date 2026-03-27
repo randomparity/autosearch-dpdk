@@ -83,7 +83,7 @@ uv run autoforge sprint switch <sprint-name>
 Verify the configuration file is complete, investigate any warning/fail messages displayed.
 
 ```bash
-uv run autoforge doctor
+uv run autoforge doctor --role runner
 ```
 
 Pre-pull the model to avoid first-run delay:
@@ -105,6 +105,12 @@ Switch to the vLLM project and initialize a sprint:
 ```bash
 uv run autoforge project switch vllm
 uv run autoforge sprint init 2026-03-26-baseline
+```
+
+Verify the configuration is complete:
+
+```bash
+uv run autoforge doctor
 ```
 
 Start optimizing:
