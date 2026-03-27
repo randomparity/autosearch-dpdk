@@ -8,9 +8,13 @@ from unittest.mock import patch
 import pytest
 
 from autoforge.agent.cli import (
-    _format_build_log,
-    cmd_build_log,
+    _failure_log,
+    _format_inspect,
+    _format_log,
+    _format_timeline,
     cmd_hints,
+    cmd_inspect,
+    cmd_logs,
     cmd_revert,
     cmd_sprint_active,
     cmd_sprint_init,
@@ -162,46 +166,146 @@ class TestCmdRevert:
         assert "dry-run" in captured.out
 
 
-class TestFormatBuildLog:
+class TestFormatLog:
     def test_error_lines_highlighted(self) -> None:
         log = "compiling foo.c\nerror: undefined symbol\nok"
-        formatted = _format_build_log(log)
+        formatted = _format_log(log)
         assert ">>> error: undefined symbol" in formatted
 
     def test_fatal_highlighted(self) -> None:
         log = "fatal: something broke"
-        assert ">>> fatal:" in _format_build_log(log)
+        assert ">>> fatal:" in _format_log(log)
 
     def test_normal_lines_indented(self) -> None:
         log = "compiling bar.c"
-        assert _format_build_log(log).startswith("    ")
+        assert _format_log(log).startswith("    ")
+
+    def test_deploy_patterns(self) -> None:
+        log = "connecting...\ntimeout waiting for service\nrefused"
+        from autoforge.agent.cli import _DEPLOY_ERROR_PATTERNS
+
+        formatted = _format_log(log, _DEPLOY_ERROR_PATTERNS)
+        assert ">>> timeout" in formatted
+        assert ">>> refused" in formatted
+        assert "    connecting" in formatted
+
+    def test_test_patterns(self) -> None:
+        log = "running tests\nassertionError: expected 5\nFAIL"
+        from autoforge.agent.cli import _TEST_ERROR_PATTERNS
+
+        formatted = _format_log(log, _TEST_ERROR_PATTERNS)
+        assert ">>> assertion" in formatted
+        assert ">>> FAIL" in formatted
 
 
-class TestCmdBuildLog:
-    def test_build_log_not_found(self) -> None:
-        campaign = {**SAMPLE_CAMPAIGN}
+class TestCmdLogs:
+    def test_logs_not_found(self) -> None:
         with (
             patch("autoforge.agent.cli.find_request_by_seq", return_value=None),
             pytest.raises(SystemExit, match="1"),
         ):
-            cmd_build_log(campaign, seq=99)
+            cmd_logs(SAMPLE_CAMPAIGN, seq=99)
 
-    def test_build_log_empty(self, capsys: pytest.CaptureFixture) -> None:
-        mock_req = type("Req", (), {"build_log_snippet": None})()
-        with patch("autoforge.agent.cli.find_request_by_seq", return_value=mock_req):
-            cmd_build_log(SAMPLE_CAMPAIGN, seq=1)
+    def test_logs_no_logs_available(self, capsys: pytest.CaptureFixture) -> None:
+        from autoforge.protocol import TestRequest
 
-        captured = capsys.readouterr()
-        assert "No build log" in captured.out
+        req = TestRequest(
+            sequence=1,
+            created_at="2026-01-01T00:00:00",
+            source_commit="abc123",
+            description="test",
+            build_plugin="local",
+            deploy_plugin="local",
+            test_plugin="testpmd-memif",
+        )
+        with patch("autoforge.agent.cli.find_request_by_seq", return_value=req):
+            cmd_logs(SAMPLE_CAMPAIGN, seq=1)
+        assert "No logs available" in capsys.readouterr().out
 
-    def test_build_log_found(self, capsys: pytest.CaptureFixture) -> None:
-        mock_req = type("Req", (), {"build_log_snippet": "error: bad thing\nok line"})()
-        with patch("autoforge.agent.cli.find_request_by_seq", return_value=mock_req):
-            cmd_build_log(SAMPLE_CAMPAIGN, seq=1)
+    def test_logs_auto_detect_phase(self, capsys: pytest.CaptureFixture) -> None:
+        from autoforge.protocol import TestRequest
 
-        captured = capsys.readouterr()
-        assert ">>> error: bad thing" in captured.out
-        assert "    ok line" in captured.out
+        req = TestRequest(
+            sequence=1,
+            created_at="2026-01-01T00:00:00",
+            source_commit="abc123",
+            description="test",
+            build_plugin="local",
+            deploy_plugin="local",
+            test_plugin="testpmd-memif",
+            status="failed",
+            failed_phase="build",
+            build_log_snippet="error: bad\nok line",
+        )
+        with patch("autoforge.agent.cli.find_request_by_seq", return_value=req):
+            cmd_logs(SAMPLE_CAMPAIGN, seq=1)
+        out = capsys.readouterr().out
+        assert "Build log" in out
+        assert ">>> error: bad" in out
+
+    def test_logs_grep_filter(self, capsys: pytest.CaptureFixture) -> None:
+        from autoforge.protocol import TestRequest
+
+        req = TestRequest(
+            sequence=1,
+            created_at="2026-01-01T00:00:00",
+            source_commit="abc123",
+            description="test",
+            build_plugin="local",
+            deploy_plugin="local",
+            test_plugin="testpmd-memif",
+            status="failed",
+            failed_phase="build",
+            build_log_snippet="line one\nerror: bad\nline three",
+        )
+        with patch("autoforge.agent.cli.find_request_by_seq", return_value=req):
+            cmd_logs(SAMPLE_CAMPAIGN, seq=1, grep="error")
+        out = capsys.readouterr().out
+        assert "error: bad" in out
+        assert "line one" not in out
+
+    def test_logs_tail(self, capsys: pytest.CaptureFixture) -> None:
+        from autoforge.protocol import TestRequest
+
+        log = "\n".join(f"line {i}" for i in range(100))
+        req = TestRequest(
+            sequence=1,
+            created_at="2026-01-01T00:00:00",
+            source_commit="abc123",
+            description="test",
+            build_plugin="local",
+            deploy_plugin="local",
+            test_plugin="testpmd-memif",
+            status="failed",
+            failed_phase="build",
+            build_log_snippet=log,
+        )
+        with patch("autoforge.agent.cli.find_request_by_seq", return_value=req):
+            cmd_logs(SAMPLE_CAMPAIGN, seq=1, tail=5)
+        out = capsys.readouterr().out
+        assert "5 lines" in out
+        assert "line 99" in out
+        assert "line 0" not in out
+
+    def test_build_log_alias(self, capsys: pytest.CaptureFixture) -> None:
+        """build-log command routes to logs with phase=build."""
+        from autoforge.protocol import TestRequest
+
+        req = TestRequest(
+            sequence=1,
+            created_at="2026-01-01T00:00:00",
+            source_commit="abc123",
+            description="test",
+            build_plugin="local",
+            deploy_plugin="local",
+            test_plugin="testpmd-memif",
+            build_log_snippet="error: bad thing\nok line",
+        )
+        with patch("autoforge.agent.cli.find_request_by_seq", return_value=req):
+            cmd_logs(SAMPLE_CAMPAIGN, seq=1, phase="build")
+        out = capsys.readouterr().out
+        assert ">>> error: bad thing" in out
+        assert "    ok line" in out
 
 
 class TestCmdHints:
@@ -410,3 +514,245 @@ class TestProjectSwitchCommand:
             pytest.raises(SystemExit, match="1"),
         ):
             main()
+
+
+def _make_test_request(**overrides):
+    """Helper to create a TestRequest for CLI tests."""
+    from autoforge.protocol import TestRequest
+
+    defaults = {
+        "sequence": 5,
+        "created_at": "2026-03-26T12:00:00",
+        "source_commit": "abc123def456",
+        "description": "test change",
+        "build_plugin": "local",
+        "deploy_plugin": "local",
+        "test_plugin": "testpmd-memif",
+    }
+    defaults.update(overrides)
+    return TestRequest(**defaults)
+
+
+class TestFormatTimeline:
+    def test_basic_timeline(self) -> None:
+        req = _make_test_request(
+            status="completed",
+            claimed_at="2026-03-26T12:01:00",
+            built_at="2026-03-26T12:03:00",
+            deployed_at="2026-03-26T12:03:30",
+            completed_at="2026-03-26T12:05:00",
+        )
+        timeline = _format_timeline(req)
+        assert "created 12:00:00" in timeline
+        assert "claimed 12:01:00 (+1m0s)" in timeline
+        assert "built 12:03:00 (+2m0s)" in timeline
+        assert "deployed 12:03:30 (+30s)" in timeline
+
+    def test_failed_timeline_shows_phase(self) -> None:
+        req = _make_test_request(
+            status="failed",
+            failed_phase="build",
+            claimed_at="2026-03-26T12:01:00",
+            completed_at="2026-03-26T12:03:00",
+        )
+        timeline = _format_timeline(req)
+        assert "FAILED at build" in timeline
+
+    def test_empty_timeline(self) -> None:
+        req = _make_test_request()
+        timeline = _format_timeline(req)
+        assert "created" in timeline
+
+    def test_missing_intermediate_timestamps(self) -> None:
+        req = _make_test_request(
+            status="completed",
+            completed_at="2026-03-26T12:10:00",
+        )
+        timeline = _format_timeline(req)
+        assert "created" in timeline
+        assert "completed" in timeline
+
+
+class TestFailureLog:
+    def test_returns_build_log(self) -> None:
+        req = _make_test_request(
+            status="failed",
+            failed_phase="build",
+            build_log_snippet="build error here",
+        )
+        assert _failure_log(req) == "build error here"
+
+    def test_returns_deploy_log(self) -> None:
+        req = _make_test_request(
+            status="failed",
+            failed_phase="deploy",
+            deploy_log_snippet="deploy error here",
+        )
+        assert _failure_log(req) == "deploy error here"
+
+    def test_returns_test_log(self) -> None:
+        req = _make_test_request(
+            status="failed",
+            failed_phase="test",
+            test_log_snippet="test error here",
+        )
+        assert _failure_log(req) == "test error here"
+
+    def test_fallback_no_phase(self) -> None:
+        req = _make_test_request(
+            status="failed",
+            build_log_snippet="build log",
+        )
+        assert _failure_log(req) == "build log"
+
+    def test_none_when_no_logs(self) -> None:
+        req = _make_test_request(status="failed")
+        assert _failure_log(req) is None
+
+
+class TestFormatInspect:
+    def test_basic_inspect(self) -> None:
+        req = _make_test_request(
+            status="completed",
+            metric_value=14.5,
+            results_summary="All passed",
+            claimed_at="2026-03-26T12:01:00",
+            completed_at="2026-03-26T12:05:00",
+        )
+        output = _format_inspect(req)
+        assert "Request 0005" in output
+        assert "completed" in output
+        assert "14.5" in output
+        assert "All passed" in output
+        assert "Timeline:" in output
+
+    def test_inspect_with_failure(self) -> None:
+        req = _make_test_request(
+            status="failed",
+            failed_phase="build",
+            error="Build failed",
+            build_log_snippet="error: something\nok line",
+            claimed_at="2026-03-26T12:01:00",
+            completed_at="2026-03-26T12:03:00",
+        )
+        output = _format_inspect(req)
+        assert "Failed phase:  build" in output
+        assert "Build failed" in output
+        assert "Build log" in output
+
+    def test_inspect_with_results_json(self) -> None:
+        req = _make_test_request(
+            status="completed",
+            results_json={"throughput": 14.5},
+        )
+        output = _format_inspect(req)
+        assert "Results JSON:" in output
+        assert "throughput" in output
+
+    def test_inspect_truncates_long_logs(self) -> None:
+        long_log = "\n".join(f"line {i}" for i in range(100))
+        req = _make_test_request(
+            status="failed",
+            failed_phase="build",
+            build_log_snippet=long_log,
+        )
+        output = _format_inspect(req)
+        assert "50 more lines" in output
+        assert "logs --seq 5 --phase build" in output
+
+
+class TestCmdInspect:
+    def test_inspect_not_found(self) -> None:
+        with (
+            patch("autoforge.agent.cli.find_request_by_seq", return_value=None),
+            pytest.raises(SystemExit, match="1"),
+        ):
+            cmd_inspect(SAMPLE_CAMPAIGN, seq=99)
+
+    def test_inspect_json_mode(self, capsys: pytest.CaptureFixture) -> None:
+        req = _make_test_request(status="completed", metric_value=14.5)
+        with patch("autoforge.agent.cli.find_request_by_seq", return_value=req):
+            cmd_inspect(SAMPLE_CAMPAIGN, seq=5, as_json=True)
+        import json
+
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert data["sequence"] == 5
+        assert data["metric_value"] == 14.5
+
+    def test_inspect_human_mode(self, capsys: pytest.CaptureFixture) -> None:
+        req = _make_test_request(status="completed", metric_value=14.5)
+        with patch("autoforge.agent.cli.find_request_by_seq", return_value=req):
+            cmd_inspect(SAMPLE_CAMPAIGN, seq=5)
+        out = capsys.readouterr().out
+        assert "Request 0005" in out
+
+
+class TestFailurePatterns:
+    def test_no_requests_dir(self, tmp_path: Path) -> None:
+        from autoforge.agent.strategy import format_failure_patterns
+
+        result = format_failure_patterns(tmp_path / "nonexistent")
+        assert result == ""
+
+    def test_no_failures(self, tmp_path: Path) -> None:
+        from autoforge.agent.strategy import format_failure_patterns
+
+        req_dir = tmp_path / "requests"
+        req_dir.mkdir()
+        req = _make_test_request(status="completed", metric_value=14.5)
+        req.write(req_dir / req.filename)
+        result = format_failure_patterns(req_dir)
+        assert result == ""
+
+    def test_groups_by_phase(self, tmp_path: Path) -> None:
+        from autoforge.agent.strategy import format_failure_patterns
+
+        req_dir = tmp_path / "requests"
+        req_dir.mkdir()
+
+        for i, phase in enumerate(["build", "build", "test"], start=1):
+            req = _make_test_request(
+                sequence=i,
+                created_at=f"2026-03-26T12:0{i}:00",
+                status="failed",
+                failed_phase=phase,
+                error=f"{phase} failed",
+            )
+            req.write(req_dir / req.filename)
+
+        result = format_failure_patterns(req_dir)
+        assert "Recent failures:" in result
+        assert "2 build" in result
+        assert "1 test" in result
+
+    def test_classifies_timeout(self, tmp_path: Path) -> None:
+        from autoforge.agent.strategy import format_failure_patterns
+
+        req_dir = tmp_path / "requests"
+        req_dir.mkdir()
+        req = _make_test_request(
+            sequence=1,
+            status="failed",
+            failed_phase="build",
+            error="timeout exceeded",
+        )
+        req.write(req_dir / req.filename)
+        result = format_failure_patterns(req_dir)
+        assert "timeout" in result
+
+    def test_classifies_linker(self, tmp_path: Path) -> None:
+        from autoforge.agent.strategy import format_failure_patterns
+
+        req_dir = tmp_path / "requests"
+        req_dir.mkdir()
+        req = _make_test_request(
+            sequence=1,
+            status="failed",
+            failed_phase="build",
+            error="Build failed",
+            build_log_snippet="undefined reference to `foo`",
+        )
+        req.write(req_dir / req.filename)
+        result = format_failure_patterns(req_dir)
+        assert "linker" in result

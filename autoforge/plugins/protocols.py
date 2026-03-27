@@ -26,6 +26,7 @@ class DeployResult:
     """Result of a deploy phase."""
 
     success: bool
+    log: str = ""
     error: str | None = None
     target_info: dict[str, Any] = field(default_factory=dict)
 
@@ -42,6 +43,7 @@ class TestResult:
     results_summary: str | None
     error: str | None
     duration_seconds: float
+    log: str = ""
 
 
 @dataclass

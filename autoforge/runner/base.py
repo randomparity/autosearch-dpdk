@@ -97,7 +97,7 @@ def recover_stale_requests(requests_dir: Path, stale_statuses: frozenset[str]) -
                 request.status,
             )
             try:
-                fail(request, path, error="runner restarted")
+                fail(request, path, error="runner restarted", failed_phase="claim")
             except RuntimeError:
                 logger.error(
                     "Could not push failure status for request %04d; written locally",
@@ -132,7 +132,13 @@ def _run_build(
     build_result = builder.build(source_path, request.source_commit, build_dir, build_timeout)
 
     if not build_result.success:
-        fail(request, request_path, error="Build failed", log_snippet=build_result.log)
+        fail(
+            request,
+            request_path,
+            error="Build failed",
+            log_snippet=build_result.log,
+            failed_phase="build",
+        )
         return None
 
     update_status(request, STATUS_BUILT, request_path)
@@ -162,7 +168,13 @@ def _run_deploy(
     deploy_result = deployer.deploy(build_result)
 
     if not deploy_result.success:
-        fail(request, request_path, error=deploy_result.error or "Deploy failed")
+        fail(
+            request,
+            request_path,
+            error=deploy_result.error or "Deploy failed",
+            deploy_log_snippet=deploy_result.log or None,
+            failed_phase="deploy",
+        )
         return None
 
     update_status(request, STATUS_DEPLOYED, request_path)
@@ -194,7 +206,13 @@ def _run_test(
     test_result = tester.test(deploy_result, timeout=test_timeout)
 
     if not test_result.success:
-        fail(request, request_path, error=test_result.error or "Test failed")
+        fail(
+            request,
+            request_path,
+            error=test_result.error or "Test failed",
+            test_log_snippet=test_result.log or None,
+            failed_phase="test",
+        )
         return
 
     complete_request(

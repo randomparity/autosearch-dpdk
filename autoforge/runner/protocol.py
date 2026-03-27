@@ -143,6 +143,9 @@ def update_status(
     completed_at: str | None = None,
     error: str | None = None,
     build_log_snippet: str | None = None,
+    deploy_log_snippet: str | None = None,
+    test_log_snippet: str | None = None,
+    failed_phase: str | None = None,
 ) -> None:
     """Update a request's status and result fields, then commit and push.
 
@@ -156,6 +159,9 @@ def update_status(
         completed_at: ISO timestamp of completion.
         error: Error description (for failed requests).
         build_log_snippet: Truncated build log (for failed builds).
+        deploy_log_snippet: Truncated deploy log (for failed deploys).
+        test_log_snippet: Truncated test log (for failed tests).
+        failed_phase: Phase that caused the failure (build/deploy/test/claim).
     """
     logger.info("Transitioning request %04d: %s -> %s", request.sequence, request.status, status)
     request.transition_to(status)
@@ -166,6 +172,9 @@ def update_status(
         "completed_at": completed_at,
         "error": error,
         "build_log_snippet": build_log_snippet,
+        "deploy_log_snippet": deploy_log_snippet,
+        "test_log_snippet": test_log_snippet,
+        "failed_phase": failed_phase,
     }
     for key, value in fields.items():
         if value is not None:
@@ -217,6 +226,10 @@ def fail(
     request_path: Path,
     error: str,
     log_snippet: str | None = None,
+    *,
+    deploy_log_snippet: str | None = None,
+    test_log_snippet: str | None = None,
+    failed_phase: str | None = None,
 ) -> None:
     """Mark a request as failed with an error message.
 
@@ -224,7 +237,10 @@ def fail(
         request: The test request to mark as failed.
         request_path: Path to the request JSON file.
         error: Human-readable error description.
-        log_snippet: Optional truncated build/test log.
+        log_snippet: Optional truncated build log.
+        deploy_log_snippet: Optional truncated deploy log.
+        test_log_snippet: Optional truncated test log.
+        failed_phase: Phase that caused the failure (build/deploy/test/claim).
     """
     update_status(
         request,
@@ -232,5 +248,8 @@ def fail(
         request_path,
         error=error,
         build_log_snippet=log_snippet,
+        deploy_log_snippet=deploy_log_snippet,
+        test_log_snippet=test_log_snippet,
+        failed_phase=failed_phase,
         completed_at=datetime.now(UTC).isoformat(),
     )

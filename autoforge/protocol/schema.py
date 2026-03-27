@@ -99,6 +99,9 @@ class TestRequest:
 
     # Results
     build_log_snippet: str | None = None
+    deploy_log_snippet: str | None = None
+    test_log_snippet: str | None = None
+    failed_phase: str | None = None
     results_json: dict[str, Any] | None = None
     results_summary: str | None = None
     metric_value: float | None = None

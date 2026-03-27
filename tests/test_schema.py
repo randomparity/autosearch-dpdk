@@ -226,6 +226,44 @@ class TestStateTransitions:
             req.transition_to(STATUS_COMPLETED)
 
 
+class TestNewFields:
+    def test_deploy_log_snippet_default_none(self) -> None:
+        req = make_request()
+        assert req.deploy_log_snippet is None
+
+    def test_test_log_snippet_default_none(self) -> None:
+        req = make_request()
+        assert req.test_log_snippet is None
+
+    def test_failed_phase_default_none(self) -> None:
+        req = make_request()
+        assert req.failed_phase is None
+
+    def test_new_fields_round_trip(self) -> None:
+        req = make_request(
+            status=STATUS_FAILED,
+            deploy_log_snippet="deploy error log",
+            test_log_snippet="test error log",
+            failed_phase="deploy",
+        )
+        restored = TestRequest.from_json(req.to_json())
+        assert restored.deploy_log_snippet == "deploy error log"
+        assert restored.test_log_snippet == "test error log"
+        assert restored.failed_phase == "deploy"
+
+    def test_backward_compat_old_json_missing_new_fields(self) -> None:
+        """Old JSONs missing new fields still deserialize (defaults apply)."""
+        req = make_request()
+        data = json.loads(req.to_json())
+        data.pop("deploy_log_snippet", None)
+        data.pop("test_log_snippet", None)
+        data.pop("failed_phase", None)
+        restored = TestRequest(**data)
+        assert restored.deploy_log_snippet is None
+        assert restored.test_log_snippet is None
+        assert restored.failed_phase is None
+
+
 class TestIsTerminal:
     def test_completed_is_terminal(self) -> None:
         req = make_request(status=STATUS_COMPLETED)
