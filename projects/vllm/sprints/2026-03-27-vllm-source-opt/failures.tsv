@@ -14,3 +14,5 @@ timestamp	source_commit	metric_value	description	diff_summary
  1 file changed, 1 insertion(+), 1 deletion(-)"
 2026-03-27T22:14:03.750110+00:00	b579dbf29416cc73ace123f413df040a2004721f	2352.957490163978	max_num_batched_tokens to 16384 for all GPU types	"vllm/engine/arg_utils.py | 4 ++--
  1 file changed, 2 insertions(+), 2 deletions(-)"
+2026-03-27T22:19:13.956491+00:00	12da554b90e68d6eeeccf5a95c2d43d486cfd2c8	2397.064897631421	inline single-token append + max_num_batched_tokens=8192	"vllm/v1/core/sched/scheduler.py | 10 ++++++++++
+ 1 file changed, 10 insertions(+)"

@@ -7,3 +7,4 @@ sequence	timestamp	source_commit	metric_value	status	description	tags
 18	2026-03-27T22:01:32.175719+00:00	0bc9670741aa430d35e240802b030740e34b5c89	2401.5825398535194	completed	increase max_num_batched_tokens to 8192
 19	2026-03-27T22:07:42.699999+00:00	d6e19a735624aa9054a8a6d353dba662a16d7cd0	2398.7517709869303	completed	increase max_num_seqs to 512
 20	2026-03-27T22:13:59.993646+00:00	b579dbf29416cc73ace123f413df040a2004721f	2352.957490163978	completed	max_num_batched_tokens to 16384 for all GPU types
+21	2026-03-27T22:19:12.414122+00:00	12da554b90e68d6eeeccf5a95c2d43d486cfd2c8	2397.064897631421	completed	inline single-token append + max_num_batched_tokens=8192
