@@ -16,3 +16,5 @@ timestamp	source_commit	metric_value	description	diff_summary
  1 file changed, 2 insertions(+), 2 deletions(-)"
 2026-03-27T22:19:13.956491+00:00	12da554b90e68d6eeeccf5a95c2d43d486cfd2c8	2397.064897631421	inline single-token append + max_num_batched_tokens=8192	"vllm/v1/core/sched/scheduler.py | 10 ++++++++++
  1 file changed, 10 insertions(+)"
+2026-03-27T22:24:13.895137+00:00	b7e592d397049ac1f2dbfa420a533fd86050b23a	2401.2556068019185	disable stats logging + max_num_batched_tokens=8192	"vllm/engine/arg_utils.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)"
