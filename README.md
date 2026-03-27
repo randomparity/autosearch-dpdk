@@ -53,21 +53,27 @@ autoforge/
   pointer.py   Pointer file (.autoforge.toml) load/save
   campaign.py  Campaign config accessor functions and resolution
 projects/
-  dpdk/
-    builds/          Build plugins (e.g. local.py)
-    deploys/         Deploy plugins (e.g. local.py)
-    tests/           Test plugins (e.g. testpmd-memif.py, dts-mlx5.py)
-    perfs/           Profiler plugins (e.g. perf-record.py)
-    repo/            DPDK source (git submodule)
-    runner.toml.example  Runner config template for DPDK
+  <project>/
+    builds/          Build plugins
+    deploys/         Deploy plugins
+    tests/           Test plugins
+    perfs/           Profiler plugins
+    judges/          Judge plugins (optional)
+    runner.toml.example  Runner config template
     sprints/
       <name>/
         campaign.toml   Campaign config for this sprint
+        program.md      Optimization goals for this sprint
         requests/       Test request JSON files
         results.tsv     Iteration history
         docs/           Summaries and graphs
 docs/            Documentation
 ```
+
+## Projects
+
+- [DPDK](projects/dpdk/) — packet processing throughput (testpmd, DTS)
+- [vLLM](projects/vllm/) — LLM inference serving throughput (containerized, GPU)
 
 ## Development
 
