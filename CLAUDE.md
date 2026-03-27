@@ -22,6 +22,8 @@ uv run autoforge hints                                 # show arch optimization 
 uv run autoforge hints --list                           # list available hint topics
 uv run autoforge hints --topic perf-counters            # show perf counter reference
 uv run autoforge project init <name>                     # scaffold new project
+uv run autoforge project list                            # list all projects
+uv run autoforge project switch <name>                   # switch active project
 uv run autoforge sprint init <name>                      # create new sprint
 uv run autoforge sprint init <name> --from <sprint>      # clone sprint config
 uv run autoforge sprint list                              # list all sprints

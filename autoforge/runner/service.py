@@ -51,14 +51,13 @@ def load_config(path: str | None = None) -> dict[str, Any]:
         FileNotFoundError: If neither the base nor local config exists.
     """
     config_path = Path(resolve_config_path(path))
-    result = load_toml_with_local(config_path)
-    if not result:
+    if not config_path.is_file() and not config_path.with_suffix(".local.toml").is_file():
         msg = (
             f"Runner config not found: {config_path}\n"
             "Create a runner.local.toml with system-specific overrides."
         )
         raise FileNotFoundError(msg)
-    return result
+    return load_toml_with_local(config_path)
 
 
 def main() -> None:

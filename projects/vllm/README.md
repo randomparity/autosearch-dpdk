@@ -162,7 +162,7 @@ Automatically selects the correct GPU flags: `--gpus all` for Docker,
 | `model` | `Qwen/Qwen3-0.6B` | HuggingFace model ID |
 | `port` | `8000` | Host port for the OpenAI-compatible API |
 | `container_name` | `vllm-bench` | Container name |
-| `hf_cache` | `/home/user/.cache/huggingface` | Host path to HuggingFace cache (bind-mounted) |
+| `hf_cache` | `$HOME/.cache/huggingface` | Host path to HuggingFace cache (bind-mounted; resolved at runtime from `Path.home()`) |
 | `gpu_memory_utilization` | `0.90` | Fraction of GPU memory to use |
 | `startup_timeout` | `300` | Seconds to wait for health check |
 | `devices` | `"all"` | GPUs to expose: `"all"` or comma-separated indices e.g. `"0"` or `"0,1"` |
@@ -173,6 +173,8 @@ Automatically selects the correct GPU flags: `--gpus all` for Docker,
 
 Runs `vllm bench serve` inside the deployed container via `docker exec` /
 `podman exec` and parses output token throughput from the results.
+
+Config section: `[bench]`
 
 | Config key | Default | Description |
 |------------|---------|-------------|
@@ -199,7 +201,7 @@ The baseline sprint config at
 
 - **Metric:** `output_throughput` (output tokens per second)
 - **Direction:** `maximize`
-- **Threshold:** `2.0%` — changes must improve throughput by at least 2%
+- **Threshold:** `2.0` tok/s — changes must improve throughput by at least this amount (absolute delta)
 
 ## Optimization strategies
 
@@ -209,3 +211,9 @@ The baseline sprint config at
   tensor parallel configuration
 - **Source patches** — scheduler changes, kernel optimizations, memory
   management improvements (requires `mode = "source"` in builder config)
+
+## See also
+
+- [Agent guide](../../docs/agent.md) — sprint workflow, campaign config, CLI reference
+- [Runner guide](../../docs/runner.md) — systemd service setup, troubleshooting
+- [Plugin SDK](../../docs/plugin-sdk.md) — authoring new plugins

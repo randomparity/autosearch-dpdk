@@ -516,7 +516,6 @@ def check_runner(
 
 
 def _check_config_sections(
-    data: dict[str, Any],
     toml_path: Path,
     category: str,
     rel_toml: str,
@@ -635,8 +634,9 @@ def check_plugins(
                             path=rel_local,
                         )
                     )
-                results.extend(_check_config_sections(data, toml_path, category, rel_toml, root))
-                results.extend(_check_sensitive_empty(data, rel_toml, category))
+                results.extend(_check_config_sections(toml_path, category, rel_toml, root))
+                merged = load_toml_with_local(toml_path)
+                results.extend(_check_sensitive_empty(merged, rel_toml, category))
             else:
                 results.append(
                     CheckResult(

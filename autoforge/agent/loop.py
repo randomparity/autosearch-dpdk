@@ -31,6 +31,7 @@ from autoforge.campaign import (
     metric_direction,
     metric_threshold,
     optimization_branch,
+    project_name,
     resolve_campaign_path,
     submodule_path,
 )
@@ -144,11 +145,11 @@ def run_baseline(
     source_path: Path,
     dry_run: bool,
 ) -> None:
-    """Submit a baseline request for the current DPDK commit and wait for results."""
+    """Submit a baseline request for the current commit and wait for results."""
     req = requests_dir()
     commit = git_submodule_head(source_path)
     seq = next_sequence(req)
-    description = "Baseline: unmodified DPDK"
+    description = f"Baseline: unmodified {project_name(campaign)}"
 
     request_path = create_request(seq, commit, campaign, description, req)
 

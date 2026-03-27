@@ -64,13 +64,13 @@ EOF
 
 At minimum, override:
 
-- `runner.local.toml` -- `build_dir` if `/tmp/dpdk-build` is not suitable
-- `tests/testpmd-memif.local.toml` -- `lcores` and port config (PCI or vdev) for your hardware
+- `runner.local.toml` — `build_dir` if `/tmp/dpdk-build` is not suitable
+- `tests/testpmd-memif.local.toml` — `lcores` and port config (PCI or vdev) for your hardware
 
 Start the runner:
 
 ```bash
-uv run python -m autoforge.runner.service
+uv run autoforge-runner
 ```
 
 ## Agent setup (workstation)
@@ -106,7 +106,7 @@ Compiles DPDK from source using meson and ninja.
 
 ### Deployer (`local`)
 
-Bare-metal pass-through -- no deployment step needed. No configuration required.
+Bare-metal pass-through — no deployment step needed. No configuration required.
 
 ### Tester (`testpmd-memif`)
 
@@ -162,7 +162,7 @@ See `projects/dpdk/sprints/*/campaign.toml` for examples. Key settings:
 
 - **Metric:** `throughput_mpps` (millions of packets per second)
 - **Direction:** `maximize`
-- **Threshold:** `0.01` (1%) -- changes must improve throughput by at least this fraction
+- **Threshold:** `0.01` Mpps — changes must improve throughput by at least this amount (absolute delta)
 - **Scope:** restricts which source paths the agent may modify (e.g. `drivers/net/memif/`, `lib/eal/ppc/`)
 
 ## Sudo setup
@@ -180,6 +180,6 @@ sudo visudo -f /etc/sudoers.d/dpdk-perf
 
 ## See also
 
-- [Agent guide](../../docs/agent.md) -- sprint workflow, campaign config, CLI reference
-- [Runner guide](../../docs/runner.md) -- systemd service setup, troubleshooting, config resolution
-- [Plugin SDK](../../docs/plugin-sdk.md) -- authoring new build, deploy, test, and profiler plugins
+- [Agent guide](../../docs/agent.md) — sprint workflow, campaign config, CLI reference
+- [Runner guide](../../docs/runner.md) — systemd service setup, troubleshooting, config resolution
+- [Plugin SDK](../../docs/plugin-sdk.md) — authoring new build, deploy, test, and profiler plugins

@@ -76,7 +76,7 @@ class TestRunBaseline:
             run_baseline(SAMPLE_CAMPAIGN, tmp_path / "dpdk", dry_run=True)
 
         mock_create.assert_called_once_with(
-            1, fake_commit, SAMPLE_CAMPAIGN, "Baseline: unmodified DPDK", sprint_req_dir
+            1, fake_commit, SAMPLE_CAMPAIGN, "Baseline: unmodified dpdk", sprint_req_dir
         )
         mock_git.assert_called_once()
         _, kwargs = mock_git.call_args
@@ -90,7 +90,7 @@ class TestRunBaseline:
         assert data["status"] == "pending"
         assert data["build_plugin"] == "local"
         assert data["test_plugin"] == "testpmd-memif"
-        assert data["description"] == "Baseline: unmodified DPDK"
+        assert data["description"] == "Baseline: unmodified dpdk"
 
     def test_dry_run_does_not_poll(self, tmp_path: Path) -> None:
         sprint_req_dir = tmp_path / "sprints" / "2026-01-01-test" / "requests"

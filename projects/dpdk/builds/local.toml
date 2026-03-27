@@ -1,5 +1,6 @@
 # Shared build settings (tracked in git).
 # System-specific overrides: local.local.toml (gitignored).
+# (The double "local" is because the plugin name is "local".)
 
 [build]
 # Number of parallel build jobs. 0 means use all available CPU cores.

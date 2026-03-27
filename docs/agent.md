@@ -1,7 +1,7 @@
 # Agent Guide
 
 The agent runs on your development workstation. It manages the optimization
-loop: proposing DPDK changes, submitting test requests, and tracking results.
+loop: proposing source changes, submitting test requests, and tracking results.
 
 ## Quick start
 
@@ -16,7 +16,7 @@ submits them for testing, and iterates based on results.
 
 - Python 3.13+
 - [uv](https://docs.astral.sh/uv/)
-- DPDK submodule initialized (`git submodule update --init`)
+- Source submodule initialized for your project (`git submodule update --init`)
 
 ## Installation
 
@@ -54,7 +54,7 @@ Campaign settings are per-sprint at
 | `[project]` | `deploy` | Deploy plugin name (e.g. `"local"`) |
 | `[project]` | `test` | Test plugin name (e.g. `"testpmd-memif"`) |
 | `[project]` | `profiler` | Profiler plugin name (e.g. `"perf-record"`) |
-| `[project]` | `submodule_path` | Path to the DPDK submodule |
+| `[project]` | `submodule_path` | Path to the project's source submodule |
 | `[project]` | `optimization_branch` | Branch for good changes (empty = skip branch push; set automatically by `sprint init` to `autoforge/{sprint-name}`) |
 | `[project]` | `scope` | Source paths the agent may modify (relative to submodule) |
 | `[profiling]` | `enabled` | Include profiling summary in results (default: `false`) |
@@ -62,7 +62,7 @@ Campaign settings are per-sprint at
 
 ## Interactive mode
 
-For manual experimentation. You make changes in the DPDK submodule, commit
+For manual experimentation. You make changes in the project's source submodule, commit
 them, and the loop submits a test request.
 
 ```bash
@@ -100,7 +100,9 @@ sprint's optimization goals. Claude Code uses the CLI subcommands (`context`,
 | `autoforge sprint active` | Print active sprint name |
 | `autoforge sprint switch <name>` | Switch active sprint |
 | `autoforge project init <name>` | Scaffold a new project |
-| `autoforge revert` | Revert last DPDK submodule commit and force-push fork |
+| `autoforge project list` | List all projects |
+| `autoforge project switch <name>` | Switch active project |
+| `autoforge revert` | Revert last source submodule commit and force-push fork |
 | `autoforge build-log --seq N` | Print formatted build log for request N (`-s N` short form) |
 | `autoforge hints` | Show arch optimization checklist for the target architecture |
 | `autoforge hints --list` | List available hint topics |
@@ -122,7 +124,7 @@ Each iteration appends a row to
 
 - `sequence` — zero-padded iteration number
 - `timestamp` — ISO 8601 UTC
-- `source_commit` — DPDK submodule HEAD at time of request
+- `source_commit` — source submodule HEAD at time of request
 - `metric_value` — extracted metric (empty if failed/timed out)
 - `status` — `completed`, `failed`, `timed_out`, or `dry_run`
 - `description` — user-provided or agent-generated change description
@@ -131,7 +133,7 @@ Failed attempts are recorded in `sprints/<name>/failures.tsv` (created on
 first failure) with columns:
 
 - `timestamp` — ISO 8601 UTC
-- `source_commit` — DPDK submodule HEAD of the reverted change
+- `source_commit` — source submodule HEAD of the reverted change
 - `metric_value` — measured value that didn't improve
 - `description` — change description
 - `diff_summary` — summary of the reverted diff
@@ -163,7 +165,7 @@ repeating failed approaches.
 ## Troubleshooting
 
 **"No submodule change detected"**
-Commit your changes inside the DPDK submodule before pressing Enter. The agent
+Commit your changes inside the source submodule before pressing Enter. The agent
 checks whether the submodule pointer has changed relative to the last commit.
 
 **Request timed out**

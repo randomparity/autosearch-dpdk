@@ -1,14 +1,15 @@
 # Runner Guide
 
-The runner runs on a lab machine with DPDK hardware. It polls for test
-requests, builds DPDK, runs performance tests (testpmd or DTS), and pushes
-results back via git.
+The runner runs on a lab machine with your project's target hardware. It polls
+for test requests, builds the project, runs performance tests, and pushes
+results back via git. Examples below use the DPDK project — see each project's
+README for project-specific setup (e.g. `projects/vllm/README.md`).
 
 ## Prerequisites
 
 - Python 3.13+
 - [uv](https://docs.astral.sh/uv/)
-- DPDK build dependencies: meson, ninja, gcc (or clang), pkg-config
+- Project-specific build dependencies (e.g. meson, ninja, gcc for DPDK; Docker/Podman for vLLM)
 - Git access to the autoforge repository (push permissions)
 - For testpmd plugin: NIC ports connected back-to-back (or memif vdevs)
 - For DTS plugin: DTS installed with a two-node topology (SUT + TG)
@@ -217,7 +218,7 @@ The runner supports four phase modes (configured via `[runner].phase`):
 1. `git pull --rebase` to fetch new requests
 2. Scan `projects/<project>/sprints/<sprint>/requests/` for pending requests
 3. Claim the first pending request (`pending` → `claimed`)
-4. Build DPDK at the specified commit (`claimed` → `building` → `built`)
+4. Build the project at the specified commit (`claimed` → `building` → `built`)
 5. Deploy build artifacts (`built` → `deploying` → `deployed`)
 6. Run test plugin (`deployed` → `running` → `completed` or `failed`)
 7. Push results and sleep
@@ -234,6 +235,9 @@ Create a wrapper script at `/usr/local/bin/autoforge-runner`:
 #!/bin/sh
 cd /path/to/checkout && exec .venv/bin/autoforge-runner "$@"
 ```
+
+The example below uses DPDK paths. Adjust `User`, `WorkingDirectory`, and
+config path for your project.
 
 Then create a systemd unit:
 
@@ -271,7 +275,7 @@ journalctl -u autoforge-runner -f
 
 For each request, the runner:
 
-1. Checks out the DPDK commit specified in the request
+1. Checks out the commit specified in the request
 2. Runs `meson setup` with configured options (cross-file, extra args)
 3. Runs `ninja` with the configured job count
 4. Build artifacts are written to the configured `build_dir`

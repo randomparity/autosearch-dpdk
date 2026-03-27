@@ -335,7 +335,7 @@ class TestVllmServingBenchTester:
         assert "1234.5 tok/s" in (result.results_summary or "")
 
     @patch("subprocess.run")
-    def test_regex_fallback(self, mock_run: MagicMock, tmp_path: Path) -> None:
+    def test_regex_fallback(self, mock_run: MagicMock) -> None:
         stdout = "Output token throughput (tok/s): 999.9\nMedian TTFT (ms): 8.1\n"
         mock_run.return_value = _make_completed(0, stdout=stdout)
         tester = load_component(
@@ -343,7 +343,7 @@ class TestVllmServingBenchTester:
             "test",
             "bench-serving",
             project_config={},
-            runner_config={"bench": {"result_dir": str(tmp_path), "bench_cmd": "vllm"}},
+            runner_config={"bench": {"num_prompts": 10}},
         )
         result = tester.test(self._deploy_result(), timeout=60)
         assert result.success

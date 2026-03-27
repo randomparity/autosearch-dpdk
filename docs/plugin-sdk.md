@@ -89,6 +89,7 @@ Create a shared config at `projects/linux-kernel/builds/local.toml`:
 ```toml
 # Shared build settings (tracked in git).
 # System-specific overrides: local.local.toml (gitignored).
+# (The double "local" is because the plugin name is "local".)
 
 [build]
 jobs = 0
