@@ -8,3 +8,5 @@ timestamp	source_commit	metric_value	description	diff_summary
 2026-03-27T21:05:58.814555+00:00	056aeadce31e953bae0cce46a4325a68a8da9a31	2321.214833461755	scheduler _make_cached_request_data pre-allocation only	"vllm/v1/core/sched/utils.py | 15 +++++++--------
  vllm/v1/request.py          | 22 ----------------------
  2 files changed, 7 insertions(+), 30 deletions(-)"
+2026-03-27T21:16:11.594670+00:00	de93094009f260e9aa940298ce712cadb791076a	2302.896881995742	decode fast path in _prepare_inputs: skip np.repeat/cumsum	"vllm/v1/worker/gpu_model_runner.py | 38 +++++++++++++++++++++++++-------------
+ 1 file changed, 25 insertions(+), 13 deletions(-)"
