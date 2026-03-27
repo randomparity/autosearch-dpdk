@@ -150,6 +150,16 @@ def poll_for_completion(
     deadline = time.monotonic() + timeout
 
     while time.monotonic() < deadline:
+        # Stash any uncommitted changes (e.g. from a co-located runner)
+        # so that git pull --rebase can succeed on a dirty working tree.
+        stash_result = subprocess.run(
+            ["git", "stash", "--include-untracked"],
+            capture_output=True,
+            text=True,
+            timeout=GIT_TIMEOUT,
+        )
+        stashed = stash_result.returncode == 0 and "No local changes" not in stash_result.stdout
+
         pull_result = subprocess.run(
             ["git", "pull", "--rebase"],
             capture_output=True,
@@ -158,6 +168,16 @@ def poll_for_completion(
         )
         if pull_result.returncode != 0:
             logger.warning("git pull --rebase failed: %s", pull_result.stderr.strip())
+
+        if stashed:
+            pop_result = subprocess.run(
+                ["git", "stash", "pop"],
+                capture_output=True,
+                text=True,
+                timeout=GIT_TIMEOUT,
+            )
+            if pop_result.returncode != 0:
+                logger.warning("git stash pop failed: %s", pop_result.stderr.strip())
 
         matches = list(requests_dir.glob(f"{seq:04d}_*.json"))
         if not matches:

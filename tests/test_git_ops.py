@@ -2,12 +2,19 @@
 
 from __future__ import annotations
 
+import subprocess
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from autoforge.agent.git_ops import GIT_TIMEOUT, force_push_source, full_revert, push_submodule
+from autoforge.agent.git_ops import (
+    GIT_TIMEOUT,
+    force_push_source,
+    full_revert,
+    git_add_commit_push,
+    push_submodule,
+)
 
 
 class TestPushSubmodule:
@@ -208,3 +215,65 @@ class TestRecordVerdict:
 
         mock_revert.assert_called_once_with(dpdk)
         mock_commit.assert_called_once()
+
+
+class TestGitAddCommitPush:
+    def _ok(self, *_args, **_kwargs):
+        return MagicMock(returncode=0, stderr="", stdout="")
+
+    def _push_fail_then_ok(self):
+        """Return a side_effect that fails the first push, then succeeds."""
+        calls = iter(
+            [
+                # git add
+                MagicMock(returncode=0),
+                # git commit
+                MagicMock(returncode=0, stderr="", stdout=""),
+                # git push (fail)
+                MagicMock(returncode=1, stderr="rejected"),
+                # git pull --rebase (ok)
+                MagicMock(returncode=0, stderr="", stdout=""),
+                # git push (ok)
+                MagicMock(returncode=0, stderr="", stdout=""),
+            ]
+        )
+        return lambda *a, **kw: next(calls)
+
+    @patch("autoforge.agent.git_ops.subprocess.run")
+    def test_push_succeeds_first_try(self, mock_run: MagicMock) -> None:
+        mock_run.side_effect = self._ok
+        git_add_commit_push(["file.txt"], "msg")
+        push_calls = [c for c in mock_run.call_args_list if c[0][0] == ["git", "push"]]
+        assert len(push_calls) == 1
+
+    @patch("autoforge.agent.git_ops.subprocess.run")
+    def test_retries_push_after_rebase(self, mock_run: MagicMock) -> None:
+        mock_run.side_effect = self._push_fail_then_ok()
+        git_add_commit_push(["file.txt"], "msg")
+        commands = [c[0][0] for c in mock_run.call_args_list]
+        assert commands == [
+            ["git", "add", "file.txt"],
+            ["git", "commit", "-m", "msg"],
+            ["git", "push"],
+            ["git", "pull", "--rebase"],
+            ["git", "push"],
+        ]
+
+    @patch("autoforge.agent.git_ops.subprocess.run")
+    def test_raises_after_all_retries_exhausted(self, mock_run: MagicMock) -> None:
+        def always_fail(*args, **kwargs):
+            cmd = args[0] if args else kwargs.get("args", [])
+            if cmd == ["git", "push"]:
+                return MagicMock(returncode=1, stderr="rejected")
+            return MagicMock(returncode=0, stderr="", stdout="")
+
+        mock_run.side_effect = always_fail
+        with pytest.raises(subprocess.CalledProcessError):
+            git_add_commit_push(["file.txt"], "msg", retries=2)
+
+    @patch("autoforge.agent.git_ops.subprocess.run")
+    def test_dry_run_skips_push(self, mock_run: MagicMock) -> None:
+        mock_run.side_effect = self._ok
+        git_add_commit_push(["file.txt"], "msg", dry_run=True)
+        push_calls = [c for c in mock_run.call_args_list if c[0][0] == ["git", "push"]]
+        assert len(push_calls) == 0

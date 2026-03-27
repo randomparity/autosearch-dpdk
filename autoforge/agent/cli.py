@@ -55,6 +55,7 @@ from autoforge.campaign import (
     metric_direction,
     optimization_branch,
     platform_arch,
+    project_name,
     resolve_campaign_path,
     submodule_path,
 )
@@ -272,7 +273,7 @@ def cmd_baseline(campaign: CampaignConfig, dry_run: bool) -> None:
     req = requests_dir()
     commit = git_submodule_head(source_path)
     seq = next_sequence(req)
-    description = "Baseline: unmodified DPDK"
+    description = f"Baseline: unmodified {project_name(campaign)}"
 
     request_path = create_request(seq, commit, campaign, description, req)
     git_add_commit_push(

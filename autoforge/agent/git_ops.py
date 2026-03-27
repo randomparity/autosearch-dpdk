@@ -78,11 +78,13 @@ def git_add_commit_push(
     paths: list[str],
     message: str,
     dry_run: bool = False,
+    retries: int = 3,
 ) -> None:
-    """Stage files, commit, and optionally push.
+    """Stage files, commit, and push. Retries with pull --rebase on conflict.
 
     Raises:
-        subprocess.CalledProcessError: If any git command fails.
+        subprocess.CalledProcessError: If add/commit fails or all push
+            retries are exhausted.
     """
     for p in paths:
         subprocess.run(
@@ -98,14 +100,40 @@ def git_add_commit_push(
         text=True,
         timeout=GIT_TIMEOUT,
     )
-    if not dry_run:
-        subprocess.run(
+    if dry_run:
+        return
+
+    for attempt in range(retries):
+        result = subprocess.run(
             ["git", "push"],
-            check=True,
             capture_output=True,
             text=True,
             timeout=GIT_TIMEOUT,
         )
+        if result.returncode == 0:
+            return
+
+        logger.warning(
+            "Push failed (attempt %d/%d): %s",
+            attempt + 1,
+            retries,
+            result.stderr.strip(),
+        )
+        if attempt < retries - 1:
+            rebase = subprocess.run(
+                ["git", "pull", "--rebase"],
+                capture_output=True,
+                text=True,
+                timeout=GIT_TIMEOUT,
+            )
+            if rebase.returncode != 0:
+                logger.error(
+                    "Pull --rebase failed: %s",
+                    rebase.stderr.strip(),
+                )
+                raise subprocess.CalledProcessError(rebase.returncode, "git pull --rebase")
+
+    raise subprocess.CalledProcessError(result.returncode, "git push")
 
 
 def push_submodule(source_path: Path, branch: str) -> None:
