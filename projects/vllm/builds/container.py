@@ -93,7 +93,7 @@ class VllmContainerBuilder:
     def _get_scm_version(source_path: Path) -> str:
         """Get version string from git describe for setuptools_scm override."""
         result = subprocess.run(
-            ["git", "describe", "--tags", "--always"],
+            ["git", "describe", "--tags"],
             cwd=source_path,
             capture_output=True,
             text=True,
@@ -101,7 +101,17 @@ class VllmContainerBuilder:
         )
         if result.returncode == 0:
             return result.stdout.strip().lstrip("v")
-        return "0.0.0+unknown"
+        # No reachable tag — fall back to a valid PEP 440 version with
+        # the short commit hash so the build doesn't fail.
+        rev = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=source_path,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        short_hash = rev.stdout.strip() if rev.returncode == 0 else "unknown"
+        return f"0.0.0.dev0+g{short_hash}"
 
     def _inject_scm_version(self, source_path: Path, version: str) -> None:
         """Inject SETUPTOOLS_SCM_PRETEND_VERSION into Dockerfile build stage.
@@ -109,15 +119,21 @@ class VllmContainerBuilder:
         In submodules, .git is a pointer file, not a directory. Docker
         bind mounts can't follow this, so setuptools_scm fails during
         wheel build. Injecting the version ENV bypasses git entirely.
+
+        Only targets the final 'build' stage marker (preceded by
+        VLLM_SKIP_PRECOMPILED_VERSION_SUFFIX), not the csrc-build stage
+        which already sets its own SETUPTOOLS_SCM_PRETEND_VERSION.
         """
         dockerfile = source_path / self._dockerfile
         content = dockerfile.read_text()
-        marker = "# Build the vLLM wheel"
+        # Use the unique context around the build stage's wheel-build comment
+        # to avoid injecting into the csrc-build stage.
+        marker = "ENV VLLM_SKIP_PRECOMPILED_VERSION_SUFFIX=1"
         if marker not in content:
             logger.warning("Dockerfile marker not found, skipping SCM injection")
             return
-        env_line = f'ENV SETUPTOOLS_SCM_PRETEND_VERSION="{version}"\n'
-        content = content.replace(marker, env_line + marker)
+        env_line = f'\nENV SETUPTOOLS_SCM_PRETEND_VERSION="{version}"'
+        content = content.replace(marker, marker + env_line)
         dockerfile.write_text(content)
         logger.info("Injected SETUPTOOLS_SCM_PRETEND_VERSION=%s into Dockerfile", version)
 

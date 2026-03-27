@@ -109,9 +109,9 @@ class TestVllmContainerBuilder:
     @patch("subprocess.run")
     def test_source_build_success(self, mock_run: MagicMock, tmp_path: Path) -> None:
         mock_run.return_value = _make_completed(0, "built ok")
-        # Create minimal Dockerfile with the marker setuptools_scm injection needs
+        # Create minimal Dockerfile with the marker the SCM injection targets
         dockerfile = tmp_path / "Dockerfile"
-        dockerfile.write_text("# Build the vLLM wheel\nRUN setup.py\n")
+        dockerfile.write_text("ENV VLLM_SKIP_PRECOMPILED_VERSION_SUFFIX=1\nRUN setup.py\n")
         builder = self._make_builder("source")
         result = builder.build(tmp_path, "def456", Path("/build"), 600)
         assert result.success
@@ -120,15 +120,16 @@ class TestVllmContainerBuilder:
 
     @patch("subprocess.run")
     def test_source_build_failure(self, mock_run: MagicMock, tmp_path: Path) -> None:
-        # First call (git checkout) succeeds, second (git describe) succeeds,
-        # third (docker build) fails
+        # First call (git checkout) succeeds, second (git describe) fails,
+        # third (git rev-parse) succeeds, fourth (docker build) fails
         mock_run.side_effect = [
             _make_completed(0),
-            _make_completed(0, stdout="v0.18.0"),
+            _make_completed(128, stderr="no tag"),
+            _make_completed(0, stdout="bcf2be96"),
             _make_completed(1, stderr="build error"),
         ]
         dockerfile = tmp_path / "Dockerfile"
-        dockerfile.write_text("# Build the vLLM wheel\nRUN setup.py\n")
+        dockerfile.write_text("ENV VLLM_SKIP_PRECOMPILED_VERSION_SUFFIX=1\nRUN setup.py\n")
         builder = self._make_builder("source")
         result = builder.build(tmp_path, "bad", Path("/build"), 600)
         assert not result.success
