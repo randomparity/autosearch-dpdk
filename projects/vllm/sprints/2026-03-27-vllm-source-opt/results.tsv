@@ -13,3 +13,4 @@ sequence	timestamp	source_commit	metric_value	status	description	tags
 24	2026-03-27T22:38:16.713847+00:00	a9b42deba5a4245f6f099cdc3ea8be6a5099fcc4	2404.8999860518843	completed	repeat: batch=8192 + no prefix caching
 25	2026-03-27T22:42:53.127977+00:00	b73009437e01499a44fd69f1070b44eddc53953b	2405.4360882385763	completed	batch=8192 + no prefix caching
 26	2026-03-27T22:47:11.987851+00:00	b4df4e32969ab33ec0e3bd7b4921bae45e9a493a	2411.820040447741	completed	batch=12288 + no prefix caching
+27	2026-03-27T22:51:35.054193+00:00	a16c953f1cd511edd8faeca234e3f328c6c5c6ca	2425.07958100267	completed	batch=8192 + no prefix caching (retry for beat)
