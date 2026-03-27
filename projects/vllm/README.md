@@ -54,6 +54,20 @@ Edit each `.toml` file for your environment. At minimum:
 - `deploys/container-gpu.toml` — set `model`, `hf_cache`, and `HF_TOKEN`
 - `runner.toml` — set `source_dir` if using source builds
 
+Point the repo at the vLLM project and sprint (the runner reads `.autoforge.toml`
+to know which project and sprint to poll):
+
+```bash
+uv run autoforge sprint switch <sprint-name>
+```
+
+Or edit `.autoforge.toml` directly:
+
+```toml
+project = "vllm"
+sprint = "<sprint-name>"
+```
+
 Pre-pull the model to avoid first-run delay:
 
 ```bash
@@ -68,7 +82,8 @@ uv run autoforge-runner
 
 ## Agent setup (workstation)
 
-Initialize a sprint and set the pointer:
+Initialize a sprint and set the pointer (this updates `.autoforge.toml` to
+`project = "vllm"` and stamps the new sprint name):
 
 ```bash
 uv run autoforge sprint init 2026-03-26-baseline
