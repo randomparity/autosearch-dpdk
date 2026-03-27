@@ -10,17 +10,17 @@
   "tags": null,
   "metric_name": "output_throughput",
   "metric_path": "output_throughput",
-  "status": "building",
+  "status": "failed",
   "claimed_at": "2026-03-27T18:25:04.016607+00:00",
   "built_at": null,
   "deployed_at": null,
-  "completed_at": null,
+  "completed_at": "2026-03-27T18:29:54.756167+00:00",
   "build_runner_id": null,
   "deploy_runner_id": null,
   "test_runner_id": null,
-  "build_log_snippet": null,
+  "build_log_snippet": "^^^^^^^^^^^^^^^^^^\n4.546   File \"/root/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/urllib/request.py\", line 492, in _call_chain\n4.546     result = func(*args)\n4.546              ^^^^^^^^^^^\n4.546   File \"/root/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/urllib/request.py\", line 639, in http_error_default\n4.546     raise HTTPError(req.full_url, code, msg, hdrs, fp)\n4.546 urllib.error.HTTPError: HTTP Error 404: Not Found\n------\n\n \u001b[33m2 warnings found (use docker --debug to expand):\n\u001b[0m - SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ARG \"SCCACHE_S3_NO_CREDENTIALS\") (line 252)\n - LegacyKeyValueFormat: \"ENV key=value\" should be used instead of legacy \"ENV key value\" format (line 811)\nDockerfile:303\n--------------------\n 302 |     ENV CCACHE_DIR=/root/.cache/ccache\n 303 | >>> RUN --mount=type=cache,target=/root/.cache/ccache \\\n 304 | >>>     --mount=type=cache,target=/root/.cache/uv \\\n 305 | >>>     if [ \"$USE_SCCACHE\" != \"1\" ]; then \\\n 306 | >>>         # Clean any existing CMake artifacts\n 307 | >>>         rm -rf .deps && \\\n 308 | >>>         mkdir -p .deps && \\\n 309 | >>>         export VLLM_USE_PRECOMPILED=\"${VLLM_USE_PRECOMPILED}\" && \\\n 310 | >>>         export VLLM_PRECOMPILED_WHEEL_COMMIT=\"${VLLM_MERGE_BASE_COMMIT}\" && \\\n 311 | >>>         export VLLM_DOCKER_BUILD_CONTEXT=1 && \\\n 312 | >>>         python3 setup.py bdist_wheel --dist-dir=dist --py-limited-api=cp38; \\\n 313 | >>>     fi\n 314 |     \n--------------------\nERROR: failed to build: failed to solve: process \"/bin/sh -c if [ \\\"$USE_SCCACHE\\\" != \\\"1\\\" ]; then         rm -rf .deps &&         mkdir -p .deps &&         export VLLM_USE_PRECOMPILED=\\\"${VLLM_USE_PRECOMPILED}\\\" &&         export VLLM_PRECOMPILED_WHEEL_COMMIT=\\\"${VLLM_MERGE_BASE_COMMIT}\\\" &&         export VLLM_DOCKER_BUILD_CONTEXT=1 &&         python3 setup.py bdist_wheel --dist-dir=dist --py-limited-api=cp38;     fi\" did not complete successfully: exit code: 1\n",
   "results_json": null,
   "results_summary": null,
   "metric_value": null,
-  "error": null
+  "error": "Build failed"
 }
