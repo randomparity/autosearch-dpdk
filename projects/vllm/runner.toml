@@ -1,0 +1,17 @@
+# Shared runner settings (tracked in git).
+# System-specific overrides: runner.local.toml (gitignored).
+# Supports ${VAR} for env vars and ${REPO_ROOT} for repo-relative paths.
+
+[runner]
+phase = "all"
+log_level = "info"
+poll_interval = 30
+
+[paths]
+source_dir = "${REPO_ROOT}/projects/vllm/repo"
+# Build artifacts directory — override in runner.local.toml for your system
+build_dir = "/tmp/vllm-build"
+
+[timeouts]
+build_minutes = 60
+test_minutes = 20

@@ -1,3 +1,6 @@
+# Shared build settings (tracked in git).
+# System-specific overrides: container.local.toml (gitignored).
+
 [build]
 runtime = "auto"                               # "auto", "docker", or "podman"
 mode = "prebuilt"                              # "prebuilt" or "source"

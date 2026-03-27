@@ -1,5 +1,6 @@
-# testpmd-memif test plugin configuration
-# Copy to testpmd-memif.toml and adjust for your environment.
+# Shared test settings (tracked in git).
+# System-specific overrides: testpmd-memif.local.toml (gitignored).
+# Override lcores and port config (pci/vdev) for your hardware.
 #
 # Sudo setup (required when sudo = true):
 #   sudo visudo -f /etc/sudoers.d/dpdk-testpmd

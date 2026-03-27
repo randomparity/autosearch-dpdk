@@ -45,20 +45,27 @@ cd autoforge
 uv sync
 ```
 
-Copy and configure plugin configs:
+Create `.local.toml` overrides for system-specific settings. Shared defaults
+are tracked in git; only override what differs on your machine:
 
 ```bash
-cp projects/dpdk/runner.toml.example projects/dpdk/runner.toml
-cp projects/dpdk/builds/local.toml.example projects/dpdk/builds/local.toml
-cp projects/dpdk/tests/testpmd-memif.toml.example projects/dpdk/tests/testpmd-memif.toml
-# Optional:
-cp projects/dpdk/perfs/perf-record.toml.example projects/dpdk/perfs/perf-record.toml
+# Override build directory for your system
+cat > projects/dpdk/runner.local.toml <<'EOF'
+[paths]
+build_dir = "/fast-ssd/dpdk-build"
+EOF
+
+# Override lcores and port config for your hardware
+cat > projects/dpdk/tests/testpmd-memif.local.toml <<'EOF'
+[testpmd]
+lcores = "96-103"
+EOF
 ```
 
-Edit each `.toml` file for your environment. At minimum:
+At minimum, override:
 
-- `runner.toml` -- set `dpdk_src` and `build_dir` paths
-- `tests/testpmd-memif.toml` -- set `lcores` and port config (PCI or vdev)
+- `runner.local.toml` -- `build_dir` if `/tmp/dpdk-build` is not suitable
+- `tests/testpmd-memif.local.toml` -- `lcores` and port config (PCI or vdev) for your hardware
 
 Start the runner:
 

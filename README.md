@@ -52,14 +52,15 @@ autoforge/
   perf/        Profiling: perf record, stack analysis, arch profiles
   pointer.py   Pointer file (.autoforge.toml) load/save
   campaign.py  Campaign config accessor functions and resolution
+  config.py    Config loading with local overrides and ${VAR} resolution
 projects/
   <project>/
-    builds/          Build plugins
-    deploys/         Deploy plugins
-    tests/           Test plugins
-    perfs/           Profiler plugins
+    builds/          Build plugins + shared .toml configs
+    deploys/         Deploy plugins + shared .toml configs
+    tests/           Test plugins + shared .toml configs
+    perfs/           Profiler plugins + shared .toml configs
     judges/          Judge plugins (optional)
-    runner.toml.example  Runner config template
+    runner.toml      Shared runner config (tracked in git)
     sprints/
       <name>/
         campaign.toml   Campaign config for this sprint

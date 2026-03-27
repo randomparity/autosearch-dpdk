@@ -1,5 +1,5 @@
-# perf-record profiler plugin configuration
-# Copy to perf-record.toml and adjust for your environment.
+# Shared profiler settings (tracked in git).
+# System-specific overrides: perf-record.local.toml (gitignored).
 
 [profiling]
 # Capture perf profiles during measurement window

@@ -84,9 +84,12 @@ class KernelBuilder:
             )
 ```
 
-Create a config example at `projects/linux-kernel/builds/local.toml.example`:
+Create a shared config at `projects/linux-kernel/builds/local.toml`:
 
 ```toml
+# Shared build settings (tracked in git).
+# System-specific overrides: local.local.toml (gitignored).
+
 [build]
 jobs = 0
 ```
@@ -239,9 +242,12 @@ class PodmanDeployer:
             return DeployResult(success=False, error="deploy timed out")
 ```
 
-Config at `projects/my-app/deploys/podman.toml.example`:
+Config at `projects/my-app/deploys/podman.toml`:
 
 ```toml
+# Shared deploy settings (tracked in git).
+# System-specific overrides: podman.local.toml (gitignored).
+
 [podman]
 image = "localhost/my-app:test"
 ```
@@ -357,9 +363,12 @@ def _parse_requests_per_sec(output: str) -> float | None:
     return float(match.group(1)) if match else None
 ```
 
-Config at `projects/my-app/tests/wrk-bench.toml.example`:
+Config at `projects/my-app/tests/wrk-bench.toml`:
 
 ```toml
+# Shared test settings (tracked in git).
+# System-specific overrides: wrk-bench.local.toml (gitignored).
+
 [wrk]
 duration = "30s"
 threads = 4
@@ -525,21 +534,24 @@ build_minutes = 30
 test_minutes = 10
 ```
 
-### Plugin config: sibling `.toml`
+### Plugin config: sibling `.toml` + `.local.toml`
 
 Each plugin can have a sibling `.toml` file with the same stem as its `.py`
-file. The loader merges this over the framework config before calling
-`configure()`:
+file. Shared settings go in the `.toml` (tracked in git). System-specific
+overrides go in a `.local.toml` sibling (gitignored):
 
 ```
-projects/my-app/tests/wrk-bench.py        # plugin code
-projects/my-app/tests/wrk-bench.toml      # plugin config (gitignored)
-projects/my-app/tests/wrk-bench.toml.example  # template (checked in)
+projects/my-app/tests/wrk-bench.py             # plugin code
+projects/my-app/tests/wrk-bench.toml           # shared config (tracked in git)
+projects/my-app/tests/wrk-bench.local.toml     # system overrides (gitignored)
 ```
 
-**Merge order:** `{**runner_config, **plugin_config}` — plugin sections
-override framework sections. Framework `[paths]` and `[timeouts]` are
-available to all plugins unless the plugin overrides them.
+**Merge order:** `runner_config` < `plugin.toml` < `plugin.local.toml` —
+each layer overrides the previous via deep merge. Framework `[paths]` and
+`[timeouts]` are available to all plugins unless overridden.
+
+String values support `${VAR}` for environment variables and `${REPO_ROOT}`
+for repo-relative paths. Use `${VAR:-default}` for optional variables.
 
 If no sibling `.toml` exists, the plugin receives only the framework config.
 
@@ -611,7 +623,7 @@ class TestBuild:
 - [ ] `configure()` method stores relevant config
 - [ ] Protocol method returns the correct Result dataclass
 - [ ] All `subprocess` calls include `timeout=`
-- [ ] Sibling `.toml.example` checked in (if config needed)
-- [ ] `.toml` added to `.gitignore` pattern
+- [ ] Sibling `.toml` checked in with shared defaults (if config needed)
+- [ ] `.local.toml` pattern is gitignored for system-specific overrides
 - [ ] Campaign `[project]` section updated with plugin name
 - [ ] Tests written using `importlib` loader pattern

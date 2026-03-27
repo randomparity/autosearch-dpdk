@@ -1,9 +1,14 @@
+# Shared deploy settings (tracked in git).
+# System-specific overrides: container-gpu.local.toml (gitignored).
+# Override hf_cache and devices for your system.
+# Secrets use ${VAR} syntax, resolved from environment at runtime.
+
 [deploy]
 runtime = "auto"                               # "auto", "docker", or "podman"
 model = "Qwen/Qwen3-0.6B"
 port = 8000
 container_name = "vllm-bench"
-hf_cache = "/home/user/.cache/huggingface"
+hf_cache = "${HOME}/.cache/huggingface"
 gpu_memory_utilization = 0.90
 startup_timeout = 300
 devices = "all"                                # "all" or comma-separated indices, e.g. "0" or "0,1"
@@ -15,5 +20,5 @@ engine_args = [
 ]
 
 [deploy.env]
-HF_TOKEN = ""       # set in the real .toml (gitignored)
+HF_TOKEN = "${HF_TOKEN:-}"
 # VLLM_ATTENTION_BACKEND = "FLASH_ATTN"

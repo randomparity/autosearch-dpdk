@@ -1,0 +1,5 @@
+# Shared profiler settings (tracked in git).
+# System-specific overrides: nvidia-smi.local.toml (gitignored).
+
+[profiling]
+interval_ms = 500

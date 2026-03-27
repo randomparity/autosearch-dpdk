@@ -7,6 +7,7 @@ import tomllib
 from pathlib import Path
 from typing import Literal, TypedDict
 
+from autoforge.config import resolve_vars
 from autoforge.pointer import REPO_ROOT, load_pointer
 from autoforge.protocol import Direction
 
@@ -240,6 +241,7 @@ def load_campaign(path: Path | None = None) -> CampaignConfig:
     config_path = path or resolve_campaign_path()
     with open(config_path, "rb") as f:
         try:
-            return tomllib.load(f)
+            data = tomllib.load(f)
         except tomllib.TOMLDecodeError as exc:
             raise ValueError(f"Invalid TOML in {config_path}: {exc}") from exc
+    return resolve_vars(data)

@@ -1,3 +1,6 @@
+# Shared test settings (tracked in git).
+# System-specific overrides: bench-serving.local.toml (gitignored).
+
 [bench]
 num_prompts = 100
 dataset_name = "random"

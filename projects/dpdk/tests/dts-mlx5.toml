@@ -1,11 +1,11 @@
-# dts-mlx5 test plugin configuration
-# Copy to dts-mlx5.toml and adjust for your environment.
+# Shared test settings (tracked in git).
+# System-specific overrides: dts-mlx5.local.toml (gitignored).
 #
 # Also requires DTS topology files:
 #   config/nodes.yaml and config/test_run.yaml
 
 [paths]
-# Path to the DTS installation directory
+# DTS installation directory — override in dts-mlx5.local.toml for your system
 dts_dir = "/opt/dts"
 
 [test]

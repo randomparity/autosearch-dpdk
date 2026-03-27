@@ -98,20 +98,26 @@ docker run --rm --gpus all docker.io/nvidia/cuda:12.8.0-base-ubuntu24.04 nvidia-
 podman run --rm --device nvidia.com/gpu=all docker.io/nvidia/cuda:12.8.0-base-ubuntu24.04 nvidia-smi
 ```
 
-Copy and configure plugin configs:
+Create `.local.toml` overrides for system-specific settings. Shared defaults
+are tracked in git; only override what differs on your machine:
 
 ```bash
-cp projects/vllm/runner.toml.example projects/vllm/runner.toml
-cp projects/vllm/builds/container.toml.example projects/vllm/builds/container.toml
-cp projects/vllm/deploys/container-gpu.toml.example projects/vllm/deploys/container-gpu.toml
-cp projects/vllm/tests/bench-serving.toml.example projects/vllm/tests/bench-serving.toml
-cp projects/vllm/perfs/nvidia-smi.toml.example projects/vllm/perfs/nvidia-smi.toml
+# Override HuggingFace cache path and GPU devices for your system
+cat > projects/vllm/deploys/container-gpu.local.toml <<'EOF'
+[deploy]
+hf_cache = "/data/hf-cache"
+devices = "0"
+EOF
 ```
 
-Edit each `.toml` file for your environment. At minimum:
+Set the `HF_TOKEN` environment variable for model downloads:
 
-- `deploys/container-gpu.toml` — set `model`, `hf_cache`, and `HF_TOKEN`
-- `runner.toml` — set `source_dir` if using source builds
+```bash
+export HF_TOKEN="hf_..."   # or add to ~/.bashrc
+```
+
+The tracked `container-gpu.toml` uses `${HF_TOKEN:-}` which resolves from
+your environment at runtime — no need to put secrets in config files.
 
 Verify the configuration file is complete, investigate any warning/fail messages displayed.
 

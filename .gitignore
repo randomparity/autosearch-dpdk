@@ -9,11 +9,11 @@ build/
 config/campaign.toml
 config/nodes.yaml
 config/test_run.yaml
-projects/*/runner.toml
-projects/*/builds/*.toml
-projects/*/deploys/*.toml
-projects/*/tests/*.toml
-projects/*/perfs/*.toml
+projects/*/runner.local.toml
+projects/*/builds/*.local.toml
+projects/*/deploys/*.local.toml
+projects/*/tests/*.local.toml
+projects/*/perfs/*.local.toml
 .env
 .desloppify/
 perf/results/

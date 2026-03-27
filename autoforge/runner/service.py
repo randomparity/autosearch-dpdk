@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import logging
 import os
-import tomllib
+from pathlib import Path
 from typing import Any
 
 from autoforge.campaign import load_campaign, resolve_campaign_path
+from autoforge.config import load_toml_with_local
 from autoforge.logging_config import setup_logging
 from autoforge.pointer import REPO_ROOT, load_pointer
 from autoforge.runner.base import (
@@ -41,20 +42,23 @@ def resolve_config_path(explicit: str | None = None) -> str:
 def load_config(path: str | None = None) -> dict[str, Any]:
     """Load runner configuration from a TOML file.
 
+    The base ``.toml`` file contains shared defaults (tracked in git).
+    A sibling ``.local.toml`` file is deep-merged on top for
+    system-specific overrides (gitignored).  ``${VAR}`` references
+    are resolved after merging.
+
     Raises:
-        FileNotFoundError: If the config file doesn't exist (with guidance).
-        tomllib.TOMLDecodeError: If the file is not valid TOML.
+        FileNotFoundError: If neither the base nor local config exists.
     """
-    config_path = resolve_config_path(path)
-    try:
-        with open(config_path, "rb") as f:
-            return tomllib.load(f)
-    except FileNotFoundError:
+    config_path = Path(resolve_config_path(path))
+    result = load_toml_with_local(config_path)
+    if not result:
         msg = (
             f"Runner config not found: {config_path}\n"
-            "Copy from runner.toml.example and edit for your environment."
+            "Create a runner.local.toml with system-specific overrides."
         )
-        raise FileNotFoundError(msg) from None
+        raise FileNotFoundError(msg)
+    return result
 
 
 def main() -> None:

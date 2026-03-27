@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
+from autoforge.config import load_toml_with_local
 from autoforge.plugins.loader import CATEGORY_MAP
 from autoforge.pointer import REPO_ROOT
 
@@ -521,34 +522,37 @@ def _check_config_sections(
     rel_toml: str,
     root: Path,
 ) -> list[CheckResult]:
-    """Warn about unexpected top-level sections in a plugin config.
+    """Warn about unexpected top-level sections in a local override.
 
-    Compares the actual config's top-level keys against the sibling
-    .toml.example file. Keys present in the config but absent from
-    the example are flagged as warnings.
+    Compares the ``.local.toml`` override's top-level keys against
+    the shared base ``.toml`` file. Keys present in the local
+    override but absent from the base are flagged as warnings.
     """
     results: list[CheckResult] = []
-    example_path = toml_path.with_suffix(".toml.example")
-    if not example_path.is_file():
+
+    local_path = toml_path.with_suffix(".local.toml")
+    if not local_path.is_file() or not toml_path.is_file():
         return results
 
-    example_data, err = _load_toml(example_path)
-    if example_data is None:
+    local_data, _ = _load_toml(local_path)
+    base_data, _ = _load_toml(toml_path)
+    if local_data is None or base_data is None:
         return results
 
-    expected_sections = set(example_data.keys())
-    actual_sections = set(data.keys())
+    expected_sections = set(base_data.keys())
+    actual_sections = set(local_data.keys())
     unexpected = actual_sections - expected_sections
 
+    rel_local = _rel(local_path, root)
     for section in sorted(unexpected):
         results.append(
             CheckResult(
                 f"plugin.{category}.config_sections",
                 "warn",
-                f"{rel_toml}: unexpected section [{section}] "
+                f"{rel_local}: unexpected section [{section}] "
                 f"(expected: {sorted(expected_sections)})",
                 "plugin",
-                path=rel_toml,
+                path=rel_local,
             )
         )
 
@@ -606,6 +610,9 @@ def check_plugins(
                 )
             )
 
+        local_path = plugin_dir / f"{name}.local.toml"
+        rel_local = _rel(local_path, root)
+
         if toml_path.is_file():
             data, err = _load_toml(toml_path)
             if data is not None:
@@ -618,6 +625,16 @@ def check_plugins(
                         path=rel_toml,
                     )
                 )
+                if local_path.is_file():
+                    results.append(
+                        CheckResult(
+                            f"plugin.{category}.local_override",
+                            "pass",
+                            f"{rel_local} (local overrides active)",
+                            "plugin",
+                            path=rel_local,
+                        )
+                    )
                 results.extend(_check_config_sections(data, toml_path, category, rel_toml, root))
                 results.extend(_check_sensitive_empty(data, rel_toml, category))
             else:
@@ -645,7 +662,7 @@ def check_plugins(
                 CheckResult(
                     f"plugin.{category}.config_exists",
                     "warn",
-                    f"{rel_toml} not found (copy from .toml.example if available)",
+                    f"{rel_toml} not found — shared defaults should be tracked in git",
                     "plugin",
                     path=rel_toml,
                 )
@@ -743,17 +760,16 @@ def _collect_effective_config(
             config["submodule_path"] = proj.get("submodule_path", "")
             config["scope"] = proj.get("scope", [])
 
-    # Runner (only if not agent-only)
+    # Runner (only if not agent-only) — merge shared + local overrides
     if role != "agent":
         runner_path = root / "projects" / project / "runner.toml"
-        if runner_path.is_file():
-            data, _ = _load_toml(runner_path)
-            if data:
-                config["runner"] = data.get("runner", {})
-                config["paths"] = data.get("paths", {})
-                config["timeouts"] = data.get("timeouts", {})
+        data = load_toml_with_local(runner_path)
+        if data:
+            config["runner"] = data.get("runner", {})
+            config["paths"] = data.get("paths", {})
+            config["timeouts"] = data.get("timeouts", {})
 
-    # Plugin configs
+    # Plugin configs — merge shared + local overrides
     if "plugins" in config:
         plugin_configs: dict[str, dict[str, Any]] = {}
         for category, directory in CATEGORY_MAP.items():
@@ -761,10 +777,9 @@ def _collect_effective_config(
             if not name:
                 continue
             toml_path = root / "projects" / project / directory / f"{name}.toml"
-            if toml_path.is_file():
-                data, _ = _load_toml(toml_path)
-                if data:
-                    plugin_configs[f"{directory}/{name}.toml"] = data
+            data = load_toml_with_local(toml_path)
+            if data:
+                plugin_configs[f"{directory}/{name}.toml"] = data
         if plugin_configs:
             config["plugin_configs"] = plugin_configs
 
@@ -833,7 +848,8 @@ def _check_sensitive_empty(
                     CheckResult(
                         f"plugin.{category}.config_empty_secret",
                         "warn",
-                        f"{rel_toml}: {key_path} is empty (copy from .toml.example and fill in)",
+                        f"{rel_toml}: {key_path} is empty"
+                        f" — use ${{{{VAR}}}} syntax to read from environment",
                         "plugin",
                         path=rel_toml,
                     )

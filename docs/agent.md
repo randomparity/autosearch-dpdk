@@ -29,8 +29,12 @@ make setup-agent
 ## Configuration
 
 The agent reads configuration from `.autoforge.toml` (pointer to active
-project/sprint) and the sprint's `campaign.toml`. Run `autoforge doctor
---role agent` to validate your setup.
+project/sprint) and the sprint's `campaign.toml`. Both are tracked in git
+and shared across all systems.
+
+String values support `${VAR}` for environment variables and `${REPO_ROOT}`
+for repo-relative paths. Run `autoforge doctor --role agent` to validate
+your setup.
 
 Campaign settings are per-sprint at
 `projects/<project>/sprints/<sprint>/campaign.toml`:

@@ -1,0 +1,18 @@
+# Shared runner settings (tracked in git).
+# System-specific overrides: runner.local.toml (gitignored).
+# Supports ${VAR} for env vars and ${REPO_ROOT} for repo-relative paths.
+
+[runner]
+phase = "all"
+log_level = "info"
+poll_interval = 30
+
+[paths]
+# DPDK source tree (repo-relative)
+dpdk_src = "${REPO_ROOT}/projects/dpdk/repo"
+# Build artifacts directory — override in runner.local.toml for your system
+build_dir = "/tmp/dpdk-build"
+
+[timeouts]
+build_minutes = 30
+test_minutes = 10

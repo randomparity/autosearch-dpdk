@@ -28,24 +28,36 @@ checks for runner prerequisites (meson, ninja, compiler, pkg-config).
 
 Run `uv run autoforge doctor --role runner` to validate your setup before starting the service.
 
-Configuration is split into framework config and per-plugin config:
+Configuration uses **shared defaults + local overrides**. Shared `.toml`
+files are tracked in git with sensible defaults. System-specific settings
+go in `.local.toml` siblings (gitignored). Create only the overrides you
+need:
 
 ```bash
-# Framework config (paths, timeouts, runner settings)
-cp projects/dpdk/runner.toml.example projects/dpdk/runner.toml
+# Override build directory and source path for your system
+cat > projects/dpdk/runner.local.toml <<'EOF'
+[paths]
+build_dir = "/fast-ssd/dpdk-build"
+EOF
 
-# Plugin configs (each plugin has its own sibling .toml)
-cp projects/dpdk/builds/local.toml.example projects/dpdk/builds/local.toml
-cp projects/dpdk/tests/testpmd-memif.toml.example projects/dpdk/tests/testpmd-memif.toml
-cp projects/dpdk/perfs/perf-record.toml.example projects/dpdk/perfs/perf-record.toml
+# Override lcores and port config for your hardware
+cat > projects/dpdk/tests/testpmd-memif.local.toml <<'EOF'
+[testpmd]
+lcores = "96-103"
+vdev = [
+    "net_memif0,role=server,id=0",
+    "net_memif1,role=client,id=0,zero-copy=yes",
+]
+EOF
 ```
 
-Edit each file for your hardware. All config files are gitignored — never
-commit host-specific paths or credentials.
+String values support `${VAR}` for environment variables and `${REPO_ROOT}`
+for repo-relative paths. Use `${VAR:-default}` for optional variables.
 
 The runner resolves framework config via: explicit path > `AUTOFORGE_CONFIG`
 env var > `.autoforge.toml` pointer. Plugin configs are loaded automatically
-from sibling `.toml` files next to each plugin `.py` file.
+from sibling `.toml` files next to each plugin `.py` file, with `.local.toml`
+overrides merged on top.
 
 **Framework config** (`projects/dpdk/runner.toml`):
 
@@ -124,7 +136,7 @@ When using memif vdevs, the runner logs a warning at startup if a server-role
 vdev has `zero-copy=yes` set — the memif PMD silently ignores zero-copy on
 the server side; only the client role supports it.
 
-See `projects/dpdk/runner.toml.example` for the full annotated list of options.
+See `projects/dpdk/runner.toml` for the full annotated list of options.
 
 testpmd requires root for hugepages and device access. The runner uses `sudo`
 by default. Configure passwordless sudo for the testpmd binary:
@@ -163,7 +175,7 @@ into where CPU cycles are spent.
 - Kernel support for hardware performance counters
 - If `profiling.sudo = true`: passwordless sudo for `perf` (same pattern as testpmd above)
 
-**Enable in `projects/dpdk/perfs/perf-record.toml`** (copy from `perf-record.toml.example`):
+**Enable in `projects/dpdk/perfs/perf-record.toml`** (or override in `perf-record.local.toml`):
 
 ```toml
 [profiling]

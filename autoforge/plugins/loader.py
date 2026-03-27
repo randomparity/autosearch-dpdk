@@ -6,12 +6,12 @@ import importlib.util
 import inspect
 import logging
 import sys
-import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from autoforge.campaign import CampaignConfig, project_config
+from autoforge.config import deep_merge, load_toml_with_local
 from autoforge.plugins.protocols import (
     Builder,
     Deployer,
@@ -132,16 +132,15 @@ def load_plugin_config(plugin_path: Path) -> dict[str, Any]:
     """Load the sibling .toml config file for a plugin.
 
     Looks for a .toml file with the same stem as the plugin .py file
-    (e.g. ``local.toml`` next to ``local.py``).
+    (e.g. ``local.toml`` next to ``local.py``).  If a ``.local.toml``
+    sibling also exists, it is deep-merged on top (local wins).
+    ``${VAR}`` references are resolved after merging.
 
     Returns:
-        Config dict, or empty dict if the sibling file does not exist.
+        Config dict, or empty dict if neither file exists.
     """
     config_path = plugin_path.with_suffix(".toml")
-    if not config_path.is_file():
-        return {}
-    with open(config_path, "rb") as f:
-        return tomllib.load(f)
+    return load_toml_with_local(config_path)
 
 
 def load_component(
@@ -192,7 +191,7 @@ def load_component(
 
     if runner_config is not None:
         plugin_cfg = load_plugin_config(plugin_path)
-        merged = {**runner_config, **plugin_cfg}
+        merged = deep_merge(runner_config, plugin_cfg)
         instance.configure(project_config or {}, merged)
 
     return instance

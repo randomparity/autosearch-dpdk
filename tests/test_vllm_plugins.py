@@ -8,9 +8,18 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from autoforge.plugins import Builder, Deployer, Profiler, Tester
 from autoforge.plugins.loader import load_component
 from autoforge.plugins.protocols import BuildResult, DeployResult
+
+
+@pytest.fixture(autouse=True)
+def _isolate_plugin_config(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Prevent on-disk .toml files from interfering with test runner_config."""
+    monkeypatch.setattr("autoforge.plugins.loader.load_plugin_config", lambda _path: {})
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -299,20 +308,26 @@ class TestVllmServingBenchTester:
     @patch("subprocess.run")
     def test_json_result_parsing(self, mock_run: MagicMock, tmp_path: Path) -> None:
         result_data = {
-            "output_throughput_tok_s": 1234.5,
+            "output_throughput": 1234.5,
             "median_ttft_ms": 10.2,
             "median_tpot_ms": 0.5,
         }
-        result_file = tmp_path / "result.json"
-        result_file.write_text(json.dumps(result_data))
 
-        mock_run.return_value = _make_completed(0, stdout="done")
+        def _side_effect(cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+            # When the tester runs "podman cp", write the result file locally
+            if len(cmd) >= 3 and cmd[1] == "cp":
+                dest = Path(cmd[3]) if len(cmd) > 3 else Path(cmd[-1])
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                dest.write_text(json.dumps(result_data))
+            return _make_completed(0, stdout="done")
+
+        mock_run.side_effect = _side_effect
         tester = load_component(
             "vllm",
             "test",
             "bench-serving",
             project_config={},
-            runner_config={"bench": {"result_dir": str(tmp_path), "bench_cmd": "vllm"}},
+            runner_config={"bench": {"num_prompts": 10}},
         )
         result = tester.test(self._deploy_result(), timeout=60)
         assert result.success
