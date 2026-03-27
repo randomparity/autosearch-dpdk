@@ -127,10 +127,18 @@ class VllmContainerBuilder:
         dockerfile = source_path / self._dockerfile
         content = dockerfile.read_text()
 
-        # Remove .git bind mounts (they can't resolve submodule pointers)
+        # Remove .git bind mounts (they can't resolve submodule pointers).
+        # Case 1: .git mount as a continuation line (e.g. after --mount=type=cache).
         content = re.sub(
-            r"\s*--mount=type=bind,source=\.git,target=\.git\s*\\\n",
-            " \\\n",
+            r"\n\s*--mount=type=bind,source=\.git,target=\.git\s*\\",
+            "",
+            content,
+        )
+        # Case 2: RUN whose only purpose is a .git mount (GIT_REPO_CHECK).
+        content = re.sub(
+            r"RUN --mount=type=bind,source=\.git,target=\.git\s*\\\n"
+            r"\s*if \[ .+?; fi\n",
+            "",
             content,
         )
 
