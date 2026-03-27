@@ -32,7 +32,7 @@ uv run autoforge sprint list
 
 **Agent (workstation):**
 
-- Python 3.13+, uv
+- Python 3.13+, uv, huggingface-cli
 
 ## Runner setup (GPU host)
 
@@ -74,7 +74,16 @@ to know which project and sprint to poll):
 
 ```bash
 uv run autoforge project switch vllm
+uv run autoforge sprint list
+<YYYY-MM-DD-sprint-name-1>
+<YYYY-MM-DD-sprint-name-2>
 uv run autoforge sprint switch <sprint-name>
+```
+
+Verify the configuration file is complete, investigate any warning/fail messages displayed.
+
+```bash
+uv run autoforge doctor
 ```
 
 Pre-pull the model to avoid first-run delay:
