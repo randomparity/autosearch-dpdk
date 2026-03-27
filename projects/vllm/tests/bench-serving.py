@@ -1,11 +1,13 @@
-"""vLLM serving benchmark — runs vllm bench serve and extracts throughput."""
+"""vLLM serving benchmark — runs vllm bench serve inside the container."""
 
 from __future__ import annotations
 
 import json
 import logging
 import re
+import shutil
 import subprocess
+import tempfile
 import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -31,9 +33,13 @@ METRIC_PATTERNS: dict[str, str] = {
     "p99_itl_ms": r"P99 ITL \(ms\):\s+([\d.]+)",
 }
 
+# Result path inside the container (not user-configurable).
+_CONTAINER_RESULT_DIR = "/tmp/vllm-bench"
+_CONTAINER_RESULT_FILE = "result.json"
+
 
 class VllmServingBenchTester:
-    """Runs vllm bench serve and extracts output token throughput."""
+    """Runs vllm bench serve inside the deployed container."""
 
     name = "bench-serving"
 
@@ -45,29 +51,26 @@ class VllmServingBenchTester:
         self._output_len = int(cfg.get("random_output_len", 256))
         self._max_concurrency = int(cfg.get("max_concurrency", 64))
         self._request_rate = str(cfg.get("request_rate", "inf"))
-        self._result_dir = Path(cfg.get("result_dir", "/tmp/vllm-bench"))
-        self._bench_cmd = cfg.get("bench_cmd", "vllm")
 
     def test(self, deploy_result: DeployResult, timeout: int) -> TestResult:
-        host = deploy_result.target_info.get("host", "localhost")
-        port = deploy_result.target_info.get("port", 8000)
         model = deploy_result.target_info.get("model", "unknown")
         container = deploy_result.target_info.get("container_name", "vllm-bench")
         runtime = deploy_result.target_info.get("runtime", "docker")
 
-        self._result_dir.mkdir(parents=True, exist_ok=True)
-        result_file = self._result_dir / "result.json"
-
+        local_result_dir = Path(tempfile.mkdtemp(prefix="vllm-bench-"))
         start = time.monotonic()
         try:
             cmd = [
-                self._bench_cmd,
+                runtime,
+                "exec",
+                container,
+                "vllm",
                 "bench",
                 "serve",
                 "--backend",
                 "vllm",
                 "--base-url",
-                f"http://{host}:{port}",
+                "http://localhost:8000",
                 "--model",
                 model,
                 "--dataset-name",
@@ -80,9 +83,9 @@ class VllmServingBenchTester:
                 self._request_rate,
                 "--save-result",
                 "--result-dir",
-                str(self._result_dir),
+                _CONTAINER_RESULT_DIR,
                 "--result-filename",
-                "result.json",
+                _CONTAINER_RESULT_FILE,
                 "--percentile-metrics",
                 "ttft,tpot,itl",
             ]
@@ -96,6 +99,7 @@ class VllmServingBenchTester:
                     ]
                 )
 
+            logger.info("Running benchmark: %s", " ".join(cmd))
             result = subprocess.run(
                 cmd,
                 capture_output=True,
@@ -114,7 +118,12 @@ class VllmServingBenchTester:
                     duration_seconds=elapsed,
                 )
 
-            metrics = _parse_results(result_file, result.stdout)
+            local_result_file = _copy_result_from_container(
+                runtime,
+                container,
+                local_result_dir,
+            )
+            metrics = _parse_results(local_result_file, result.stdout)
             output_tput = metrics.get("output_throughput_tok_s")
             return TestResult(
                 success=True,
@@ -139,10 +148,31 @@ class VllmServingBenchTester:
                 capture_output=True,
                 timeout=30,
             )
+            shutil.rmtree(local_result_dir, ignore_errors=True)
 
 
-def _parse_results(result_file: Path, stdout: str) -> dict[str, Any]:
-    if result_file.exists():
+def _copy_result_from_container(
+    runtime: str,
+    container: str,
+    local_dir: Path,
+) -> Path | None:
+    """Copy the JSON result file from the container to a local path."""
+    local_file = local_dir / _CONTAINER_RESULT_FILE
+    src = f"{container}:{_CONTAINER_RESULT_DIR}/{_CONTAINER_RESULT_FILE}"
+    cp = subprocess.run(
+        [runtime, "cp", src, str(local_file)],
+        capture_output=True,
+        timeout=30,
+    )
+    if cp.returncode != 0:
+        logger.warning("Failed to copy result file from container: %s", cp.stderr)
+        return None
+    return local_file
+
+
+def _parse_results(result_file: Path | None, stdout: str) -> dict[str, Any]:
+    """Parse benchmark results from JSON file or stdout regex fallback."""
+    if result_file and result_file.exists():
         try:
             with open(result_file) as f:
                 return json.load(f)

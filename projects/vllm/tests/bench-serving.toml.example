@@ -5,5 +5,3 @@ random_input_len = 512
 random_output_len = 256
 max_concurrency = 64
 request_rate = "inf"
-result_dir = "/tmp/vllm-bench"
-bench_cmd = "vllm"            # or full path to benchmark_serving.py

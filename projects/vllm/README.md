@@ -165,8 +165,8 @@ Automatically selects the correct GPU flags: `--gpus all` for Docker,
 
 ### Tester (`bench-serving`)
 
-Runs `vllm bench serve` against the deployed container and parses output token
-throughput from the results.
+Runs `vllm bench serve` inside the deployed container via `docker exec` /
+`podman exec` and parses output token throughput from the results.
 
 | Config key | Default | Description |
 |------------|---------|-------------|
@@ -176,8 +176,6 @@ throughput from the results.
 | `random_output_len` | `256` | Output token length (random dataset) |
 | `max_concurrency` | `64` | Maximum concurrent requests |
 | `request_rate` | `"inf"` | Request rate (`"inf"` for closed-loop) |
-| `result_dir` | `/tmp/vllm-bench` | Directory for benchmark output files |
-| `bench_cmd` | `"vllm"` | Command or path to `benchmark_serving.py` |
 
 ### Profiler (`nvidia-smi`)
 
