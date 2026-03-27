@@ -89,6 +89,38 @@ class VllmContainerBuilder:
                 duration_seconds=time.monotonic() - start,
             )
 
+    @staticmethod
+    def _get_scm_version(source_path: Path) -> str:
+        """Get version string from git describe for setuptools_scm override."""
+        result = subprocess.run(
+            ["git", "describe", "--tags", "--always"],
+            cwd=source_path,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        if result.returncode == 0:
+            return result.stdout.strip().lstrip("v")
+        return "0.0.0+unknown"
+
+    def _inject_scm_version(self, source_path: Path, version: str) -> None:
+        """Inject SETUPTOOLS_SCM_PRETEND_VERSION into Dockerfile build stage.
+
+        In submodules, .git is a pointer file, not a directory. Docker
+        bind mounts can't follow this, so setuptools_scm fails during
+        wheel build. Injecting the version ENV bypasses git entirely.
+        """
+        dockerfile = source_path / self._dockerfile
+        content = dockerfile.read_text()
+        marker = "# Build the vLLM wheel"
+        if marker not in content:
+            logger.warning("Dockerfile marker not found, skipping SCM injection")
+            return
+        env_line = f'ENV SETUPTOOLS_SCM_PRETEND_VERSION="{version}"\n'
+        content = content.replace(marker, env_line + marker)
+        dockerfile.write_text(content)
+        logger.info("Injected SETUPTOOLS_SCM_PRETEND_VERSION=%s into Dockerfile", version)
+
     def _build_from_source(
         self,
         source_path: Path,
@@ -104,6 +136,10 @@ class VllmContainerBuilder:
                 capture_output=True,
                 timeout=30,
             )
+            # Inject version so setuptools_scm doesn't need .git access
+            version = self._get_scm_version(source_path)
+            self._inject_scm_version(source_path, version)
+
             cmd = [self._runtime, "build"]
             if self._runtime == "podman":
                 cmd.extend(["--security-opt", "label=disable"])

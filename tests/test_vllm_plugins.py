@@ -107,23 +107,30 @@ class TestVllmContainerBuilder:
         assert "TIMEOUT" in result.log
 
     @patch("subprocess.run")
-    def test_source_build_success(self, mock_run: MagicMock) -> None:
+    def test_source_build_success(self, mock_run: MagicMock, tmp_path: Path) -> None:
         mock_run.return_value = _make_completed(0, "built ok")
+        # Create minimal Dockerfile with the marker setuptools_scm injection needs
+        dockerfile = tmp_path / "Dockerfile"
+        dockerfile.write_text("# Build the vLLM wheel\nRUN setup.py\n")
         builder = self._make_builder("source")
-        result = builder.build(Path("/src"), "def456", Path("/build"), 600)
+        result = builder.build(tmp_path, "def456", Path("/build"), 600)
         assert result.success
         assert result.artifacts["mode"] == "source"
         assert result.artifacts["commit"] == "def456"
 
     @patch("subprocess.run")
-    def test_source_build_failure(self, mock_run: MagicMock) -> None:
-        # First call (git checkout) succeeds, second (build) fails
+    def test_source_build_failure(self, mock_run: MagicMock, tmp_path: Path) -> None:
+        # First call (git checkout) succeeds, second (git describe) succeeds,
+        # third (docker build) fails
         mock_run.side_effect = [
             _make_completed(0),
+            _make_completed(0, stdout="v0.18.0"),
             _make_completed(1, stderr="build error"),
         ]
+        dockerfile = tmp_path / "Dockerfile"
+        dockerfile.write_text("# Build the vLLM wheel\nRUN setup.py\n")
         builder = self._make_builder("source")
-        result = builder.build(Path("/src"), "bad", Path("/build"), 600)
+        result = builder.build(tmp_path, "bad", Path("/build"), 600)
         assert not result.success
 
 
