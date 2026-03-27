@@ -18,3 +18,4 @@ sequence	timestamp	source_commit	metric_value	status	description	tags
 30	2026-03-27T23:07:05.859017+00:00	6a96012bb238b1441932897a0d9e94a467389731	2344.1457253915187	completed	batch=8192 + no prefix cache + no stats (retry)
 31	2026-03-27T23:11:32.437532+00:00	cde522cc459efffce9ece0a059cb685d071890eb	2383.685416618132	completed	batch=8192 + no prefix cache only
 32	2026-03-27T23:16:02.334359+00:00	0bb911b484d29f75661b17a241d01a833811c82b	2396.1996910880007	completed	no prefix cache (attempt to lock in)
+33	2026-03-27T23:21:46.340259+00:00	2604369d45af58804e39fae155dadb7806b678a9	2332.239819692605	completed	no prefix cache (persistence)
