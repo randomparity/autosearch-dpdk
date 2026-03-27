@@ -67,6 +67,18 @@ class TestProtocolConformance:
 # Builder tests
 # ---------------------------------------------------------------------------
 
+_TEST_DOCKERFILE = (
+    'ENV SETUPTOOLS_SCM_PRETEND_VERSION="0.0.0+csrc.build"\n'
+    "RUN python3 setup.py bdist_wheel\n"
+    "ENV VLLM_SKIP_PRECOMPILED_VERSION_SUFFIX=1\n"
+    "RUN --mount=type=bind,source=.git,target=.git \\\n"
+    "    python3 setup.py bdist_wheel\n"
+)
+
+
+def _write_test_dockerfile(tmp_path: Path) -> None:
+    (tmp_path / "Dockerfile").write_text(_TEST_DOCKERFILE)
+
 
 class TestVllmContainerBuilder:
     def _make_builder(self, mode: str = "prebuilt") -> Any:
@@ -109,9 +121,8 @@ class TestVllmContainerBuilder:
     @patch("subprocess.run")
     def test_source_build_success(self, mock_run: MagicMock, tmp_path: Path) -> None:
         mock_run.return_value = _make_completed(0, "built ok")
-        # Create minimal Dockerfile with the marker the SCM injection targets
-        dockerfile = tmp_path / "Dockerfile"
-        dockerfile.write_text("ENV VLLM_SKIP_PRECOMPILED_VERSION_SUFFIX=1\nRUN setup.py\n")
+        # Create minimal Dockerfile with markers the submodule patch targets
+        _write_test_dockerfile(tmp_path)
         builder = self._make_builder("source")
         result = builder.build(tmp_path, "def456", Path("/build"), 600)
         assert result.success
@@ -128,8 +139,7 @@ class TestVllmContainerBuilder:
             _make_completed(0, stdout="bcf2be96"),
             _make_completed(1, stderr="build error"),
         ]
-        dockerfile = tmp_path / "Dockerfile"
-        dockerfile.write_text("ENV VLLM_SKIP_PRECOMPILED_VERSION_SUFFIX=1\nRUN setup.py\n")
+        _write_test_dockerfile(tmp_path)
         builder = self._make_builder("source")
         result = builder.build(tmp_path, "bad", Path("/build"), 600)
         assert not result.success

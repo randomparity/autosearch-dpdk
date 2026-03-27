@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 import shutil
 import subprocess
 import time
@@ -113,29 +114,52 @@ class VllmContainerBuilder:
         short_hash = rev.stdout.strip() if rev.returncode == 0 else "unknown"
         return f"0.0.0.dev0+g{short_hash}"
 
-    def _inject_scm_version(self, source_path: Path, version: str) -> None:
-        """Inject SETUPTOOLS_SCM_PRETEND_VERSION into Dockerfile build stage.
+    def _patch_dockerfile_for_submodule(self, source_path: Path, version: str) -> None:
+        """Patch Dockerfile to eliminate all .git access during build.
 
         In submodules, .git is a pointer file, not a directory. Docker
-        bind mounts can't follow this, so setuptools_scm fails during
-        wheel build. Injecting the version ENV bypasses git entirely.
-
-        Only targets the final 'build' stage marker (preceded by
-        VLLM_SKIP_PRECOMPILED_VERSION_SUFFIX), not the csrc-build stage
-        which already sets its own SETUPTOOLS_SCM_PRETEND_VERSION.
+        bind mounts expose this file as-is, breaking setuptools_scm and
+        vcs_versioning. Fix by:
+        1. Removing all .git bind mounts from RUN instructions
+        2. Overriding SETUPTOOLS_SCM_PRETEND_VERSION in every stage
+        3. Adding .git to .dockerignore to exclude from build context
         """
         dockerfile = source_path / self._dockerfile
         content = dockerfile.read_text()
-        # Use the unique context around the build stage's wheel-build comment
-        # to avoid injecting into the csrc-build stage.
-        marker = "ENV VLLM_SKIP_PRECOMPILED_VERSION_SUFFIX=1"
-        if marker not in content:
-            logger.warning("Dockerfile marker not found, skipping SCM injection")
-            return
-        env_line = f'\nENV SETUPTOOLS_SCM_PRETEND_VERSION="{version}"'
-        content = content.replace(marker, marker + env_line)
+
+        # Remove .git bind mounts (they can't resolve submodule pointers)
+        content = re.sub(
+            r"\s*--mount=type=bind,source=\.git,target=\.git\s*\\\n",
+            " \\\n",
+            content,
+        )
+
+        # Override the csrc-build stage's pretend version (may be ignored
+        # by newer vcs_versioning) with VLLM_VERSION_OVERRIDE which
+        # setup.py checks before calling setuptools_scm.
+        content = content.replace(
+            'ENV SETUPTOOLS_SCM_PRETEND_VERSION="0.0.0+csrc.build"',
+            'ENV SETUPTOOLS_SCM_PRETEND_VERSION="0.0.0+csrc.build"\n'
+            'ENV VLLM_VERSION_OVERRIDE="0.0.0+csrc.build"',
+        )
+
+        # Inject version into the build stage
+        content = content.replace(
+            "ENV VLLM_SKIP_PRECOMPILED_VERSION_SUFFIX=1",
+            "ENV VLLM_SKIP_PRECOMPILED_VERSION_SUFFIX=1\n"
+            f'ENV SETUPTOOLS_SCM_PRETEND_VERSION="{version}"\n'
+            f'ENV VLLM_VERSION_OVERRIDE="{version}"',
+        )
+
         dockerfile.write_text(content)
-        logger.info("Injected SETUPTOOLS_SCM_PRETEND_VERSION=%s into Dockerfile", version)
+
+        # Exclude .git from build context entirely
+        dockerignore = source_path / ".dockerignore"
+        ignore_text = dockerignore.read_text() if dockerignore.exists() else ""
+        if ".git" not in ignore_text.splitlines():
+            dockerignore.write_text(ignore_text.rstrip() + "\n.git\n")
+
+        logger.info("Patched Dockerfile: removed .git mounts, set version=%s", version)
 
     def _build_from_source(
         self,
@@ -152,9 +176,9 @@ class VllmContainerBuilder:
                 capture_output=True,
                 timeout=30,
             )
-            # Inject version so setuptools_scm doesn't need .git access
+            # Patch Dockerfile to eliminate .git access (broken in submodules)
             version = self._get_scm_version(source_path)
-            self._inject_scm_version(source_path, version)
+            self._patch_dockerfile_for_submodule(source_path, version)
 
             cmd = [self._runtime, "build"]
             if self._runtime == "podman":
