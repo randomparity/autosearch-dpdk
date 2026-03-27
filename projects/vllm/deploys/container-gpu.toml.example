@@ -6,6 +6,7 @@ container_name = "vllm-bench"
 hf_cache = "/home/user/.cache/huggingface"
 gpu_memory_utilization = 0.90
 startup_timeout = 300
+devices = "all"                                # "all" or comma-separated indices, e.g. "0" or "0,1"
 
 # Extra engine args passed after --model (list of strings)
 engine_args = [

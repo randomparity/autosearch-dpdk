@@ -118,6 +118,7 @@ Automatically selects the correct GPU flags: `--gpus all` for Docker,
 | `hf_cache` | `/home/user/.cache/huggingface` | Host path to HuggingFace cache (bind-mounted) |
 | `gpu_memory_utilization` | `0.90` | Fraction of GPU memory to use |
 | `startup_timeout` | `300` | Seconds to wait for health check |
+| `devices` | `"all"` | GPUs to expose: `"all"` or comma-separated indices e.g. `"0"` or `"0,1"` |
 | `engine_args` | `[]` | Extra args passed after `--model` |
 | `[deploy.env]` | — | Environment variables (e.g. `HF_TOKEN`, `VLLM_ATTENTION_BACKEND`) |
 

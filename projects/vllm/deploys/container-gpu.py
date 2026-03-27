@@ -46,6 +46,7 @@ class ContainerGpuDeployer:
         self._startup_timeout = int(cfg.get("startup_timeout", 300))
         self._gpu_memory_util = float(cfg.get("gpu_memory_utilization", 0.90))
         self._env_vars: dict[str, str] = cfg.get("env", {})
+        self._devices: str = cfg.get("devices", "all")
 
     def deploy(self, build_result: BuildResult) -> DeployResult:
         image = build_result.artifacts.get("image", "localhost/vllm-bench:latest")
@@ -64,9 +65,13 @@ class ContainerGpuDeployer:
             self._container_name,
         ]
         if self._runtime == "docker":
-            cmd.extend(["--gpus", "all"])
-        else:
+            gpu_flag = "all" if self._devices == "all" else f"device={self._devices}"
+            cmd.extend(["--gpus", gpu_flag])
+        elif self._devices == "all":
             cmd.extend(["--device", "nvidia.com/gpu=all"])
+        else:
+            for dev in self._devices.split(","):
+                cmd.extend(["--device", f"nvidia.com/gpu={dev.strip()}"])
         cmd.extend(
             [
                 "--ipc=host",
