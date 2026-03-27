@@ -404,6 +404,19 @@ def cmd_status(campaign: CampaignConfig) -> None:
     _print_result(latest)
 
 
+def cmd_sysinfo(role: str) -> None:
+    """Collect and save system info for the given role."""
+    import json
+
+    from autoforge.agent.sprint import docs_dir
+    from autoforge.agent.sysinfo import save_sysinfo
+
+    path = save_sysinfo(role, docs_dir())
+    data = json.loads(path.read_text())
+    print(json.dumps(data, indent=2))
+    print(f"\nSaved to {path}")
+
+
 def cmd_summarize(campaign: CampaignConfig) -> None:
     """Generate sprint summary from results data."""
     from autoforge.agent.sprint import docs_dir
@@ -511,6 +524,14 @@ def main() -> None:
         action="store_true",
         dest="list_topics",
         help="List available hint topics for the architecture",
+    )
+
+    sysinfo_p = sub.add_parser("sysinfo", help="Collect and save system info")
+    sysinfo_p.add_argument(
+        "--role",
+        required=True,
+        choices=["agent", "build", "test", "runner"],
+        help="Machine role (runner = build + test on same host)",
     )
 
     submit_p = sub.add_parser("submit", help="Submit a code change for testing")
@@ -631,6 +652,10 @@ def _dispatch(args: argparse.Namespace) -> None:
                 print(f"ERROR: {exc}")
                 sys.exit(1)
             print(f"Switched to project: {args.name}")
+        return
+
+    if args.command == "sysinfo":
+        cmd_sysinfo(args.role)
         return
 
     if args.command == "doctor":

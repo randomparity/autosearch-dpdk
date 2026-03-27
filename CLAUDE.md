@@ -30,6 +30,7 @@ uv run autoforge sprint list                              # list all sprints
 uv run autoforge sprint switch <name>                    # switch active sprint
 uv run autoforge doctor                                  # validate configuration setup
 uv run autoforge doctor --role agent                     # agent-side checks only
+uv run autoforge sysinfo --role runner                     # collect system info (agent|build|test|runner)
 uv run autoforge summarize                               # generate sprint summary from results
 uv run autoforge-loop --dry-run                         # interactive mode (manual fallback)
 ```

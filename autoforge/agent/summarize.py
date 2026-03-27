@@ -69,6 +69,8 @@ Experiments that regressed or showed no improvement and were reverted.
 
 {patch_discussion_prompt}
 
+{system_info_section}
+
 ---
 
 ## Appendix B: Architecture Insights
@@ -162,6 +164,14 @@ def _load_summary_data(campaign: CampaignConfig) -> dict[str, Any]:
     # Patch discussion prompts
     patch_prompts = _build_patch_prompts(history, baseline, direction)
 
+    # System info
+    from autoforge.agent.sprint import docs_dir
+    from autoforge.agent.sysinfo import load_all_sysinfo, render_sysinfo_section
+
+    docs = docs_dir()
+    all_sysinfo = load_all_sysinfo(docs) if docs.exists() else {}
+    system_info_section = render_sysinfo_section(all_sysinfo)
+
     return {
         "sprint_name": sprint_name,
         "goal_description": goal_cfg.get("description", "").strip(),
@@ -180,6 +190,7 @@ def _load_summary_data(campaign: CampaignConfig) -> dict[str, Any]:
         "build_failures_table": failures_table,
         "tags_summary": tags_summary,
         "patch_discussion_prompt": patch_prompts,
+        "system_info_section": system_info_section,
         "architecture_insights_prompt": ("<!-- Add architecture-specific insights here. -->"),
         "tooling_observations_prompt": ("<!-- Add tooling observations here. -->"),
     }
