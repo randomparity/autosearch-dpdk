@@ -62,14 +62,44 @@ def _make_request(
 class TestGitPull:
     @patch("autoforge.runner.base.subprocess.run")
     def test_success_returns_true(self, mock_run) -> None:
-        mock_run.return_value = subprocess.CompletedProcess([], 0, stdout="", stderr="")
+        mock_run.return_value = subprocess.CompletedProcess(
+            [], 0, stdout="No local changes to save", stderr=""
+        )
         assert git_pull() is True
-        mock_run.assert_called_once()
+        # stash (no-op) + pull = 2 calls (no pop since nothing stashed)
+        assert mock_run.call_count == 2
 
     @patch("autoforge.runner.base.subprocess.run")
     def test_failure_returns_false(self, mock_run) -> None:
-        mock_run.return_value = subprocess.CompletedProcess([], 1, stdout="", stderr="error")
+        def side_effect(*args, **kwargs):
+            cmd = args[0]
+            if cmd == ["git", "pull", "--rebase"]:
+                return subprocess.CompletedProcess([], 1, stdout="", stderr="error")
+            return subprocess.CompletedProcess([], 0, stdout="No local changes to save", stderr="")
+
+        mock_run.side_effect = side_effect
         assert git_pull() is False
+
+    @patch("autoforge.runner.base.subprocess.run")
+    def test_stashes_and_pops_dirty_tree(self, mock_run) -> None:
+        call_log = []
+
+        def side_effect(*args, **kwargs):
+            cmd = args[0]
+            call_log.append(cmd)
+            if cmd == ["git", "stash", "--include-untracked"]:
+                return subprocess.CompletedProcess(
+                    [], 0, stdout="Saved working directory", stderr=""
+                )
+            return subprocess.CompletedProcess([], 0, stdout="", stderr="")
+
+        mock_run.side_effect = side_effect
+        assert git_pull() is True
+        assert call_log == [
+            ["git", "stash", "--include-untracked"],
+            ["git", "pull", "--rebase"],
+            ["git", "stash", "pop"],
+        ]
 
 
 class TestRecoverStaleRequests:

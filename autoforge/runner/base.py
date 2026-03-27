@@ -42,7 +42,20 @@ logger = logging.getLogger(__name__)
 
 
 def git_pull() -> bool:
-    """Pull latest changes with rebase. Returns True on success."""
+    """Pull latest changes with rebase. Returns True on success.
+
+    Stashes uncommitted changes before pulling so that a co-located
+    agent (or any other process modifying the working tree) does not
+    block the rebase.
+    """
+    stash_result = subprocess.run(
+        ["git", "stash", "--include-untracked"],
+        capture_output=True,
+        text=True,
+        timeout=GIT_TIMEOUT,
+    )
+    stashed = stash_result.returncode == 0 and "No local changes" not in stash_result.stdout
+
     result = subprocess.run(
         ["git", "pull", "--rebase"],
         capture_output=True,
@@ -51,8 +64,18 @@ def git_pull() -> bool:
     )
     if result.returncode != 0:
         logger.error("git pull --rebase failed: %s", result.stderr.strip())
-        return False
-    return True
+
+    if stashed:
+        pop_result = subprocess.run(
+            ["git", "stash", "pop"],
+            capture_output=True,
+            text=True,
+            timeout=GIT_TIMEOUT,
+        )
+        if pop_result.returncode != 0:
+            logger.warning("git stash pop failed: %s", pop_result.stderr.strip())
+
+    return result.returncode == 0
 
 
 def recover_stale_requests(requests_dir: Path, stale_statuses: frozenset[str]) -> None:
