@@ -19,10 +19,11 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# Regex fallback patterns — keys match the JSON output from `vllm bench serve`.
 METRIC_PATTERNS: dict[str, str] = {
-    "output_throughput_tok_s": r"Output token throughput \(tok/s\):\s+([\d.]+)",
-    "total_throughput_tok_s": r"Total [Tt]oken throughput \(tok/s\):\s+([\d.]+)",
-    "request_throughput_req_s": r"Request throughput \(req/s\):\s+([\d.]+)",
+    "output_throughput": r"Output token throughput \(tok/s\):\s+([\d.]+)",
+    "total_token_throughput": r"Total [Tt]oken throughput \(tok/s\):\s+([\d.]+)",
+    "request_throughput": r"Request throughput \(req/s\):\s+([\d.]+)",
     "mean_ttft_ms": r"Mean TTFT \(ms\):\s+([\d.]+)",
     "median_ttft_ms": r"Median TTFT \(ms\):\s+([\d.]+)",
     "p99_ttft_ms": r"P99 TTFT \(ms\):\s+([\d.]+)",
@@ -124,7 +125,7 @@ class VllmServingBenchTester:
                 local_result_dir,
             )
             metrics = _parse_results(local_result_file, result.stdout)
-            output_tput = metrics.get("output_throughput_tok_s")
+            output_tput = metrics.get("output_throughput")
             return TestResult(
                 success=True,
                 metric_value=output_tput,
@@ -188,7 +189,7 @@ def _parse_results(result_file: Path | None, stdout: str) -> dict[str, Any]:
 
 
 def _format_summary(metrics: dict[str, Any]) -> str:
-    tput = metrics.get("output_throughput_tok_s", 0)
+    tput = metrics.get("output_throughput", 0)
     ttft = metrics.get("median_ttft_ms", 0)
     tpot = metrics.get("median_tpot_ms", 0)
     return f"{tput:.1f} tok/s output | TTFT {ttft:.1f}ms | TPOT {tpot:.2f}ms"

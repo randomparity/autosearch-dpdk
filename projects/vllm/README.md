@@ -191,7 +191,7 @@ GPU utilization as a CSV time series.
 The baseline sprint config at
 `projects/vllm/sprints/2026-03-26-baseline/campaign.toml` targets:
 
-- **Metric:** `output_throughput_tok_s` (output tokens per second)
+- **Metric:** `output_throughput` (output tokens per second)
 - **Direction:** `maximize`
 - **Threshold:** `2.0%` — changes must improve throughput by at least 2%
 

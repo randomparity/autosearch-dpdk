@@ -3,8 +3,8 @@ name = "vllm-serving-throughput"
 max_iterations = 30
 
 [metric]
-name = "output_throughput_tok_s"
-path = "output_throughput_tok_s"
+name = "output_throughput"
+path = "output_throughput"
 direction = "maximize"
 threshold = 2.0    # keep changes that improve throughput by >= 2%
 
