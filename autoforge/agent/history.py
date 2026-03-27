@@ -54,7 +54,7 @@ def append_result(
 
     try:
         with open(path, "a", newline="") as f:
-            writer = csv.writer(f, delimiter="\t")
+            writer = csv.writer(f, delimiter="\t", lineterminator="\n")
             tags_str = ",".join(tags) if tags else ""
             writer.writerow([seq, timestamp, commit, metric_str, status, description, tags_str])
     except OSError as exc:
@@ -130,7 +130,7 @@ def append_failure(
     try:
         write_header = not path.exists()
         with open(path, "a", newline="") as f:
-            writer = csv.writer(f, delimiter="\t")
+            writer = csv.writer(f, delimiter="\t", lineterminator="\n")
             if write_header:
                 writer.writerow(FAILURE_COLUMNS)
             writer.writerow([timestamp, commit, metric_str, description, diff_summary])
