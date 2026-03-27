@@ -4,3 +4,4 @@ sequence	timestamp	source_commit	metric_value	status	description	tags
 13	2026-03-27T21:16:10.357476+00:00	de93094009f260e9aa940298ce712cadb791076a	2302.896881995742	completed	decode fast path in _prepare_inputs: skip np.repeat/cumsum
 15	2026-03-27T21:32:30.011930+00:00	28048bd6b09cb164a934a8c134b7d7a7f4733b4f	2280.9413286148942	completed	Baseline: unmodified vllm
 17	2026-03-27T21:56:43.644417+00:00	45c2343810fc42c119f3d01a3282305f8b5cbabd	2399.0338079486355	completed	increase default max_num_batched_tokens to 4096 (retry)
+18	2026-03-27T22:01:32.175719+00:00	0bc9670741aa430d35e240802b030740e34b5c89	2401.5825398535194	completed	increase max_num_batched_tokens to 8192
