@@ -1,1 +1,2 @@
 sequence	timestamp	source_commit	metric_value	status	description	tags
+1	2026-03-28T12:30:13.042562+00:00	0bc9670741aa430d35e240802b030740e34b5c89	2393.56299291657	completed	Baseline: unmodified vllm
