@@ -302,33 +302,24 @@ def check_scope_compliance(source_path: Path, scope: list[str]) -> list[str]:
 
     normalized = [s.rstrip("/") + "/" for s in scope]
 
+    # git diff HEAD covers both staged and unstaged changes vs HEAD
+    result = subprocess.run(
+        ["git", "diff", "--name-only", "HEAD"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=str(source_path),
+    )
+    if result.returncode != 0:
+        logger.warning("scope check git diff failed: %s", result.stderr.strip())
+        return []
+
     out_of_scope: list[str] = []
-    for extra_args in ([], ["--cached"]):
-        cmd = [
-            "git",
-            "diff",
-            *extra_args,
-            "--name-only",
-            "HEAD",
-        ]
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=30,
-            cwd=str(source_path),
-        )
-        if result.returncode != 0:
-            logger.warning("scope check git diff failed: %s", result.stderr.strip())
-            return []
-        for line in result.stdout.strip().splitlines():
-            path = line.strip()
-            if not path:
-                continue
-            if (
-                not any(path.startswith(prefix) for prefix in normalized)
-                and path not in out_of_scope
-            ):
-                out_of_scope.append(path)
+    for line in result.stdout.strip().splitlines():
+        path = line.strip()
+        if not path:
+            continue
+        if not any(path.startswith(prefix) for prefix in normalized):
+            out_of_scope.append(path)
 
     return out_of_scope

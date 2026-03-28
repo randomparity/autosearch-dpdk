@@ -31,6 +31,9 @@ uv run autoforge sprint switch <name>                    # switch active sprint
 uv run autoforge doctor                                  # validate configuration setup
 uv run autoforge doctor --role agent                     # agent-side checks only
 uv run autoforge sysinfo --role runner                     # collect system info (agent|build|test|runner)
+uv run autoforge logs --seq N                              # print logs for request N (auto-detects phase)
+uv run autoforge logs --seq N --phase build                # build log only
+uv run autoforge inspect --seq N                           # full request details: timeline, metric, logs
 uv run autoforge summarize                               # generate sprint summary from results
 uv run autoforge-loop --dry-run                         # interactive mode (manual fallback)
 ```
@@ -78,12 +81,12 @@ autoforge/perf/        Profiling: perf record orchestration, stack analysis, arc
 
 ### Agent modules
 
-- `cli.py` — CLI subcommands (`context`, `submit`, `poll`, `judge`, `baseline`, `finale`, `revert`, `build-log`, `status`, `hints`, `sprint`, `project`, `summarize`, `doctor`) for Claude Code
+- `cli.py` — CLI subcommands (`context`, `submit`, `poll`, `judge`, `baseline`, `finale`, `revert`, `logs`, `build-log`, `inspect`, `sysinfo`, `status`, `hints`, `sprint`, `project`, `summarize`, `doctor`) for Claude Code
 - `hints.py` — architecture-specific optimization hints lookup (supports topics: optimization, perf-counters)
 - `loop.py` — interactive iteration loop (manual fallback)
 - `git_ops.py` — git subprocess wrappers, `ResultContext`, `record_result_or_revert()`, `record_verdict()`, `full_revert()`, `force_push_source()`
 - `project.py` — `init_project()` for scaffolding new projects
-- `strategy.py` — `format_context()`, `has_submodule_change()`, `extract_profile_summary()`
+- `strategy.py` — `format_context()`, `has_submodule_change()`, `check_scope_compliance()`, `format_failure_patterns()`, `extract_profile_summary()`
 - `history.py` — TSV-based results/failures tracking
 - `metric.py` — `compare_metric()`, `below_threshold()`
 - `protocol.py` — request creation (`create_request()`), sequence numbering, `poll_for_completion()`, `find_request_by_seq()`

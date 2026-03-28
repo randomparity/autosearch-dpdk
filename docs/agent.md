@@ -46,7 +46,9 @@ Campaign settings are per-sprint at
 | `[metric]` | `name` | Human-readable metric name |
 | `[metric]` | `path` | Key path into results JSON (dot-separated for nested dicts) |
 | `[metric]` | `direction` | `"maximize"` or `"minimize"` |
-| `[metric]` | `threshold` | Stop early if improvement falls below this value |
+| `[metric]` | `threshold` | Minimum absolute improvement required to keep a change |
+| `[metric]` | `comparison` | Baseline for keep/revert: `"peak"` (all-time best, default) or `"rolling_average"` (mean of last N) |
+| `[metric]` | `comparison_window` | Number of recent results to average when `comparison = "rolling_average"` (default: 5) |
 | `[agent]` | `poll_interval` | Seconds between polling for results (default: 30) |
 | `[agent]` | `timeout_minutes` | Max wait for a single test run (default: 60) |
 | `[goal]` | `description` | Freeform text injected into the agent prompt |
@@ -103,7 +105,13 @@ sprint's optimization goals. Claude Code uses the CLI subcommands (`context`,
 | `autoforge project list` | List all projects |
 | `autoforge project switch <name>` | Switch active project |
 | `autoforge revert` | Revert last source submodule commit and force-push fork |
-| `autoforge build-log --seq N` | Print formatted build log for request N (`-s N` short form) |
+| `autoforge logs --seq N` | Print logs for a request; auto-detects failed phase (`-s N` short form) |
+| `autoforge logs --seq N --phase build` | Print logs for a specific phase (`build`, `deploy`, or `test`) |
+| `autoforge logs --seq N --grep STR --tail N` | Filter log lines by substring, show last N |
+| `autoforge build-log --seq N` | Alias for `logs --phase build` (kept for backward compatibility) |
+| `autoforge inspect --seq N` | Show full request details: timeline, plugins, metric, all log snippets |
+| `autoforge inspect --seq N --json` | Output raw request JSON |
+| `autoforge sysinfo --role agent` | Collect and save system info to sprint docs dir |
 | `autoforge hints` | Show arch optimization checklist for the target architecture |
 | `autoforge hints --list` | List available hint topics |
 | `autoforge hints --topic perf-counters` | Show PMU performance counter reference |

@@ -183,42 +183,34 @@ class TestCheckScopeCompliance:
 
     def test_all_in_scope(self, tmp_path) -> None:
         with patch("autoforge.agent.strategy.subprocess.run") as mock_run:
-            mock_run.side_effect = [
-                _fake_run("drivers/net/memif/rte_eth_memif.c\ndrivers/net/memif/memif.h\n"),
-                _fake_run(""),
-            ]
+            mock_run.return_value = _fake_run(
+                "drivers/net/memif/rte_eth_memif.c\ndrivers/net/memif/memif.h\n"
+            )
             result = check_scope_compliance(tmp_path, ["drivers/net/memif/"])
             assert result == []
 
     def test_some_out_of_scope(self, tmp_path) -> None:
         with patch("autoforge.agent.strategy.subprocess.run") as mock_run:
-            mock_run.side_effect = [
-                _fake_run("drivers/net/memif/rte_eth_memif.c\nlib/ethdev/rte_ethdev.c\n"),
-                _fake_run(""),
-            ]
+            mock_run.return_value = _fake_run(
+                "drivers/net/memif/rte_eth_memif.c\nlib/ethdev/rte_ethdev.c\n"
+            )
             result = check_scope_compliance(tmp_path, ["drivers/net/memif/"])
             assert result == ["lib/ethdev/rte_ethdev.c"]
 
     def test_no_changed_files(self, tmp_path) -> None:
         with patch("autoforge.agent.strategy.subprocess.run") as mock_run:
-            mock_run.side_effect = [_fake_run(""), _fake_run("")]
+            mock_run.return_value = _fake_run("")
             result = check_scope_compliance(tmp_path, ["drivers/net/memif/"])
             assert result == []
 
     def test_scope_without_trailing_slash(self, tmp_path) -> None:
         with patch("autoforge.agent.strategy.subprocess.run") as mock_run:
-            mock_run.side_effect = [
-                _fake_run("drivers/net/memif/rte_eth_memif.c\n"),
-                _fake_run(""),
-            ]
+            mock_run.return_value = _fake_run("drivers/net/memif/rte_eth_memif.c\n")
             result = check_scope_compliance(tmp_path, ["drivers/net/memif"])
             assert result == []
 
-    def test_deduplicates_across_staged_and_unstaged(self, tmp_path) -> None:
+    def test_git_failure_returns_empty(self, tmp_path) -> None:
         with patch("autoforge.agent.strategy.subprocess.run") as mock_run:
-            mock_run.side_effect = [
-                _fake_run("lib/ethdev/rte_ethdev.c\n"),  # unstaged
-                _fake_run("lib/ethdev/rte_ethdev.c\n"),  # staged (same file)
-            ]
+            mock_run.return_value = _fake_run("", returncode=1)
             result = check_scope_compliance(tmp_path, ["drivers/net/memif/"])
-            assert result == ["lib/ethdev/rte_ethdev.c"]
+            assert result == []

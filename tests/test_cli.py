@@ -447,6 +447,36 @@ class TestCmdJudge:
         assert "keep" in out
         assert "test keep" in out
 
+    def test_rolling_average_mode_calls_rolling_average(self, tmp_path: Path) -> None:
+        from autoforge.agent.cli import cmd_judge
+
+        campaign = self._base_campaign()
+        campaign["metric"]["comparison"] = "rolling_average"
+        campaign["metric"]["comparison_window"] = 3
+        latest = self._make_request()
+
+        with (
+            patch("autoforge.agent.cli.check_git_clean"),
+            patch("autoforge.agent.cli.requests_dir", return_value=tmp_path / "requests"),
+            patch("autoforge.agent.cli.results_path", return_value=tmp_path / "results.tsv"),
+            patch("autoforge.agent.cli.failures_path", return_value=tmp_path / "failures.tsv"),
+            patch("autoforge.agent.cli.find_latest_request", return_value=latest),
+            patch("autoforge.agent.cli.rolling_average_result", return_value=85.0) as mock_avg,
+            patch("autoforge.agent.cli.best_result") as mock_best,
+            patch("autoforge.agent.cli.append_result"),
+            patch("autoforge.agent.cli.apply_judge_verdict") as mock_apply,
+        ):
+            cmd_judge(campaign, dry_run=True)
+
+        mock_avg.assert_called_once_with(
+            tmp_path / "results.tsv",
+            direction="maximize",
+            window=3,
+        )
+        mock_best.assert_not_called()
+        mock_apply.assert_called_once()
+        assert mock_apply.call_args[0][1] == 85.0  # best_val from rolling avg
+
 
 class TestProjectListCommand:
     def test_no_projects(self, capsys: pytest.CaptureFixture) -> None:
