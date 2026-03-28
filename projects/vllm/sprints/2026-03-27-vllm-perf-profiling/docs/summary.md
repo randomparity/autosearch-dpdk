@@ -87,3 +87,28 @@ The sprint produced several improvements to the autoforge framework:
 - **Larger models** — 7B+ models have longer GPU forward passes, making Python overhead proportionally smaller. Focus on models where batch sizes are constrained by memory.
 - **CPU-bound workloads** — target workloads with high request churn (short prompts, short outputs) where scheduling overhead dominates
 - **GPU-side profiling** — use NVIDIA Nsight Systems instead of Linux perf to profile GPU kernel execution and identify idle gaps
+
+## System Info
+
+_Sysinfo collected from the agent workstation. Runner sysinfo was not captured
+correctly (`sysinfo --role runner` ran locally). The runner is a separate Linux
+x86_64 machine with an NVIDIA GPU, accessed only via git._
+
+| Property | Agent (local) |
+| --- | --- |
+| Hostname | Maximus.local |
+| OS | Darwin 25.4.0 |
+| Architecture | arm64 |
+| CPU | Apple M5 Max |
+| Physical cores | 18 |
+| Memory (GB) | 128.0 |
+| Python | 3.14.3 |
+
+| Property | Runner (inferred from logs) |
+| --- | --- |
+| Hostname | homer |
+| OS | Linux x86_64 |
+| CPU | unknown (18+ cores) |
+| Memory (GB) | 252 (126 GB per NUMA node) |
+| GPU | NVIDIA (model unknown, supports CUDA graphs) |
+| Ramdisk | 96 GB tmpfs at /mnt/ramdisk |
