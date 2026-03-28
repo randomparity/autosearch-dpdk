@@ -7,3 +7,4 @@ sequence	timestamp	source_commit	metric_value	status	description	tags
 10	2026-03-28T13:52:08.714817+00:00	8c6d3d28c2296420b261739124e487d605cb2799	2404.0678942114773	completed	Hoist attribute lookups and skip invariant checks in scheduler hot loops
 11	2026-03-28T14:00:57.084456+00:00	8ea616a2bf42369bbf4d2bb01b8b1df29d37c090	2372.137327368912	completed	Pure-decode fast path in _prepare_inputs with correct dtypes
 13	2026-03-28T14:17:42.803194+00:00	828a2d386b227723ecb3edb319ecd20f9c07bc06	2381.282373937819	completed	Fix init + stacked micro-optimizations for scheduler hot path
+14	2026-03-28T14:25:54.103873+00:00	9cc95b6c66ec6e07550a9f420a0c202487feca2d	2432.0618141260597	completed	Remove context manager overhead from allocate_slots in hot loop
