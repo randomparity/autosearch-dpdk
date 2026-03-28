@@ -10,3 +10,5 @@ timestamp	source_commit	metric_value	description	diff_summary
  1 file changed, 27 insertions(+), 13 deletions(-)"
 2026-03-28T14:17:44.683248+00:00	828a2d386b227723ecb3edb319ecd20f9c07bc06	2381.282373937819	Fix init + stacked micro-optimizations for scheduler hot path	"vllm/v1/core/sched/scheduler.py | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)"
+2026-03-28T14:31:37.804610+00:00	fde1375b068d645c1c48733c052df0fe91526246	2357.819964323377	Cache local refs in scheduler hot loops to reduce attribute lookups	"vllm/v1/core/sched/scheduler.py | 39 +++++++++++++++++++++------------------
+ 1 file changed, 21 insertions(+), 18 deletions(-)"
