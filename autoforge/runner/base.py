@@ -46,6 +46,18 @@ from autoforge.runner.protocol import (
 logger = logging.getLogger(__name__)
 
 
+def _collect_runner_sysinfo() -> dict[str, Any]:
+    """Collect system info on the runner at startup.
+
+    Returns a dict suitable for embedding in results JSON.
+    """
+    from autoforge.agent.sysinfo import collect_sysinfo
+
+    info = collect_sysinfo()
+    info["role"] = "runner"
+    return info
+
+
 def recover_stale_requests(requests_dir: Path, stale_statuses: frozenset[str]) -> None:
     """Mark requests in stale statuses as failed on startup."""
     if not requests_dir.is_dir():
@@ -283,6 +295,7 @@ def _run_test(
     campaign: CampaignConfig,
     config: RunnerConfig,
     deploy_result: DeployResult | None = None,
+    runner_sysinfo: dict[str, Any] | None = None,
 ) -> None:
     """Execute the test phase and update request to completed/failed.
 
@@ -343,6 +356,8 @@ def _run_test(
     results_json = test_result.results_json or {}
     if profile_result[0] is not None:
         results_json["profile"] = profile_result[0]
+    if runner_sysinfo is not None:
+        results_json["runner_sysinfo"] = runner_sysinfo
 
     complete_request(
         request,
@@ -371,6 +386,7 @@ class PhaseRunner(ABC):
         self.runner_id = config.get("runner", {}).get("runner_id", "")
         self.poll_interval = int(config.get("runner", {}).get("poll_interval", 30))
         self._startup_commit = git_head_commit(REPO_ROOT)
+        self._runner_sysinfo = _collect_runner_sysinfo()
 
     needs_claim: bool = False
     """Whether this runner must claim requests before executing."""
@@ -491,7 +507,13 @@ class TestRunner(PhaseRunner):
     stale_statuses = frozenset({STATUS_RUNNING})
 
     def execute_phase(self, request: TestRequest, request_path: Path) -> None:
-        _run_test(request, request_path, self.campaign, self.config)
+        _run_test(
+            request,
+            request_path,
+            self.campaign,
+            self.config,
+            runner_sysinfo=self._runner_sysinfo,
+        )
 
 
 class FullRunner(PhaseRunner):
@@ -519,4 +541,11 @@ class FullRunner(PhaseRunner):
         if deploy_result is None:
             return
 
-        _run_test(request, request_path, self.campaign, self.config, deploy_result)
+        _run_test(
+            request,
+            request_path,
+            self.campaign,
+            self.config,
+            deploy_result,
+            runner_sysinfo=self._runner_sysinfo,
+        )

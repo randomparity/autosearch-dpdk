@@ -170,7 +170,10 @@ def _load_summary_data(campaign: CampaignConfig) -> dict[str, Any]:
     from autoforge.agent.sysinfo import load_all_sysinfo, render_sysinfo_section
 
     docs = docs_dir()
-    all_sysinfo = load_all_sysinfo(docs) if docs.exists() else {}
+    all_sysinfo = load_all_sysinfo(
+        docs if docs.exists() else docs,
+        requests_dir=req_dir,
+    )
     system_info_section = render_sysinfo_section(all_sysinfo)
 
     return {

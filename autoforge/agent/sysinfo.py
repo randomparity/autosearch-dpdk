@@ -62,8 +62,20 @@ def save_sysinfo(role: str, output_dir: Path) -> Path:
     return path
 
 
-def load_all_sysinfo(docs_dir: Path) -> dict[str, dict[str, Any]]:
-    """Load all sysinfo JSON files from a docs directory.
+def load_all_sysinfo(
+    docs_dir: Path,
+    requests_dir: Path | None = None,
+) -> dict[str, dict[str, Any]]:
+    """Load sysinfo from JSON files and completed request results.
+
+    Checks two sources:
+    1. ``sysinfo-*.json`` files in *docs_dir* (agent-side collection).
+    2. ``runner_sysinfo`` embedded in completed request results in
+       *requests_dir* (runner-side collection, preferred for runner role).
+
+    Runner-side sysinfo from requests takes precedence over stale
+    ``sysinfo-runner.json`` files since it's collected on the actual
+    runner machine.
 
     Returns:
         Mapping of role to info dict.
@@ -76,7 +88,37 @@ def load_all_sysinfo(docs_dir: Path) -> dict[str, dict[str, Any]]:
             result[role] = data
         except (json.JSONDecodeError, OSError) as exc:
             logger.warning("Failed to load %s: %s", path, exc)
+
+    # Extract runner sysinfo from the most recent completed request.
+    if requests_dir is not None and requests_dir.is_dir():
+        runner_info = _extract_runner_sysinfo_from_requests(requests_dir)
+        if runner_info:
+            result["runner"] = runner_info
+
     return result
+
+
+def _extract_runner_sysinfo_from_requests(
+    requests_dir: Path,
+) -> dict[str, Any] | None:
+    """Scan completed requests for embedded runner_sysinfo.
+
+    Returns the sysinfo from the most recent completed request that
+    contains it, or None.
+    """
+    from autoforge.protocol import TestRequest
+
+    for path in sorted(requests_dir.glob("*.json"), reverse=True):
+        try:
+            req = TestRequest.read(path)
+        except (ValueError, KeyError, TypeError, OSError):
+            continue
+        if req.status != "completed" or not req.results_json:
+            continue
+        sysinfo = req.results_json.get("runner_sysinfo")
+        if sysinfo and isinstance(sysinfo, dict):
+            return sysinfo
+    return None
 
 
 def render_sysinfo_section(
