@@ -179,10 +179,17 @@ def _prepare_profiler(
     campaign: CampaignConfig,
     config: RunnerConfig,
     deploy_result: DeployResult,
+    request: TestRequest | None = None,
 ) -> tuple[Any, int, dict[str, Any]] | None:
     """Load profiler plugin and config. Returns (profiler, duration, config) or None."""
     profiling_cfg = campaign.get("profiling", {})
     if not profiling_cfg.get("enabled", False):
+        return None
+
+    # Respect per-request profiler override (e.g. finale requests set
+    # profile_plugin="" to skip profiling).
+    if request is not None and hasattr(request, "profile_plugin") and request.profile_plugin == "":
+        logger.debug("Profiling skipped: request has empty profile_plugin")
         return None
 
     proj_cfg = _project_config(campaign)
@@ -298,7 +305,7 @@ def _run_test(
     )
 
     # Prepare profiler before starting the test so it can run concurrently.
-    profiler_setup = _prepare_profiler(campaign, config, deploy_result)
+    profiler_setup = _prepare_profiler(campaign, config, deploy_result, request)
     profile_result: list[dict[str, Any] | None] = [None]
     profile_thread: threading.Thread | None = None
 
