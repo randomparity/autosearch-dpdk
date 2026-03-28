@@ -10,11 +10,11 @@
   "tags": null,
   "metric_name": "output_throughput",
   "metric_path": "output_throughput",
-  "status": "running",
+  "status": "completed",
   "claimed_at": "2026-03-28T14:45:30.368921+00:00",
   "built_at": null,
   "deployed_at": null,
-  "completed_at": null,
+  "completed_at": "2026-03-28T14:48:00.201841+00:00",
   "build_runner_id": null,
   "deploy_runner_id": null,
   "test_runner_id": null,
@@ -22,8 +22,114 @@
   "deploy_log_snippet": null,
   "test_log_snippet": null,
   "failed_phase": null,
-  "results_json": null,
-  "results_summary": null,
-  "metric_value": null,
+  "results_json": {
+    "date": "20260328-144759",
+    "endpoint_type": "vllm",
+    "backend": "vllm",
+    "label": null,
+    "model_id": "Qwen/Qwen3-0.6B",
+    "tokenizer_id": "Qwen/Qwen3-0.6B",
+    "num_prompts": 200.0,
+    "request_rate": "inf",
+    "burstiness": 1.0,
+    "max_concurrency": 64.0,
+    "duration": 10.25464821200876,
+    "completed": 200.0,
+    "failed": 0.0,
+    "total_input_tokens": 102400.0,
+    "total_output_tokens": 51200.0,
+    "request_throughput": 19.50353366172451,
+    "request_goodput": null,
+    "output_throughput": 4992.904617401475,
+    "total_token_throughput": 14978.713852204424,
+    "max_output_tokens_per_s": 5584.0,
+    "max_concurrent_requests": 126.25,
+    "rtfx": 0.0,
+    "mean_ttft_ms": 106.79462290703668,
+    "median_ttft_ms": 105.44020100132911,
+    "std_ttft_ms": 34.283150936262075,
+    "p99_ttft_ms": 176.3202694143547,
+    "mean_tpot_ms": 11.28155279774721,
+    "median_tpot_ms": 11.548129612250097,
+    "std_tpot_ms": 1.3365683502035675,
+    "p99_tpot_ms": 11.676814531083116,
+    "mean_itl_ms": 11.282826629888342,
+    "median_itl_ms": 11.415380617108895,
+    "std_itl_ms": 2.1124647485695514,
+    "p99_itl_ms": 18.875484180098283,
+    "iterations": 5,
+    "warmup_excluded": true,
+    "per_iteration": [
+      3095.451378676059,
+      5014.385916217298,
+      4987.063504178344,
+      4997.694171764365,
+      4972.474877445891
+    ],
+    "profile": {
+      "top_functions": [
+        {
+          "name": "[unknown]",
+          "samples": 162,
+          "pct": 40.0
+        },
+        {
+          "name": "_PyEval_EvalFrameDefault",
+          "samples": 83,
+          "pct": 20.49
+        },
+        {
+          "name": "tokenizers::models::bpe::word::Word::merge_all",
+          "samples": 10,
+          "pct": 2.47
+        },
+        {
+          "name": "<tokenizers::models::ModelWrapper as tokenizers::tokenizer::Model>::id_to_token",
+          "samples": 7,
+          "pct": 1.73
+        },
+        {
+          "name": "PyObject_GC_Del",
+          "samples": 7,
+          "pct": 1.73
+        },
+        {
+          "name": "_PyObject_GenericGetAttrWithDict",
+          "samples": 5,
+          "pct": 1.23
+        },
+        {
+          "name": "<core::str::lossy::Utf8Chunks as core::iter::traits::iterator::Iterator>::next",
+          "samples": 4,
+          "pct": 0.99
+        },
+        {
+          "name": "PyObject_GetAttr",
+          "samples": 4,
+          "pct": 0.99
+        },
+        {
+          "name": "core::ops::function::impls::<impl core::ops::function::FnMut<A> for &mut F>::call_mut",
+          "samples": 4,
+          "pct": 0.99
+        },
+        {
+          "name": "realloc",
+          "samples": 3,
+          "pct": 0.74
+        }
+      ],
+      "derived_metrics": {
+        "ipc": 1.964229,
+        "l1d_miss_rate": 0.012732,
+        "llc_miss_rate": 0.000161,
+        "branch_miss_rate": 0.001984
+      },
+      "diagnostics": [],
+      "total_samples": 405
+    }
+  },
+  "results_summary": "4992.9 tok/s output | TTFT 105.4ms | TPOT 11.55ms",
+  "metric_value": 4992.904617401475,
   "error": null
 }
