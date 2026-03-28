@@ -1,0 +1,3 @@
+timestamp	source_commit	metric_value	description	diff_summary
+2026-03-28T13:21:49.879562+00:00	d9470e8fd534c346bc6c70e2f6dd297d6f5f6047	2379.1904879463746	Add decode-only fast path in _prepare_inputs to skip numpy ops	"vllm/v1/worker/gpu_model_runner.py | 39 +++++++++++++++++++++++++-------------
+ 1 file changed, 26 insertions(+), 13 deletions(-)"

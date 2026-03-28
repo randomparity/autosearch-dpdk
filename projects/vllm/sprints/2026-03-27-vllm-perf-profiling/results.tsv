@@ -1,3 +1,4 @@
 sequence	timestamp	source_commit	metric_value	status	description	tags
 1	2026-03-28T12:30:13.042562+00:00	0bc9670741aa430d35e240802b030740e34b5c89	2393.56299291657	completed	Baseline: unmodified vllm
 2	2026-03-28T13:15:11.875813+00:00	32c50d240b9fdfda9ab6917845f917cee13223d1	2425.4898548186898	completed	Optimize check_stop and _update_request_with_output for decode fast path
+3	2026-03-28T13:21:48.340979+00:00	d9470e8fd534c346bc6c70e2f6dd297d6f5f6047	2379.1904879463746	completed	Add decode-only fast path in _prepare_inputs to skip numpy ops
