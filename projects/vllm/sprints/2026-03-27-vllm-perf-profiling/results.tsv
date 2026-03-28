@@ -15,3 +15,4 @@ sequence	timestamp	source_commit	metric_value	status	description	tags
 20	2026-03-28T14:58:28.351084+00:00	e0b7d39f7650a8a1364bd8ce66c0b7fa4a914222	4964.471631958772	completed	Combined: check_stop fast path + context manager removal + local caching
 21	2026-03-28T15:06:13.678864+00:00	eeaaeea6893d48137a3676e4a692a21094dbbde4	4986.924557688738	completed	Raise GC gen-0 threshold to reduce collection frequency during serving
 22	2026-03-28T15:13:15.115940+00:00	928c29a5aca6ad562f19f3b3675de4381fa2304d	4996.884559810528	completed	Increase max_num_batched_tokens to 16384 and max_num_seqs to 512
+23	2026-03-28T15:17:45.501753+00:00	928c29a5aca6ad562f19f3b3675de4381fa2304d	4997.468344473163	completed	Increase default stream_interval from 1 to 4 to batch output processing
