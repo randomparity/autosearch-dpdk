@@ -391,28 +391,15 @@ class TestVllmServingBenchTester:
         assert "bench error" in (result.error or "")
 
     @patch("subprocess.run")
-    def test_container_teardown(self, mock_run: MagicMock) -> None:
-        """Container is removed even after a successful test."""
+    def test_no_container_teardown_in_test_plugin(self, mock_run: MagicMock) -> None:
+        """Container cleanup is the runner's responsibility, not the test plugin's."""
         mock_run.return_value = _make_completed(0, stdout="done")
         tester = self._make_tester()
         tester.test(self._deploy_result(), timeout=60)
         teardown_calls = [
             c for c in mock_run.call_args_list if "rm" in str(c) and "test-ctr" in str(c)
         ]
-        assert len(teardown_calls) >= 1
-
-    @patch("subprocess.run")
-    def test_teardown_uses_runtime_from_target_info(self, mock_run: MagicMock) -> None:
-        """Teardown uses the runtime from deploy_result.target_info."""
-        mock_run.return_value = _make_completed(0, stdout="done")
-        tester = self._make_tester()
-        tester.test(self._deploy_result(runtime="docker"), timeout=60)
-        teardown_calls = [
-            c for c in mock_run.call_args_list if "rm" in str(c) and "test-ctr" in str(c)
-        ]
-        assert len(teardown_calls) >= 1
-        teardown_cmd = teardown_calls[0].args[0]
-        assert teardown_cmd[0] == "docker"
+        assert len(teardown_calls) == 0
 
 
 # ---------------------------------------------------------------------------

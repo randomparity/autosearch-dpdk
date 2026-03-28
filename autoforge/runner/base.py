@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import logging
+import subprocess
+import threading
 import time
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -171,15 +173,12 @@ def _run_deploy(
     return deploy_result
 
 
-def _run_profile(
+def _prepare_profiler(
     campaign: CampaignConfig,
     config: RunnerConfig,
     deploy_result: DeployResult,
-) -> dict[str, Any] | None:
-    """Run the profiler plugin if profiling is enabled. Returns summary or None.
-
-    Profile failure is non-fatal — logs a warning and returns None.
-    """
+) -> tuple[Any, int, dict[str, Any]] | None:
+    """Load profiler plugin and config. Returns (profiler, duration, config) or None."""
     profiling_cfg = campaign.get("profiling", {})
     if not profiling_cfg.get("enabled", False):
         return None
@@ -204,25 +203,69 @@ def _run_profile(
         return None
 
     duration = int(profiling_cfg.get("duration", 30))
-    profile_config: dict[str, Any] = {**deploy_result.target_info}
+    startup_delay = int(profiling_cfg.get("startup_delay", 5))
+    profile_config: dict[str, Any] = {
+        **deploy_result.target_info,
+        "startup_delay": startup_delay,
+    }
+    return profiler, duration, profile_config
+
+
+def _run_profile_thread(
+    profiler: Any,
+    duration: int,
+    profile_config: dict[str, Any],
+    result_holder: list[dict[str, Any] | None],
+) -> None:
+    """Run profiler in a background thread with a startup delay.
+
+    Waits for the benchmark to generate load before capturing a profile.
+    The result is stored in result_holder[0].
+    """
+    startup_delay = profile_config.pop("startup_delay", 5)
+    profiler_name = getattr(profiler, "name", "unknown")
+
+    logger.info(
+        "Profiler %r waiting %ds for benchmark warmup",
+        profiler_name,
+        startup_delay,
+    )
+    time.sleep(startup_delay)
 
     logger.info("Running profiler %r for %ds", profiler_name, duration)
     try:
         result = profiler.profile(pid=0, duration=duration, config=profile_config)
     except Exception:
         logger.exception("Profiler %r raised an exception", profiler_name)
-        return None
+        return
 
     if not result.success:
         logger.warning("Profiler %r failed: %s", profiler_name, result.error)
-        return None
+        return
 
     logger.info(
         "Profiling complete (%s, %.1fs)",
         profiler_name,
         result.duration_seconds,
     )
-    return result.summary
+    result_holder[0] = result.summary
+
+
+def _cleanup_deploy_target(deploy_result: DeployResult) -> None:
+    """Remove the deploy target (container) after test and profiling complete."""
+    target_info = deploy_result.target_info
+    container_name = target_info.get("container_name")
+    if not container_name:
+        return
+    runtime = target_info.get("runtime", "docker")
+    try:
+        subprocess.run(
+            [runtime, "rm", "-f", container_name],
+            capture_output=True,
+            timeout=30,
+        )
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        logger.warning("Failed to clean up container %s", container_name)
 
 
 def _run_test(
@@ -235,6 +278,7 @@ def _run_test(
     """Execute the test phase and update request to completed/failed.
 
     When deploy_result is None (split-runner mode), a stub is constructed from config.
+    Profiling runs concurrently with the test in a background thread.
     """
     if deploy_result is None:
         deploy_result = _deploy_result_from_config(config)
@@ -251,8 +295,31 @@ def _run_test(
         runner_config=config,
     )
 
+    # Prepare profiler before starting the test so it can run concurrently.
+    profiler_setup = _prepare_profiler(campaign, config, deploy_result)
+    profile_result: list[dict[str, Any] | None] = [None]
+    profile_thread: threading.Thread | None = None
+
     update_status(request, STATUS_RUNNING, request_path)
-    test_result = tester.test(deploy_result, timeout=test_timeout)
+
+    # Start profiler thread before the test so it captures during benchmark execution.
+    if profiler_setup is not None:
+        profiler, duration, profile_config = profiler_setup
+        profile_thread = threading.Thread(
+            target=_run_profile_thread,
+            args=(profiler, duration, profile_config, profile_result),
+            daemon=True,
+        )
+        profile_thread.start()
+
+    try:
+        test_result = tester.test(deploy_result, timeout=test_timeout)
+    finally:
+        # Wait for profiler to finish (it may already be done).
+        if profile_thread is not None:
+            profile_thread.join(timeout=60)
+        # Clean up the deploy target (e.g. container) after profiling completes.
+        _cleanup_deploy_target(deploy_result)
 
     if not test_result.success:
         fail(
@@ -265,9 +332,8 @@ def _run_test(
         return
 
     results_json = test_result.results_json or {}
-    profile_summary = _run_profile(campaign, config, deploy_result)
-    if profile_summary is not None:
-        results_json["profile"] = profile_summary
+    if profile_result[0] is not None:
+        results_json["profile"] = profile_result[0]
 
     complete_request(
         request,

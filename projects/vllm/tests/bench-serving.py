@@ -144,11 +144,6 @@ class VllmServingBenchTester:
                 duration_seconds=time.monotonic() - start,
             )
         finally:
-            subprocess.run(
-                [runtime, "rm", "-f", container],
-                capture_output=True,
-                timeout=30,
-            )
             shutil.rmtree(local_result_dir, ignore_errors=True)
 
 
