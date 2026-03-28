@@ -4,3 +4,4 @@ sequence	timestamp	source_commit	metric_value	status	description	tags
 3	2026-03-28T13:21:48.340979+00:00	d9470e8fd534c346bc6c70e2f6dd297d6f5f6047	2379.1904879463746	completed	Add decode-only fast path in _prepare_inputs to skip numpy ops
 4	2026-03-28T13:27:57.685661+00:00	440076749eb2e9341fb5b543582b5ad8cc6b9191	2290.5326983588084	completed	Reduce per-request Python overhead in scheduler hot loops
 9	2026-03-28T13:46:38.088704+00:00	32c50d240b9fdfda9ab6917845f917cee13223d1	2400.4788468468255	completed	Baseline: unmodified vllm
+10	2026-03-28T13:52:08.714817+00:00	8c6d3d28c2296420b261739124e487d605cb2799	2404.0678942114773	completed	Hoist attribute lookups and skip invariant checks in scheduler hot loops

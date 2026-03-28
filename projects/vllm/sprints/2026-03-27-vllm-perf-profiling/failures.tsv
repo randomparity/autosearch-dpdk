@@ -4,3 +4,5 @@ timestamp	source_commit	metric_value	description	diff_summary
 2026-03-28T13:27:58.990585+00:00	440076749eb2e9341fb5b543582b5ad8cc6b9191	2290.5326983588084	Reduce per-request Python overhead in scheduler hot loops	"vllm/v1/core/sched/scheduler.py | 95 +++++++++++++++++++----------------------
  vllm/v1/core/sched/utils.py     | 14 +++---
  2 files changed, 53 insertions(+), 56 deletions(-)"
+2026-03-28T13:52:09.931508+00:00	8c6d3d28c2296420b261739124e487d605cb2799	2404.0678942114773	Hoist attribute lookups and skip invariant checks in scheduler hot loops	"vllm/v1/core/sched/scheduler.py | 42 ++++++++++++++++++++++-------------------
+ 1 file changed, 23 insertions(+), 19 deletions(-)"
