@@ -216,12 +216,13 @@ The runner supports four phase modes (configured via `[runner].phase`):
 **Full runner daemon loop (phase=all):**
 
 1. `git pull --rebase` to fetch new requests
-2. Scan `projects/<project>/sprints/<sprint>/requests/` for pending requests
-3. Claim the first pending request (`pending` → `claimed`)
-4. Build the project at the specified commit (`claimed` → `building` → `built`)
-5. Deploy build artifacts (`built` → `deploying` → `deployed`)
-6. Run test plugin (`deployed` → `running` → `completed` or `failed`)
-7. Push results and sleep
+2. If any `.py` or `.toml` files changed since startup, re-exec the process to pick up new code/config
+3. Scan `projects/<project>/sprints/<sprint>/requests/` for pending requests
+4. Claim the first pending request (`pending` → `claimed`)
+5. Build the project at the specified commit (`claimed` → `building` → `built`)
+6. Deploy build artifacts (`built` → `deploying` → `deployed`)
+7. Run test plugin (`deployed` → `running` → `completed` or `failed`)
+8. Push results and sleep
 
 The runner takes no CLI arguments. All configuration is via
 `projects/<project>/runner.toml` and `.autoforge.toml` (for project/sprint
@@ -298,6 +299,14 @@ For DTS: check the DTS output directory for full test logs. The request JSON
 The runner automatically retries push operations up to 3 times with
 `git pull --rebase` between attempts. If all retries fail, the request is
 marked as failed and logged.
+
+**Unexpected restarts**
+After each `git pull`, the runner checks whether any `.py` or `.toml` files
+changed since it started. If they did, it re-executes itself via `os.execvp`
+to pick up the updated code or config. When running under systemd, this
+appears as a normal service restart in `journalctl`. This is expected behavior
+and not a crash. Only `.py` and `.toml` changes trigger a restart — request
+files (`.json`) and results (`.tsv`) do not.
 
 **Stale requests**
 On startup, the runner recovers any requests stuck in intermediate statuses

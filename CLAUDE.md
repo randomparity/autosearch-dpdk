@@ -67,14 +67,15 @@ pending → claimed → building → built → deploying → deployed → runnin
 ### Package boundaries
 
 ```
-autoforge/pointer.py   Shared: REPO_ROOT, PointerConfig, load_pointer(), save_pointer()
-autoforge/config.py    Shared: resolve_vars, deep_merge, load_toml_with_local (${VAR} + .local.toml)
-autoforge/campaign.py  Shared: CampaignConfig, typed accessor functions, campaign resolution
-autoforge/protocol/    Shared: TestRequest, Direction, GIT_TIMEOUT, status constants, StatusLiteral, extract_metric
-autoforge/plugins/     Plugin protocols (Builder, Deployer, Tester, Profiler, Judge, JudgeVerdict) and loader (load_pipeline, load_judge)
-autoforge/agent/       Workstation: CLI subcommands, git ops, history tracking
-autoforge/runner/      Lab machine: service loop, git-based state transitions
-autoforge/perf/        Profiling: perf record orchestration, stack analysis, arch profiles
+autoforge/pointer.py    Shared: REPO_ROOT, PointerConfig, load_pointer(), save_pointer()
+autoforge/config.py     Shared: resolve_vars, deep_merge, load_toml_with_local (${VAR} + .local.toml)
+autoforge/campaign.py   Shared: CampaignConfig, typed accessor functions, campaign resolution
+autoforge/git_utils.py  Shared: git_pull_with_stash(), git_head_commit(), code_changed_since(), git_push_with_retry()
+autoforge/protocol/     Shared: TestRequest, Direction, GIT_TIMEOUT, status constants, StatusLiteral, extract_metric
+autoforge/plugins/      Plugin protocols (Builder, Deployer, Tester, Profiler, Judge, JudgeVerdict) and loader (load_pipeline, load_judge)
+autoforge/agent/        Workstation: CLI subcommands, git ops, history tracking
+autoforge/runner/       Lab machine: service entry point, phase runners, auto-restart, git-based state transitions
+autoforge/perf/         Profiling: perf record orchestration, stack analysis, arch profiles
 ```
 
 **Import rules:** `agent/` and `runner/` both import from `protocol/`, `plugins/`, and `autoforge.campaign`, never from each other. Always import from `autoforge.protocol` (the facade), not `autoforge.protocol.schema` directly.
@@ -93,7 +94,8 @@ autoforge/perf/        Profiling: perf record orchestration, stack analysis, arc
 
 ### Runner modules
 
-- `service.py` — main polling loop, loads plugin, `execute_request()` orchestrates build→deploy→test→push
+- `service.py` — entry point, config loading, dispatches to phase runner class
+- `base.py` — `PhaseRunner` base class and concrete runners (`BuildRunner`, `DeployRunner`, `TestRunner`, `FullRunner`); `poll_loop()` with auto-restart on code/config changes; `recover_stale_requests()`; profiling orchestration
 - `protocol.py` — git commit/push with retry, `claim()`, `update_status()`, `complete_request()`, `fail()`
 
 ### DPDK plugin modules (`projects/dpdk/`)
