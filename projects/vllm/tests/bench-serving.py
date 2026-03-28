@@ -107,9 +107,13 @@ class VllmServingBenchTester:
                 )
 
             elapsed = time.monotonic() - start
-            averaged = _average_metrics(all_metrics)
+            # Drop the first iteration (warmup: model load, JIT, cache priming)
+            # when multiple iterations are configured.
+            scored = all_metrics[1:] if len(all_metrics) > 1 else all_metrics
+            averaged = _average_metrics(scored)
             output_tput = averaged.get("output_throughput")
             averaged["iterations"] = self._iterations
+            averaged["warmup_excluded"] = len(all_metrics) > 1
             averaged["per_iteration"] = [m.get("output_throughput") for m in all_metrics]
             return TestResult(
                 success=True,
